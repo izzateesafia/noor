@@ -25,6 +25,9 @@ import 'deep_link_test_page.dart';
 import 'quran_reader_page.dart';
 import 'quran_search_page.dart';
 import 'mushaf_reader_page.dart';
+import 'prayer_alarm_settings_page.dart';
+import 'services/prayer_alarm_service.dart';
+import 'test_prayer_alarm.dart';
 import 'cubit/user_cubit.dart';
 import 'cubit/class_cubit.dart';
 import 'cubit/dua_cubit.dart';
@@ -64,6 +67,10 @@ void main() async {
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   await setupNotifications();
   await saveUserToken();
+  
+  // Initialize prayer alarm service
+  await PrayerAlarmService().initialize();
+  
   runApp(const MyApp());
 }
 
@@ -259,6 +266,8 @@ class MyApp extends StatelessWidget {
                 '/quran': (context) => const QuranReaderPage(),
                 '/quran_search': (context) => const QuranSearchPage(),
                 '/mushaf': (context) => const MushafReaderPage(),
+                '/prayer_alarm_settings': (context) => const PrayerAlarmSettingsPage(),
+                '/test_prayer_alarm': (context) => const TestPrayerAlarmPage(),
               },
               builder: (context, child) {
                 // Initialize deep links with proper context

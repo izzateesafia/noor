@@ -5,7 +5,7 @@ import '../cubit/prayer_times_cubit.dart';
 import '../cubit/prayer_times_states.dart';
 import '../models/prayer_times.dart';
 import '../theme_constants.dart';
-import '../services/adhan_audio_service.dart';
+
 
 class PrayerTimesCard extends StatefulWidget {
   const PrayerTimesCard({super.key});
@@ -17,8 +17,6 @@ class PrayerTimesCard extends StatefulWidget {
 class _PrayerTimesCardState extends State<PrayerTimesCard> {
   Timer? _autoRefreshTimer;
   Timer? _nextPrayerTimer;
-  final AdhanAudioService _adhanAudioService = AdhanAudioService();
-  bool _hasPlayedAdhan = false;
 
   @override
   void initState() {
@@ -32,7 +30,6 @@ class _PrayerTimesCardState extends State<PrayerTimesCard> {
   void dispose() {
     _autoRefreshTimer?.cancel();
     _nextPrayerTimer?.cancel();
-    _adhanAudioService.dispose();
     super.dispose();
   }
 
@@ -142,14 +139,7 @@ class _PrayerTimesCardState extends State<PrayerTimesCard> {
         final nextPrayer = _getNextPrayer(prayerTimes);
         final prayers = _getPrayersList(prayerTimes);
 
-        // Play adhan sound when prayer times are first loaded
-        if (!_hasPlayedAdhan && state.status == PrayerTimesStatus.loaded) {
-          _hasPlayedAdhan = true;
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            // Play adhan for the next prayer
-            _adhanAudioService.playAdhanForPrayer(nextPrayer);
-          });
-        }
+        // Note: Adhan is now handled by PrayerAlarmService automatically
 
         return RefreshIndicator(
           onRefresh: () async {
@@ -201,18 +191,17 @@ class _PrayerTimesCardState extends State<PrayerTimesCard> {
                                ],
                              ),
                            ),
-                           // Manual adhan button for testing
+                           // Prayer alarm settings button
                            IconButton(
                              onPressed: () {
-                               // Play adhan for the next prayer
-                               _adhanAudioService.playAdhanForPrayer(nextPrayer);
+                               Navigator.pushNamed(context, '/prayer_alarm_settings');
                              },
                              icon: Icon(
-                               Icons.volume_up,
+                               Icons.settings,
                                color: AppColors.primary,
                                size: 20,
                              ),
-                             tooltip: 'Play Adhan for $nextPrayer',
+                             tooltip: 'Prayer Alarm Settings',
                            ),
                         ],
                       ),
