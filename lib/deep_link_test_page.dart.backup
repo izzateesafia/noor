@@ -1,0 +1,224 @@
+import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'deep_link_handler.dart';
+
+class DeepLinkTestPage extends StatelessWidget {
+  const DeepLinkTestPage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Deep Link Test'),
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Test Deep Links',
+              style: TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Tap any link below to test opening specific pages in the app:',
+              style: TextStyle(
+                fontSize: 16,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(height: 24),
+            
+            // Deep Link Buttons
+            _buildDeepLinkButton(
+              context,
+              'Premium Page',
+              DeepLinkRoutes.premium,
+              Icons.star,
+              Colors.amber,
+            ),
+            _buildDeepLinkButton(
+              context,
+              'User Profile',
+              DeepLinkRoutes.profile,
+              Icons.person,
+              Colors.blue,
+            ),
+            _buildDeepLinkButton(
+              context,
+              'Classes',
+              DeepLinkRoutes.classes,
+              Icons.school,
+              Colors.green,
+            ),
+            _buildDeepLinkButton(
+              context,
+              'Duas',
+              DeepLinkRoutes.duas,
+              Icons.waving_hand_outlined,
+              Colors.purple,
+            ),
+            _buildDeepLinkButton(
+              context,
+              'Hadiths',
+              DeepLinkRoutes.hadiths,
+              Icons.menu_book,
+              Colors.orange,
+            ),
+            _buildDeepLinkButton(
+              context,
+              'Qiblah',
+              DeepLinkRoutes.qiblah,
+              Icons.explore,
+              Colors.red,
+            ),
+            _buildDeepLinkButton(
+              context,
+              'Hifdh Checker',
+              DeepLinkRoutes.hifdh,
+              Icons.psychology,
+              Colors.teal,
+            ),
+            _buildDeepLinkButton(
+              context,
+              'Prayer Steps',
+              DeepLinkRoutes.rukun,
+              Icons.directions_walk,
+              Colors.indigo,
+            ),
+            _buildDeepLinkButton(
+              context,
+              'Dashboard',
+              DeepLinkRoutes.dashboard,
+              Icons.dashboard,
+              Colors.grey,
+            ),
+            _buildDeepLinkButton(
+              context,
+              'Admin Panel',
+              DeepLinkRoutes.admin,
+              Icons.admin_panel_settings,
+              Colors.deepOrange,
+            ),
+            
+            const SizedBox(height: 32),
+            
+            // Instructions
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'How to Test:',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      '1. Tap any button above to open the page in the app\n'
+                      '2. You can also test these links from other apps\n'
+                      '3. Use these URLs in messages, emails, or websites\n'
+                      '4. The app will automatically open the correct page',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            
+            const SizedBox(height: 16),
+            
+            // Share Links Section
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      'Share Links:',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'You can share these deep links with others:',
+                      style: TextStyle(fontSize: 14),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildShareableLink('Premium: ${DeepLinkRoutes.premium}'),
+                    _buildShareableLink('Profile: ${DeepLinkRoutes.profile}'),
+                    _buildShareableLink('Classes: ${DeepLinkRoutes.classes}'),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDeepLinkButton(
+    BuildContext context,
+    String title,
+    String deepLink,
+    IconData icon,
+    Color color,
+  ) {
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      child: ListTile(
+        leading: CircleAvatar(
+          backgroundColor: color.withOpacity(0.1),
+          child: Icon(icon, color: color),
+        ),
+        title: Text(title),
+        subtitle: Text(deepLink),
+        trailing: const Icon(Icons.arrow_forward_ios),
+        onTap: () async {
+          try {
+            final uri = Uri.parse(deepLink);
+            if (await canLaunchUrl(uri)) {
+              await launchUrl(uri);
+            } else {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text('Could not open: $deepLink')),
+              );
+            }
+          } catch (e) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Error: $e')),
+            );
+          }
+        },
+      ),
+    );
+  }
+
+  Widget _buildShareableLink(String link) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: SelectableText(
+        link,
+        style: const TextStyle(
+          fontSize: 12,
+          fontFamily: 'monospace',
+          color: Colors.blue,
+        ),
+      ),
+    );
+  }
+} 

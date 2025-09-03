@@ -1,0 +1,46 @@
+{
+  "project_info": {
+    "project_number": "134970392054",
+    "project_id": "uwais-manage",
+    "storage_bucket": "uwais-manage.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:134970392054:android:61375a474c43957abedbd7",
+        "android_client_info": {
+          "package_name": "com.example.noor"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "134970392054-02lgr84huva74u0ef9o1h58ucnkev3va.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBHSnrVBfhZ-YawCzkQEVBa7EdOZBucJog"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "134970392054-02lgr84huva74u0ef9o1h58ucnkev3va.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "134970392054-vrjkt6ellgsc6rioo67im24bqu4tsfv1.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.noor"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
