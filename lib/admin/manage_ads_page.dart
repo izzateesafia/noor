@@ -13,12 +13,12 @@ class ManageAdsPage extends StatefulWidget {
 class _ManageAdsPageState extends State<ManageAdsPage> {
   List<Ad> ads = [
     Ad(
-      title: 'Special Ramadan Sale!',
+      title: 'Jualan Khas Ramadan!',
       image: 'assets/images/ad_ramadan.png',
       link: 'https://ramadansale.com',
     ),
     Ad(
-      title: 'Quran App Premium',
+      title: 'Aplikasi Al-Quran Premium',
       image: 'assets/images/ad_premium.png',
       link: 'https://quranapp.com/premium',
     ),
@@ -56,13 +56,13 @@ class _ManageAdsPageState extends State<ManageAdsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manage Advertisements'),
+        title: const Text('Urus Iklan'),
         backgroundColor: AppColors.appBar,
         foregroundColor: AppColors.onAppBar,
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            tooltip: 'Add Advertisement',
+            tooltip: 'Tambah Iklan',
             onPressed: _addAd,
           ),
         ],
@@ -129,7 +129,7 @@ class _ManageAdsPageState extends State<ManageAdsPage> {
                       ),
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
-                        tooltip: 'Delete',
+                        tooltip: 'Padam',
                         onPressed: () => _deleteAd(i),
                       ),
                     ],

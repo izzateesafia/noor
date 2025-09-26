@@ -16,12 +16,12 @@ class HeaderSection extends StatelessWidget {
       context: context,
       builder: (BuildContext context) {
         return AlertDialog(
-          title: const Text('Sign Out'),
-          content: const Text('Are you sure you want to sign out?'),
+          title: const Text('Log Keluar'),
+          content: const Text('Adakah anda pasti mahu log keluar?'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
+              child: const Text('Batal'),
             ),
             TextButton(
               onPressed: () {
@@ -29,7 +29,7 @@ class HeaderSection extends StatelessWidget {
                 context.read<UserCubit>().signOut();
                 Navigator.of(context).pushReplacementNamed('/login');
               },
-              child: const Text('Sign Out'),
+              child: const Text('Log Keluar'),
             ),
           ],
         );

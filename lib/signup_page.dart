@@ -47,46 +47,46 @@ class _SignupPageState extends State<SignupPage> {
 
   String? _validateName(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Full name is required';
+      return 'Nama penuh diperlukan';
     }
     if (value.trim().length < 2) {
-      return 'Name must be at least 2 characters';
+      return 'Nama mestilah sekurang-kurangnya 2 aksara';
     }
     if (value.trim().length > 50) {
-      return 'Name must be less than 50 characters';
+      return 'Nama mestilah kurang daripada 50 aksara';
     }
     return null;
   }
 
   String? _validatePhone(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Phone number is required';
+      return 'Nombor telefon diperlukan';
     }
     if (!_phoneRegex.hasMatch(value.trim())) {
-      return 'Please enter a valid phone number';
+      return 'Sila masukkan nombor telefon yang sah';
     }
     return null;
   }
 
   String? _validateEmail(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Email is required';
+      return 'Emel diperlukan';
     }
     if (!_emailRegex.hasMatch(value.trim())) {
-      return 'Please enter a valid email address';
+      return 'Sila masukkan alamat emel yang sah';
     }
     return null;
   }
 
   String? _validatePassword(String? value) {
     if (value == null || value.isEmpty) {
-      return 'Password is required';
+      return 'Kata laluan diperlukan';
     }
     if (value.length < 6) {
-      return 'Password must be at least 6 characters';
+      return 'Kata laluan mestilah sekurang-kurangnya 6 aksara';
     }
     if (value.length > 50) {
-      return 'Password must be less than 50 characters';
+      return 'Kata laluan mestilah kurang daripada 50 aksara';
     }
     return null;
   }
@@ -96,7 +96,7 @@ class _SignupPageState extends State<SignupPage> {
       final now = DateTime.now();
       final age = now.year - _selectedBirthDate!.year;
       if (age < 5 || age > 120) {
-        return 'Please enter a valid birth date';
+        return 'Sila masukkan tarikh lahir yang sah';
       }
     }
     return null;
@@ -119,7 +119,7 @@ class _SignupPageState extends State<SignupPage> {
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(userCubit.state.error ?? 'Google sign-in failed'),
+            content: Text(userCubit.state.error ?? 'Log masuk Google gagal'),
             backgroundColor: Colors.red,
           ),
         );
@@ -127,7 +127,7 @@ class _SignupPageState extends State<SignupPage> {
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Google sign-in error: $e'),
+          content: Text('Ralat log masuk Google: $e'),
           backgroundColor: Colors.red,
         ),
       );
@@ -141,10 +141,10 @@ class _SignupPageState extends State<SignupPage> {
   String? _validateAddress(String? value) {
     if (value != null && value.trim().isNotEmpty) {
       if (value.trim().length < 10) {
-        return 'Address must be at least 10 characters';
+        return 'Alamat mestilah sekurang-kurangnya 10 aksara';
       }
       if (value.trim().length > 200) {
-        return 'Address must be less than 200 characters';
+        return 'Alamat mestilah kurang daripada 200 aksara';
       }
     }
     return null;
@@ -193,15 +193,15 @@ class _SignupPageState extends State<SignupPage> {
           context: context,
           barrierDismissible: false,
           builder: (ctx) => AlertDialog(
-            title: const Text('Verify Your Email'),
-            content: const Text('A verification email has been sent. Please check your inbox and verify your email before continuing.'),
+            title: const Text('Sahkan Emel Anda'),
+            content: const Text('Emel pengesahan telah dihantar. Sila periksa peti masuk anda dan sahkan emel anda sebelum meneruskan.'),
             actions: [
               TextButton(
                 onPressed: () async {
                   await cred.user?.sendEmailVerification();
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Verification email resent.')));
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Emel pengesahan dihantar semula.')));
                 },
-                child: const Text('Resend Email'),
+                child: const Text('Hantar Semula Emel'),
               ),
               TextButton(
                 onPressed: () async {
@@ -218,10 +218,10 @@ class _SignupPageState extends State<SignupPage> {
                       Navigator.pushReplacementNamed(context, '/role');
                     }
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Email not verified yet.')));
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Emel belum disahkan lagi.')));
                   }
                 },
-                child: const Text('I have verified'),
+                child: const Text('Saya telah sahkan'),
               ),
             ],
           ),
@@ -230,7 +230,7 @@ class _SignupPageState extends State<SignupPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Sign up failed: ${e.toString()}')),
+          SnackBar(content: Text('Pendaftaran gagal: ${e.toString()}')),
         );
       }
     } finally {
@@ -255,7 +255,7 @@ class _SignupPageState extends State<SignupPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Sign Up')),
+      appBar: AppBar(title: const Text('Daftar')),
       body: Padding(
         padding: const EdgeInsets.all(24.0),
         child: SingleChildScrollView(
@@ -266,7 +266,7 @@ class _SignupPageState extends State<SignupPage> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  'Create Account',
+                  'Buat Akaun',
                   style: TextStyle(
                     letterSpacing: 2.0,
                     fontFamily: 'Kahfi',
@@ -279,7 +279,7 @@ class _SignupPageState extends State<SignupPage> {
                 TextFormField(
                   controller: _nameController,
                   decoration: const InputDecoration(
-                    labelText: 'Full Name *',
+                    labelText: 'Nama Penuh *',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.person),
                   ),
@@ -291,7 +291,7 @@ class _SignupPageState extends State<SignupPage> {
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   decoration: const InputDecoration(
-                    labelText: 'Phone Number *',
+                    labelText: 'Nombor Telefon *',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.phone),
                   ),
@@ -302,7 +302,7 @@ class _SignupPageState extends State<SignupPage> {
                   controller: _emailController,
                   keyboardType: TextInputType.emailAddress,
                   decoration: const InputDecoration(
-                    labelText: 'Email *',
+                    labelText: 'Emel *',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.email),
                   ),
@@ -313,10 +313,10 @@ class _SignupPageState extends State<SignupPage> {
                   controller: _passwordController,
                   obscureText: true,
                   decoration: const InputDecoration(
-                    labelText: 'Password *',
+                    labelText: 'Kata Laluan *',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.lock),
-                    helperText: 'Minimum 6 characters',
+                    helperText: 'Minimum 6 aksara',
                   ),
                   validator: _validatePassword,
                 ),
@@ -326,7 +326,7 @@ class _SignupPageState extends State<SignupPage> {
                   child: AbsorbPointer(
                     child: TextFormField(
                       decoration: InputDecoration(
-                        labelText: 'Birth Date (optional)',
+                        labelText: 'Tarikh Lahir (pilihan)',
                         border: const OutlineInputBorder(),
                         hintText: 'YYYY-MM-DD',
                         prefixIcon: const Icon(Icons.calendar_today),
@@ -351,11 +351,11 @@ class _SignupPageState extends State<SignupPage> {
                   controller: _addressController,
                   maxLines: 3,
                   decoration: const InputDecoration(
-                    labelText: 'Address (optional)',
+                    labelText: 'Alamat (pilihan)',
                     border: OutlineInputBorder(),
                     alignLabelWithHint: true,
                     prefixIcon: Icon(Icons.location_on),
-                    helperText: 'Street, City, State, Country',
+                    helperText: 'Jalan, Bandar, Negeri, Negara',
                   ),
                   validator: _validateAddress,
                 ),
@@ -378,7 +378,7 @@ class _SignupPageState extends State<SignupPage> {
                             valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
                           ),
                         )
-                      : const Text('Sign Up'),
+                      : const Text('Daftar'),
                   ),
                 ),
                 const SizedBox(height: 16),
@@ -415,7 +415,7 @@ class _SignupPageState extends State<SignupPage> {
                       size: 24,
                     ),
                     label: Text(
-                      'Sign up with Google',
+                                              'Daftar dengan Google',
                       style: TextStyle(
                         color: Colors.grey.shade700,
                         fontSize: 16,
@@ -428,7 +428,7 @@ class _SignupPageState extends State<SignupPage> {
                   onPressed: () {
                     Navigator.pushReplacementNamed(context, '/login');
                   },
-                  child: const Text('Already have an account? Login'),
+                  child: const Text('Sudah ada akaun? Log Masuk'),
                 ),
               ],
             ),

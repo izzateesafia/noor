@@ -144,4 +144,16 @@ class UserRepository {
       return null;
     }
   }
+
+  // Sign out from Firebase Auth
+  Future<void> signOut() async {
+    try {
+      print('UserRepository: Signing out from Firebase Auth...');
+      await _auth.signOut();
+      print('UserRepository: Successfully signed out from Firebase Auth');
+    } catch (e) {
+      print('UserRepository: Error signing out from Firebase Auth: $e');
+      rethrow;
+    }
+  }
 } 

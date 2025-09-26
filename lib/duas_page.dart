@@ -24,12 +24,12 @@ class DuasPage extends StatelessWidget {
           } else if (state.status == DuaStatus.error) {
             return const Scaffold(
               appBar: _DuasAppBar(),
-              body: Center(child: Text('Failed to load duas.')),
+              body: Center(child: Text('Gagal memuatkan doa.')),
             );
           } else if (state.duas.isEmpty) {
             return const Scaffold(
               appBar: _DuasAppBar(),
-              body: Center(child: Text('No duas available.')),
+              body: Center(child: Text('Tiada doa tersedia.')),
             );
           }
           final duas = List<Dua>.from(state.duas)
@@ -107,7 +107,7 @@ class _DuasAppBar extends StatelessWidget implements PreferredSizeWidget {
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      title: const Text('Duas'),
+      title: const Text('Doa'),
       backgroundColor: AppColors.appBar,
       foregroundColor: AppColors.onAppBar,
     );

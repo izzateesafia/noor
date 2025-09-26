@@ -94,7 +94,7 @@ class MushafPage extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Text(
-        'Juz ${_getJuzFromPage(pageNumber)} • Page $pageNumber of ${quran.totalPagesCount}',
+        'Juz ${_getJuzFromPage(pageNumber)} • Halaman $pageNumber daripada ${quran.totalPagesCount}',
         style: TextStyle(
           color: Colors.grey[600],
           fontSize: 12,

@@ -27,7 +27,9 @@ import 'quran_search_page.dart';
 import 'mushaf_reader_page.dart';
 import 'prayer_alarm_settings_page.dart';
 import 'services/prayer_alarm_service.dart';
+import 'services/alarm_service.dart';
 import 'test_prayer_alarm.dart';
+import 'adhan_tester_page.dart';
 import 'cubit/user_cubit.dart';
 import 'cubit/class_cubit.dart';
 import 'cubit/dua_cubit.dart';
@@ -71,6 +73,9 @@ void main() async {
   // Initialize prayer alarm service
   await PrayerAlarmService().initialize();
   
+  // Initialize alarm service
+  await AlarmService().initialize();
+  
   runApp(const MyApp());
 }
 
@@ -90,8 +95,8 @@ Future<void> setupNotifications() async {
   // Create notification channel for Android
   const AndroidNotificationChannel channel = AndroidNotificationChannel(
     'high_importance_channel',
-    'High Importance Notifications',
-    description: 'This channel is used for important notifications.',
+    'Notifikasi Kepentingan Tinggi',
+    description: 'Saluran ini digunakan untuk notifikasi penting.',
     importance: Importance.high,
   );
 
@@ -240,7 +245,7 @@ class MyApp extends StatelessWidget {
               ),
             ],
             child: MaterialApp(
-              title: 'Daily Quran Onboarding',
+              title: 'Al-Quran Harian',
               theme: lightTheme,
               darkTheme: darkTheme,
               themeMode: mode,
@@ -268,6 +273,7 @@ class MyApp extends StatelessWidget {
                 '/mushaf': (context) => const MushafReaderPage(),
                 '/prayer_alarm_settings': (context) => const PrayerAlarmSettingsPage(),
                 '/test_prayer_alarm': (context) => const TestPrayerAlarmPage(),
+                '/adhan_tester': (context) => const AdhanTesterPage(),
               },
               builder: (context, child) {
                 // Initialize deep links with proper context

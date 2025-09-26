@@ -12,7 +12,24 @@ class TestPrayerAlarmPage extends StatefulWidget {
 
 class _TestPrayerAlarmPageState extends State<TestPrayerAlarmPage> {
   final PrayerAlarmService _prayerAlarmService = PrayerAlarmService();
-  String _status = 'Initializing...';
+  String _status = 'Memulakan...';
+
+  String _getPrayerDisplayName(String prayerName) {
+    switch (prayerName) {
+      case 'Fajr':
+        return 'Subuh';
+      case 'Dhuhr':
+        return 'Zuhur';
+      case 'Asr':
+        return 'Asar';
+      case 'Maghrib':
+        return 'Maghrib';
+      case 'Isha':
+        return 'Isya';
+      default:
+        return prayerName;
+    }
+  }
 
   @override
   void initState() {
@@ -24,11 +41,11 @@ class _TestPrayerAlarmPageState extends State<TestPrayerAlarmPage> {
     try {
       await _prayerAlarmService.initialize();
       setState(() {
-        _status = 'Service initialized successfully!';
+        _status = 'Perkhidmatan berjaya dimulakan!';
       });
     } catch (e) {
       setState(() {
-        _status = 'Error initializing service: $e';
+        _status = 'Ralat memulakan perkhidmatan: $e';
       });
     }
   }
@@ -37,11 +54,11 @@ class _TestPrayerAlarmPageState extends State<TestPrayerAlarmPage> {
     try {
       await _prayerAlarmService.testAdhan(prayerName);
       setState(() {
-        _status = 'Testing adhan for $prayerName...';
+        _status = 'Menguji azan untuk $prayerName...';
       });
     } catch (e) {
       setState(() {
-        _status = 'Error testing adhan: $e';
+        _status = 'Ralat menguji azan: $e';
       });
     }
   }
@@ -50,7 +67,7 @@ class _TestPrayerAlarmPageState extends State<TestPrayerAlarmPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Test Prayer Alarm'),
+        title: const Text('Ujian Penggera Solat'),
         backgroundColor: Colors.blue,
         foregroundColor: Colors.white,
       ),
@@ -66,7 +83,7 @@ class _TestPrayerAlarmPageState extends State<TestPrayerAlarmPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text(
-                      'Service Status',
+                      'Status Perkhidmatan',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -80,7 +97,7 @@ class _TestPrayerAlarmPageState extends State<TestPrayerAlarmPage> {
             ),
             const SizedBox(height: 16),
             const Text(
-              'Test Adhan for Each Prayer:',
+              'Uji Azan untuk Setiap Solat:',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -94,7 +111,7 @@ class _TestPrayerAlarmPageState extends State<TestPrayerAlarmPage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     onPressed: () => _testAdhan(prayer),
-                    child: Text('Test $prayer Adhan'),
+                    child: Text('Uji Azan ${_getPrayerDisplayName(prayer)}'),
                   ),
                 ),
               );

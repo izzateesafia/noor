@@ -16,13 +16,13 @@ class _HifdhCheckerPageState extends State<HifdhCheckerPage> {
     HifdhCheck(
       surah: 'Al-Fatihah',
       ayah: '1-7',
-      result: 'Excellent! No mistakes detected.',
+      result: 'Cemerlang! Tiada kesilapan dikesan.',
       date: DateTime(2025, 7, 6, 10, 0),
     ),
     HifdhCheck(
       surah: 'Al-Baqarah',
       ayah: '1-5',
-      result: 'Minor tajweed mistakes. Practice more.',
+      result: 'Kesilapan tajwid kecil. Latih lebih banyak.',
       date: DateTime(2025, 7, 5, 15, 30),
     ),
   ];
@@ -30,7 +30,7 @@ class _HifdhCheckerPageState extends State<HifdhCheckerPage> {
   void _toggleRecording() {
     setState(() {
       isRecording = !isRecording;
-      aiFeedback = isRecording ? '' : 'AI Feedback: (placeholder)';
+      aiFeedback = isRecording ? '' : 'Maklum Balas AI: (placeholder)';
     });
   }
 
@@ -38,7 +38,7 @@ class _HifdhCheckerPageState extends State<HifdhCheckerPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Hifz SmartChecker'),
+        title: const Text('Pemeriksa Hifz Pintar'),
         backgroundColor: AppColors.appBar,
         foregroundColor: AppColors.onAppBar,
       ),
@@ -48,7 +48,7 @@ class _HifdhCheckerPageState extends State<HifdhCheckerPage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             const Text(
-              'Check Your Hifdh',
+              'Periksa Hifz Anda',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,

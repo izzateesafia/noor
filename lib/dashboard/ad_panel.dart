@@ -15,8 +15,8 @@ class AdPanel extends StatelessWidget {
     }
     
     final String adImage = ad!.image ?? 'assets/images/ad_sample.png';
-    final String adTitle = ad!.title ?? 'Upgrade to Daily Quran Premium!';
-    final String adDescription = ad!.description ?? 'Enjoy an ad-free experience and unlock all features.';
+    final String adTitle = ad!.title ?? 'Tingkatkan ke Al-Quran Harian Premium!';
+    final String adDescription = ad!.description ?? 'Nikmati pengalaman tanpa iklan dan buka kunci semua ciri.';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -90,7 +90,7 @@ class AdPanel extends StatelessWidget {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
                           padding: const EdgeInsets.symmetric(horizontal: 18),
                         ),
-                        child: const Text('Learn More'),
+                        child: const Text('Ketahui Lebih Lanjut'),
                       ),
                     ),
                   ],

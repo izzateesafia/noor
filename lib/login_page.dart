@@ -6,6 +6,7 @@ import 'main.dart';
 import 'cubit/user_cubit.dart';
 import 'cubit/user_states.dart';
 import 'repository/user_repository.dart';
+import 'services/google_auth_service.dart';
 
 class LoginPage extends StatelessWidget {
   const LoginPage({super.key});
@@ -17,7 +18,7 @@ class LoginPage extends StatelessWidget {
       Navigator.pushReplacementNamed(context, '/role');
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login failed: ${e.toString()}')),
+        SnackBar(content: Text('Log masuk gagal: ${e.toString()}')),
       );
     }
   }
@@ -28,16 +29,16 @@ class LoginPage extends StatelessWidget {
       bool shouldRequest = await showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Location Permission'),
-          content: const Text('This app needs access to your location to provide Qiblah direction and other features.'),
+          title: const Text('Kebenaran Lokasi'),
+          content: const Text('Aplikasi ini memerlukan akses ke lokasi anda untuk memberikan arah Qiblah dan ciri-ciri lain.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Deny'),
+              child: const Text('Tolak'),
             ),
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Allow'),
+              child: const Text('Benarkan'),
             ),
           ],
         ),
@@ -49,8 +50,8 @@ class LoginPage extends StatelessWidget {
       await showDialog(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Permission Required'),
-          content: const Text('Location permission is permanently denied. Please enable it in your device settings.'),
+          title: const Text('Kebenaran Diperlukan'),
+          content: const Text('Kebenaran lokasi telah ditolak secara kekal. Sila aktifkan dalam tetapan peranti anda.'),
           actions: [
             TextButton(
               onPressed: () => Navigator.of(ctx).pop(),
@@ -69,19 +70,19 @@ class LoginPage extends StatelessWidget {
     final result = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Reset Password'),
+        title: const Text('Set Semula Kata Laluan'),
         content: TextField(
           controller: emailController,
-          decoration: const InputDecoration(labelText: 'Enter your email'),
+          decoration: const InputDecoration(labelText: 'Masukkan emel anda'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
+            child: const Text('Batal'),
           ),
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(emailController.text.trim()),
-            child: const Text('Send'),
+            child: const Text('Hantar'),
           ),
         ],
       ),
@@ -90,11 +91,11 @@ class LoginPage extends StatelessWidget {
       try {
         await firebase_auth.FirebaseAuth.instance.sendPasswordResetEmail(email: result);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Password reset email sent!')),
+          const SnackBar(content: Text('Emel set semula kata laluan telah dihantar!')),
         );
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to send reset email: ${e.toString()}')),
+          SnackBar(content: Text('Gagal menghantar emel set semula: ${e.toString()}')),
         );
       }
     }
@@ -106,7 +107,19 @@ class LoginPage extends StatelessWidget {
     final passwordController = TextEditingController();
     
     return BlocProvider(
-      create: (context) => UserCubit(UserRepository()),
+      create: (context) {
+        final cubit = UserCubit(UserRepository())..fetchCurrentUser();
+        
+        // Auto-reset if stuck in loading state for too long
+        Future.delayed(const Duration(seconds: 10), () {
+          if (cubit.state.status == UserStatus.loading) {
+            print('Auto-resetting stuck loading state');
+            cubit.resetState();
+          }
+        });
+        
+        return cubit;
+      },
       child: BlocConsumer<UserCubit, UserState>(
         listener: (context, state) {
           if (state.status == UserStatus.loaded && state.currentUser != null) {
@@ -132,14 +145,14 @@ class LoginPage extends StatelessWidget {
         },
         builder: (context, state) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Login')),
+            appBar: AppBar(title: const Text('Log Masuk')),
             body: Padding(
               padding: const EdgeInsets.all(24.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Daily Quran',
+                    'Al-Quran Harian',
                     style: TextStyle(
                       letterSpacing: 2.0,
                       fontFamily: 'Kahfi',
@@ -151,21 +164,48 @@ class LoginPage extends StatelessWidget {
                   const SizedBox(height: 32),
                   TextField(
                     controller: emailController,
+                    enabled: true, // Always enabled
                     decoration: InputDecoration(
-                      labelText: 'Email or Phone',
+                      labelText: 'Emel atau Telefon',
                       border: OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 16),
                   TextField(
                     controller: passwordController,
+                    enabled: true, // Always enabled
                     obscureText: true,
                     decoration: InputDecoration(
-                      labelText: 'Password',
+                      labelText: 'Kata Laluan',
                       border: OutlineInputBorder(),
                     ),
                   ),
                   const SizedBox(height: 24),
+                  // Loading indicator
+                  if (state.status == UserStatus.loading)
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      margin: const EdgeInsets.only(bottom: 16),
+                      decoration: BoxDecoration(
+                        color: Colors.blue.shade50,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: Colors.blue.shade200),
+                      ),
+                      child: Row(
+                        children: [
+                          const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            'Sedang memproses...',
+                            style: TextStyle(color: Colors.blue.shade700),
+                          ),
+                        ],
+                      ),
+                    ),
                   SizedBox(
                     width: double.infinity,
                     child: ElevatedButton(
@@ -176,9 +216,7 @@ class LoginPage extends StatelessWidget {
                       onPressed: state.status == UserStatus.loading 
                         ? null 
                         : () => _handleLogin(context, emailController.text.trim(), passwordController.text.trim()),
-                      child: state.status == UserStatus.loading 
-                        ? const CircularProgressIndicator(color: Colors.white)
-                        : const Text('Login'),
+                      child: const Text('Log Masuk'),
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -199,7 +237,7 @@ class LoginPage extends StatelessWidget {
                         size: 24,
                       ),
                       label: Text(
-                        'Sign in with Google',
+                        'Log masuk dengan Google',
                         style: TextStyle(
                           color: Colors.grey.shade700,
                           fontSize: 16,
@@ -210,13 +248,31 @@ class LoginPage extends StatelessWidget {
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: () => _showPasswordResetDialog(context),
-                    child: const Text('Forgot Password?'),
+                    child: const Text('Lupa Kata Laluan?'),
                   ),
                   TextButton(
                     onPressed: () {
                       Navigator.pushNamed(context, '/signup');
                     },
-                    child: const Text('Don\'t have an account? Sign Up'),
+                    child: const Text('Tiada akaun? Daftar'),
+                  ),
+                  const SizedBox(height: 16),
+                  // Debug buttons
+                  if (state.status == UserStatus.loading)
+                    TextButton(
+                      onPressed: () {
+                        context.read<UserCubit>().resetState();
+                      },
+                      child: const Text('Reset (Debug)'),
+                    ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () async {
+                      print('Testing Google Sign-In configuration...');
+                      final googleAuthService = GoogleAuthService();
+                      await googleAuthService.testGoogleSignInConfig();
+                    },
+                    child: const Text('Test Google Config (Debug)'),
                   ),
                 ],
               ),

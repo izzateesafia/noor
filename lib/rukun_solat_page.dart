@@ -9,21 +9,21 @@ class RukunSolatPage extends StatelessWidget {
   Widget build(BuildContext context) {
     final List<RukunSolat> rukunList = [
       RukunSolat(
-        title: 'Niat (Intention)',
+        title: 'Niat',
         image: 'assets/images/niat.png',
-        explanation: 'Making the intention in the heart to perform the specific prayer.',
+        explanation: 'Membuat niat di dalam hati untuk melakukan solat yang tertentu.',
         videoUrl: 'https://www.youtube.com/watch?v=niat_video',
       ),
       RukunSolat(
         title: 'Takbiratul Ihram',
         image: 'assets/images/takbir.png',
-        explanation: 'Raising both hands and saying "Allahu Akbar" to begin the prayer.',
+        explanation: 'Mengangkat kedua-dua tangan dan mengucapkan "Allahu Akbar" untuk memulakan solat.',
         videoUrl: 'https://www.youtube.com/watch?v=takbir_video',
       ),
       RukunSolat(
-        title: 'Standing (Qiyam)',
+        title: 'Berdiri (Qiyam)',
         image: 'assets/images/qiyam.png',
-        explanation: 'Standing upright while reciting Al-Fatihah and another surah.',
+        explanation: 'Berdiri tegak sambil membaca Al-Fatihah dan surah yang lain.',
         videoUrl: 'https://www.youtube.com/watch?v=qiyam_video',
       ),
       RukunSolat(

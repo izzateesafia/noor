@@ -57,19 +57,19 @@ class _ManageUsersViewState extends State<_ManageUsersView> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete User'),
-        content: Text('Are you sure you want to delete ${user.name}? This action cannot be undone.'),
+        title: const Text('Padam Pengguna'),
+        content: Text('Adakah anda pasti mahu memadam ${user.name}? Tindakan ini tidak boleh dibatalkan.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
+            child: const Text('Batal'),
           ),
           TextButton(
             onPressed: () {
               context.read<UserCubit>().deleteUser(user.id);
               Navigator.of(ctx).pop();
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text('Padam', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -91,7 +91,7 @@ class _ManageUsersViewState extends State<_ManageUsersView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manage Users'),
+        title: const Text('Urus Pengguna'),
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
       ),

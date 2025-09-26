@@ -48,7 +48,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyCH9pN-j5FAd_-BJkU4qpkxZX6sPLxvXqQ',
-    appId: '1:134970392054:web:138263b82b59d090bedbd7',
+    appId: '1:134970392054:web:b9a1fb8874792c71bedbd7',
     messagingSenderId: '134970392054',
     projectId: 'uwais-manage',
     authDomain: 'uwais-manage.firebaseapp.com',
@@ -57,7 +57,7 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyBHSnrVBfhZ-YawCzkQEVBa7EdOZBucJog',
-    appId: '1:134970392054:android:61375a474c43957abedbd7',
+    appId: '1:134970392054:android:c051dc2ff0a20a79bedbd7',
     messagingSenderId: '134970392054',
     projectId: 'uwais-manage',
     storageBucket: 'uwais-manage.firebasestorage.app',
@@ -65,10 +65,12 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCPqueAYkiwLd3h2Xm9rX-nkAnqsStr-zs',
-    appId: '1:134970392054:ios:e0b67b6528170b4cbedbd7',
+    appId: '1:134970392054:ios:21818c1e78079ba7bedbd7',
     messagingSenderId: '134970392054',
     projectId: 'uwais-manage',
     storageBucket: 'uwais-manage.firebasestorage.app',
-    iosBundleId: 'com.example.noor',
+    iosClientId: '134970392054-86d1gomong6gdbdtu6c62p4knpouqh02.apps.googleusercontent.com',
+    iosBundleId: 'com.hexahelix.dq',
   );
+
 }

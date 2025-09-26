@@ -5,16 +5,41 @@ import '../repository/user_repository.dart';
 
 class GoogleAuthService {
   final firebase_auth.FirebaseAuth _auth = firebase_auth.FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn();
+  final GoogleSignIn _googleSignIn = GoogleSignIn(
+    clientId: '134970392054-86d1gomong6gdbdtu6c62p4knpouqh02.apps.googleusercontent.com',
+  );
   final UserRepository _userRepository = UserRepository();
 
   // Sign in with Google
   Future<UserModel?> signInWithGoogle() async {
     try {
       print('GoogleAuthService: Starting Google Sign-In process...');
+      print('GoogleAuthService: Client ID: 134970392054-86d1gomong6gdbdtu6c62p4knpouqh02.apps.googleusercontent.com');
       
-      // Trigger the authentication flow
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn();
+      // Check if Google Sign-In is available
+      print('GoogleAuthService: Checking if Google Sign-In is available...');
+      final bool isAvailable = await _googleSignIn.isSignedIn();
+      print('GoogleAuthService: Google Sign-In available: $isAvailable');
+      
+      // Try to get current user first
+      print('GoogleAuthService: Attempting to get current user...');
+      final GoogleSignInAccount? currentUser = await _googleSignIn.signInSilently();
+      if (currentUser != null) {
+        print('GoogleAuthService: Found existing user: ${currentUser.email}');
+        // Continue with existing user
+      } else {
+        print('GoogleAuthService: No existing user, starting sign-in flow...');
+      }
+      
+      // Trigger the authentication flow with timeout
+      print('GoogleAuthService: Calling _googleSignIn.signIn()...');
+      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn().timeout(
+        const Duration(seconds: 15),
+        onTimeout: () {
+          print('GoogleAuthService: Sign-in timed out after 15 seconds');
+          throw Exception('Google Sign-In timed out - no response from Google');
+        },
+      );
       
       if (googleUser == null) {
         print('GoogleAuthService: User cancelled the sign-in');
@@ -81,6 +106,16 @@ class GoogleAuthService {
       print('GoogleAuthService: Error signing in with Google: $e');
       print('GoogleAuthService: Error type: ${e.runtimeType}');
       print('GoogleAuthService: Error details: ${e.toString()}');
+      
+      // Check for specific Google Sign-In errors
+      if (e.toString().contains('sign_in_failed')) {
+        print('GoogleAuthService: Sign-in failed - check SHA-1 fingerprint and client ID');
+      } else if (e.toString().contains('network_error')) {
+        print('GoogleAuthService: Network error - check internet connection');
+      } else if (e.toString().contains('invalid_client')) {
+        print('GoogleAuthService: Invalid client - check client ID configuration');
+      }
+      
       rethrow;
     }
   }
@@ -113,6 +148,26 @@ class GoogleAuthService {
     } catch (e) {
       print('Error getting current Google user: $e');
       return null;
+    }
+  }
+
+  // Test Google Sign-In configuration
+  Future<void> testGoogleSignInConfig() async {
+    try {
+      print('GoogleAuthService: Testing Google Sign-In configuration...');
+      print('GoogleAuthService: Client ID: 134970392054-86d1gomong6gdbdtu6c62p4knpouqh02.apps.googleusercontent.com');
+      
+      // Test if we can initialize Google Sign-In
+      final bool canSignIn = await _googleSignIn.isSignedIn();
+      print('GoogleAuthService: Can sign in: $canSignIn');
+      
+      // Test silent sign-in
+      final GoogleSignInAccount? silentUser = await _googleSignIn.signInSilently();
+      print('GoogleAuthService: Silent sign-in result: ${silentUser?.email ?? 'No user'}');
+      
+      print('GoogleAuthService: Configuration test completed');
+    } catch (e) {
+      print('GoogleAuthService: Configuration test failed: $e');
     }
   }
 }

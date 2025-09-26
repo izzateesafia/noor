@@ -53,11 +53,11 @@ class _HadithFormPageState extends State<HadithFormPage> {
       final openSettings = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Permission Required'),
+          title: const Text('Kebenaran Diperlukan'),
           content: Text(
             source == ImageSource.camera
-              ? 'Camera permission is permanently denied. Please enable it in your device settings.'
-              : 'Gallery permission is permanently denied. Please enable it in your device settings.'
+              ? 'Kebenaran kamera telah ditolak secara kekal. Sila aktifkan dalam tetapan peranti anda.'
+              : 'Kebenaran galeri telah ditolak secara kekal. Sila aktifkan dalam tetapan peranti anda.'
           ),
           actions: [
             TextButton(

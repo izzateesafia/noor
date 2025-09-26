@@ -26,7 +26,7 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>com.example.noor</string>
+			<string>com.hexahelix.dq</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>noor</string>
@@ -37,7 +37,7 @@
 			<string>Google Sign-In</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.googleusercontent.apps.134970392054-vrjkt6ellgsc6rioo67im24bqu4tsfv1</string>
+				<string>com.googleusercontent.apps.134970392054-86d1gomong6gdbdtu6c62p4knpouqh02</string>
 			</array>
 		</dict>
 	</array>
@@ -63,6 +63,55 @@
 		<string>remote-notification</string>
 		<string>processing</string>
 	</array>
+	<key>LSApplicationQueriesSchemes</key>
+	<array>
+		<string>googlegmail</string>
+		<string>googlemail</string>
+		<string>googleplus</string>
+		<string>googledrive</string>
+		<string>googlemaps</string>
+		<string>googleearth</string>
+		<string>googlechrome</string>
+		<string>googlechromes</string>
+		<string>googleapp</string>
+		<string>youtube</string>
+		<string>yt</string>
+		<string>comgooglemaps</string>
+		<string>comgoogleearth</string>
+		<string>comgoogleplus</string>
+		<string>comgooglegmail</string>
+		<string>comgoogledrive</string>
+		<string>comgooglechrome</string>
+		<string>comgoogleapp</string>
+		<string>comyoutube</string>
+		<string>comyt</string>
+	</array>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>googleapis.com</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSExceptionMinimumTLSVersion</key>
+				<string>TLSv1.0</string>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
+			<key>googleusercontent.com</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+				<key>NSExceptionMinimumTLSVersion</key>
+				<string>TLSv1.0</string>
+				<key>NSIncludesSubdomains</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

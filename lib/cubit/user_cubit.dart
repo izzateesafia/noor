@@ -80,7 +80,13 @@ class UserCubit extends Cubit<UserState> {
     emit(state.copyWith(status: UserStatus.loading));
     try {
       print('UserCubit: Signing in with Google...');
-      final user = await _googleAuthService.signInWithGoogle();
+      final user = await _googleAuthService.signInWithGoogle().timeout(
+        const Duration(seconds: 35),
+        onTimeout: () {
+          print('UserCubit: Google sign-in timed out');
+          throw Exception('Google Sign-In timed out');
+        },
+      );
       
       if (user != null) {
         print('UserCubit: Successfully signed in with Google: ${user.name}');
@@ -104,17 +110,30 @@ class UserCubit extends Cubit<UserState> {
     }
   }
 
-  // Sign out from Google
+  // Reset state to initial
+  void resetState() {
+    emit(const UserState());
+  }
+
+  // Sign out from Firebase Auth and Google
   Future<void> signOut() async {
     emit(state.copyWith(status: UserStatus.loading));
     try {
       print('UserCubit: Signing out...');
+      
+      // Sign out from Firebase Auth
+      await repository.signOut();
+      
+      // Sign out from Google if applicable
       await _googleAuthService.signOut();
+      
       emit(state.copyWith(
         status: UserStatus.initial,
         currentUser: null,
         users: [],
       ));
+      
+      print('UserCubit: Successfully signed out');
     } catch (e) {
       print('UserCubit: Error signing out: $e');
       emit(state.copyWith(

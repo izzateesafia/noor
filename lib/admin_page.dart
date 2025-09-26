@@ -22,12 +22,12 @@ class AdminPage extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const SizedBox(height: 18),
-          const Text('Go Live as Ustaz', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+          const Text('Siaran Langsung sebagai Ustaz', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           const SizedBox(height: 18),
           ListTile(
             leading: const Icon(Icons.ondemand_video, color: Colors.red),
             title: const Text('YouTube Live'),
-            subtitle: const Text('Open YouTube Studio to start a live stream'),
+            subtitle: const Text('Buka YouTube Studio untuk memulakan siaran langsung'),
             onTap: () async {
               Navigator.of(context).pop();
               final url = Uri.parse('https://studio.youtube.com/channel/UC/live_streaming');

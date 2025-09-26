@@ -27,7 +27,7 @@ class _ManageLiveStreamsView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manage Live Streams'),
+        title: const Text('Urus Siaran Langsung'),
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
         actions: [
@@ -72,7 +72,7 @@ class _ManageLiveStreamsView extends StatelessWidget {
             return _buildLiveStreamsList(context, state.allLiveStreams);
           }
 
-          return const Center(child: Text('No live streams found'));
+          return const Center(child: Text('Tiada siaran langsung dijumpai'));
         },
       ),
     );
@@ -91,7 +91,7 @@ class _ManageLiveStreamsView extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             const Text(
-              'No live streams yet',
+              'Belum ada siaran langsung',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,

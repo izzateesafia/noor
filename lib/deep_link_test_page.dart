@@ -38,7 +38,7 @@ class _DeepLinkTestPageState extends State<DeepLinkTestPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Deep Link Test'),
+        title: const Text('Ujian Pautan Dalam'),
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
       ),
@@ -48,7 +48,7 @@ class _DeepLinkTestPageState extends State<DeepLinkTestPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             const Text(
-              'Test Deep Links',
+              'Uji Pautan Dalam',
               style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -56,7 +56,7 @@ class _DeepLinkTestPageState extends State<DeepLinkTestPage> {
             ),
             const SizedBox(height: 16),
             const Text(
-              'Tap any button below to navigate to specific pages in the app:',
+              'Ketik mana-mana butang di bawah untuk navigasi ke halaman tertentu dalam aplikasi:',
               style: TextStyle(
                 fontSize: 16,
                 color: Colors.grey,
@@ -67,21 +67,21 @@ class _DeepLinkTestPageState extends State<DeepLinkTestPage> {
             // Direct Navigation Buttons
             _buildNavigationButton(
               context,
-              'Premium Page',
+              'Halaman Premium',
               '/premium',
               Icons.star,
               Colors.amber,
             ),
             _buildNavigationButton(
               context,
-              'User Profile',
+              'Profil Pengguna',
               '/profile',
               Icons.person,
               Colors.blue,
             ),
             _buildNavigationButton(
               context,
-              'Classes',
+              'Kelas',
               '/classes',
               Icons.school,
               Colors.green,

@@ -66,7 +66,7 @@ class _UserProfileViewState extends State<_UserProfileView> {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Profile'),
+            title: const Text('Profil'),
             actions: [
               if (user.isPremium)
                 Padding(

@@ -60,29 +60,29 @@ class _PrayerTimesCardState extends State<PrayerTimesCard> {
     final currentTime = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
     
     final prayers = [
-      {'name': 'Fajr', 'time': prayerTimes.fajr},
-      {'name': 'Dhuhr', 'time': prayerTimes.dhuhr},
-      {'name': 'Asr', 'time': prayerTimes.asr},
-      {'name': 'Maghrib', 'time': prayerTimes.maghrib},
-      {'name': 'Isha', 'time': prayerTimes.isha},
+      {'name': 'Fajr', 'time': prayerTimes.fajr, 'displayName': 'Subuh'},
+      {'name': 'Dhuhr', 'time': prayerTimes.dhuhr, 'displayName': 'Zuhur'},
+      {'name': 'Asr', 'time': prayerTimes.asr, 'displayName': 'Asar'},
+      {'name': 'Maghrib', 'time': prayerTimes.maghrib, 'displayName': 'Maghrib'},
+      {'name': 'Isha', 'time': prayerTimes.isha, 'displayName': 'Isya'},
     ];
 
     for (var prayer in prayers) {
       if (prayer['time']!.compareTo(currentTime) > 0) {
-        return prayer['name']!;
+        return prayer['displayName']!;
       }
     }
-    return 'Fajr'; // Default to Fajr if all prayers have passed
+    return 'Subuh'; // Default to Subuh if all prayers have passed
   }
 
   List<Map<String, String>> _getPrayersList(PrayerTimes prayerTimes) {
     return [
-      {'name': 'Fajr', 'time': prayerTimes.fajr},
-      {'name': 'Sunrise', 'time': prayerTimes.sunrise},
-      {'name': 'Dhuhr', 'time': prayerTimes.dhuhr},
-      {'name': 'Asr', 'time': prayerTimes.asr},
-      {'name': 'Maghrib', 'time': prayerTimes.maghrib},
-      {'name': 'Isha', 'time': prayerTimes.isha},
+      {'name': 'Fajr', 'time': prayerTimes.fajr, 'displayName': 'Subuh'},
+      {'name': 'Sunrise', 'time': prayerTimes.sunrise, 'displayName': 'Terbit'},
+      {'name': 'Dhuhr', 'time': prayerTimes.dhuhr, 'displayName': 'Zuhur'},
+      {'name': 'Asr', 'time': prayerTimes.asr, 'displayName': 'Asar'},
+      {'name': 'Maghrib', 'time': prayerTimes.maghrib, 'displayName': 'Maghrib'},
+      {'name': 'Isha', 'time': prayerTimes.isha, 'displayName': 'Isya'},
     ];
   }
 
@@ -216,12 +216,12 @@ class _PrayerTimesCardState extends State<PrayerTimesCard> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: prayers.where((p) => p['name'] != 'Sunrise').map((prayer) {
-                              final bool isNext = prayer['name'] == nextPrayer;
+                              final bool isNext = prayer['displayName'] == nextPrayer;
                               return Column(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Text(
-                                    prayer['name']!,
+                                    prayer['displayName']!,
                                     style: isNext
                                         ? Theme.of(context).textTheme.bodyLarge?.copyWith(
                                             color: AppColors.primary,

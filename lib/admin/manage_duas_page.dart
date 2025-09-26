@@ -44,19 +44,19 @@ class _ManageDuasView extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Dua'),
-        content: const Text('Are you sure you want to delete this dua?'),
+        title: const Text('Padam Doa'),
+        content: const Text('Adakah anda pasti mahu memadam doa ini?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
+            child: const Text('Batal'),
           ),
           TextButton(
             onPressed: () {
               context.read<DuaCubit>().deleteDua(dua.id);
               Navigator.of(ctx).pop();
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: const Text('Padam', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -67,13 +67,13 @@ class _ManageDuasView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manage Duas'),
+        title: const Text('Urus Doa'),
         backgroundColor: AppColors.appBar,
         foregroundColor: AppColors.onAppBar,
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            tooltip: 'Add Dua',
+            tooltip: 'Tambah Doa',
             onPressed: () => _addDua(context),
           ),
         ],

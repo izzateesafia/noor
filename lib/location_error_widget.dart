@@ -29,7 +29,7 @@ class LocationErrorWidget extends StatelessWidget {
           ),
           box,
           ElevatedButton(
-            child: const Text("Retry"),
+            child: const Text("Cuba Lagi"),
             onPressed: () {
               if (callback != null) callback!();
             },

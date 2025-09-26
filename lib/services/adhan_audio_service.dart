@@ -58,15 +58,19 @@ class AdhanAudioService {
 
   /// Play specific azan for a particular prayer time
   Future<void> playAdhanForPrayer(String prayerName) async {
+    print('AdhanAudioService: playAdhanForPrayer called with $prayerName');
     try {
       // Stop any currently playing audio
       await stopAdhan();
+      print('AdhanAudioService: Stopped any existing audio');
       
       // Create new audio player
       _audioPlayer = AudioPlayer();
+      print('AdhanAudioService: Created new AudioPlayer');
       
       // Set audio session for better compatibility
       await _audioPlayer!.setReleaseMode(ReleaseMode.stop);
+      print('AdhanAudioService: Set release mode to stop');
       
       // Determine which azan file to play based on prayer
       String audioFile = 'audio/azan.mp3'; // Default azan for most prayers
@@ -76,22 +80,29 @@ class AdhanAudioService {
         audioFile = 'audio/azan_fajr.mp3';
       }
       
+      print('AdhanAudioService: Attempting to play $audioFile');
+      
       // Play the appropriate azan
       try {
         await _audioPlayer!.play(AssetSource(audioFile));
+        print('AdhanAudioService: Successfully started playing $audioFile');
         
         if (kDebugMode) {
           print('Playing $audioFile for $prayerName');
         }
       } catch (assetError) {
+        print('AdhanAudioService: Error playing $audioFile: $assetError');
         if (kDebugMode) {
           print('Could not play $audioFile, using default azan: $assetError');
         }
         
         // Fallback to default azan
         try {
+          print('AdhanAudioService: Trying fallback to default azan');
           await _audioPlayer!.play(AssetSource('audio/azan.mp3'));
+          print('AdhanAudioService: Fallback azan started successfully');
         } catch (defaultError) {
+          print('AdhanAudioService: Fallback azan also failed: $defaultError');
           if (kDebugMode) {
             print('Could not play default azan either: $defaultError');
           }
@@ -100,9 +111,11 @@ class AdhanAudioService {
       }
       
       _isPlaying = true;
+      print('AdhanAudioService: Set _isPlaying to true');
       
       // Auto-stop after 15 seconds (typical azan duration)
       Future.delayed(const Duration(seconds: 15), () {
+        print('AdhanAudioService: Auto-stopping after 15 seconds');
         stopAdhan();
       });
       
@@ -110,6 +123,7 @@ class AdhanAudioService {
         print('Azan audio for $prayerName started playing');
       }
     } catch (e) {
+      print('AdhanAudioService: Error in playAdhanForPrayer: $e');
       if (kDebugMode) {
         print('Error playing azan audio for $prayerName: $e');
       }

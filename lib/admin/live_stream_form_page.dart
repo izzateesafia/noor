@@ -43,7 +43,7 @@ class _LiveStreamFormPageState extends State<LiveStreamFormPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.liveStream == null ? 'Add Live Stream' : 'Edit Live Stream'),
+        title: Text(widget.liveStream == null ? 'Tambah Siaran Langsung' : 'Edit Siaran Langsung'),
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
         actions: [
@@ -83,14 +83,14 @@ class _LiveStreamFormPageState extends State<LiveStreamFormPage> {
                 TextFormField(
                   controller: _titleController,
                   decoration: const InputDecoration(
-                    labelText: 'Live Stream Title *',
-                    hintText: 'Enter the title of your live stream',
+                    labelText: 'Tajuk Siaran Langsung *',
+                    hintText: 'Masukkan tajuk siaran langsung anda',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.title),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter a title';
+                      return 'Sila masukkan tajuk';
                     }
                     return null;
                   },
@@ -101,15 +101,15 @@ class _LiveStreamFormPageState extends State<LiveStreamFormPage> {
                 TextFormField(
                   controller: _descriptionController,
                   decoration: const InputDecoration(
-                    labelText: 'Description *',
-                    hintText: 'Enter a description for your live stream',
+                    labelText: 'Penerangan *',
+                    hintText: 'Masukkan penerangan untuk siaran langsung anda',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.description),
                   ),
                   maxLines: 3,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
-                      return 'Please enter a description';
+                      return 'Sila masukkan penerangan';
                     }
                     return null;
                   },

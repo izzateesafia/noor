@@ -32,7 +32,7 @@ class FeaturedSection extends StatelessWidget {
             if (state.status == ClassStatus.loading) {
               classSection = const Center(child: CircularProgressIndicator());
             } else if (state.status == ClassStatus.error) {
-              classSection = Center(child: Text('Failed to load classes', style: TextStyle(color: Theme.of(context).colorScheme.error)));
+              classSection = Center(child: Text('Gagal memuatkan kelas', style: TextStyle(color: Theme.of(context).colorScheme.error)));
             } else if (state.status == ClassStatus.loaded && state.classes.isNotEmpty) {
               classSection = SizedBox(
                 height: 190,
@@ -43,12 +43,12 @@ class FeaturedSection extends StatelessWidget {
                 ),
               );
             } else {
-              classSection = Center(child: Text('No classes available', style: Theme.of(context).textTheme.bodyMedium));
+              classSection = Center(child: Text('Tiada kelas tersedia', style: Theme.of(context).textTheme.bodyMedium));
             }
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildSectionHeader(context, 'Featured Classes', Icons.school, '/classes'),
+                _buildSectionHeader(context, 'Kelas Pilihan', Icons.school, '/classes'),
                 const SizedBox(height: 12),
                 classSection,
               ],
@@ -60,7 +60,7 @@ class FeaturedSection extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionHeader(context, 'Featured Duas', Icons.favorite, '/duas'),
+            _buildSectionHeader(context, 'Doa Pilihan', Icons.favorite, '/duas'),
             const SizedBox(height: 12),
             Builder(
               builder: (context) {
@@ -68,7 +68,7 @@ class FeaturedSection extends StatelessWidget {
                 if (duas == null) {
                   duaSection = const Center(child: CircularProgressIndicator());
                 } else if (duas!.isEmpty) {
-                  duaSection = Center(child: Text('No duas available', style: Theme.of(context).textTheme.bodyMedium));
+                  duaSection = Center(child: Text('Tiada doa tersedia', style: Theme.of(context).textTheme.bodyMedium));
                 } else {
                   duaSection = SizedBox(
                     height: 160,
@@ -89,7 +89,7 @@ class FeaturedSection extends StatelessWidget {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildSectionHeader(context, 'Featured Hadiths', Icons.book, '/hadiths'),
+            _buildSectionHeader(context, 'Hadis Pilihan', Icons.book, '/hadiths'),
             const SizedBox(height: 12),
             Builder(
               builder: (context) {
@@ -97,7 +97,7 @@ class FeaturedSection extends StatelessWidget {
                 if (hadiths == null) {
                   hadithSection = const Center(child: CircularProgressIndicator());
                 } else if (hadiths!.isEmpty) {
-                  hadithSection = Center(child: Text('No hadiths available', style: Theme.of(context).textTheme.bodyMedium));
+                  hadithSection = Center(child: Text('Tiada hadis tersedia', style: Theme.of(context).textTheme.bodyMedium));
                 } else {
                   hadithSection = SizedBox(
                     height: 160,

@@ -15,6 +15,23 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
   bool _alarmEnabled = true;
   double _alarmVolume = 1.0;
   Set<String> _enabledPrayers = {'Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'};
+
+  String _getPrayerDisplayName(String prayerName) {
+    switch (prayerName) {
+      case 'Fajr':
+        return 'Subuh';
+      case 'Dhuhr':
+        return 'Zuhur';
+      case 'Asr':
+        return 'Asar';
+      case 'Maghrib':
+        return 'Maghrib';
+      case 'Isha':
+        return 'Isya';
+      default:
+        return prayerName;
+    }
+  }
   bool _isLoading = true;
 
   @override
@@ -39,7 +56,7 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error loading settings: $e')),
+          SnackBar(content: Text('Ralat memuatkan tetapan: $e')),
         );
       }
     }
@@ -58,13 +75,13 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
       
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Settings saved successfully')),
+          const SnackBar(content: Text('Tetapan berjaya disimpan')),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving settings: $e')),
+          SnackBar(content: Text('Ralat menyimpan tetapan: $e')),
         );
       }
     }
@@ -75,13 +92,13 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
       await _prayerAlarmService.testAdhan(prayerName);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Testing adhan for $prayerName')),
+          SnackBar(content: Text('Menguji azan untuk $prayerName')),
         );
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error testing adhan: $e')),
+          SnackBar(content: Text('Ralat menguji azan: $e')),
         );
       }
     }
@@ -92,7 +109,7 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
     if (_isLoading) {
       return Scaffold(
         appBar: AppBar(
-          title: const Text('Prayer Alarm Settings'),
+          title: const Text('Tetapan Penggera Solat'),
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
         ),
@@ -111,7 +128,7 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
           IconButton(
             onPressed: _saveSettings,
             icon: const Icon(Icons.save),
-            tooltip: 'Save Settings',
+            tooltip: 'Simpan Tetapan',
           ),
         ],
       ),
@@ -138,13 +155,13 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Prayer Alarm',
+                                'Penggera Solat',
                                 style: Theme.of(context).textTheme.titleLarge?.copyWith(
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               Text(
-                                'Automatically play adhan when prayer time arrives',
+                                'Mainkan azan secara automatik apabila waktu solat tiba',
                                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                                   color: Colors.grey[600],
                                 ),
@@ -185,7 +202,7 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
                           Icon(Icons.volume_up, color: AppColors.primary, size: 24),
                           const SizedBox(width: 12),
                           Text(
-                            'Alarm Volume',
+                            'Kelantangan Penggera',
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -242,7 +259,7 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
                           Icon(Icons.schedule, color: AppColors.primary, size: 24),
                           const SizedBox(width: 12),
                           Text(
-                            'Prayer Times',
+                            'Waktu Solat',
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -251,7 +268,7 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
                       ),
                       const SizedBox(height: 16),
                       Text(
-                        'Select which prayers should trigger the adhan alarm:',
+                        'Pilih solat mana yang akan mencetuskan penggera azan:',
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: Colors.grey[600],
                         ),
@@ -265,7 +282,7 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
                             children: [
                               Expanded(
                                 child: Text(
-                                  prayer,
+                                  _getPrayerDisplayName(prayer),
                                   style: Theme.of(context).textTheme.bodyLarge,
                                 ),
                               ),
@@ -318,7 +335,7 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
                         Icon(Icons.info_outline, color: Colors.blue[700], size: 24),
                         const SizedBox(width: 12),
                         Text(
-                          'How it works',
+                          'Cara ia berfungsi',
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: Colors.blue[700],
@@ -328,11 +345,11 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
                     ),
                     const SizedBox(height: 12),
                     Text(
-                      '• The app checks for prayer times every minute\n'
-                      '• Adhan will play automatically when prayer time arrives\n'
-                      '• Each prayer adhan plays only once per day\n'
-                      '• Make sure your device volume is turned on\n'
-                      '• The app works in the background when minimized',
+                      '• Aplikasi memeriksa waktu solat setiap minit\n'
+                      '• Azan akan dimainkan secara automatik apabila waktu solat tiba\n'
+                      '• Azan setiap solat dimainkan hanya sekali sehari\n'
+                      '• Pastikan kelantangan peranti anda dihidupkan\n'
+                      '• Aplikasi berfungsi di latar belakang apabila diminimumkan',
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: Colors.blue[700],
                       ),
@@ -342,7 +359,29 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
               ),
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 16),
+
+            // Adhan Tester Button
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/adhan_tester');
+                },
+                icon: const Icon(Icons.play_arrow),
+                label: const Text('Buka Penguji Azan'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  side: BorderSide(color: AppColors.primary),
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
 
             // Save Button
             SizedBox(
@@ -358,7 +397,7 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
                   ),
                 ),
                 child: const Text(
-                  'Save Settings',
+                  'Simpan Tetapan',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,

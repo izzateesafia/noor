@@ -110,7 +110,7 @@ class _UserDetailViewState extends State<_UserDetailView> {
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('User updated successfully')),
+      const SnackBar(content: Text('Pengguna berjaya dikemas kini')),
     );
   }
 

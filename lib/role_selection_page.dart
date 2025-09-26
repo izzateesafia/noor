@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'theme_constants.dart';
+import 'cubit/user_cubit.dart';
+import 'cubit/user_states.dart';
+import 'repository/user_repository.dart';
+import 'models/user_model.dart';
 
 class RoleSelectionPage extends StatefulWidget {
   const RoleSelectionPage({super.key});
@@ -11,11 +16,35 @@ class RoleSelectionPage extends StatefulWidget {
 class _RoleSelectionPageState extends State<RoleSelectionPage> {
   String? _selectedRole;
 
+  @override
+  void initState() {
+    super.initState();
+    // Check if user is already logged in and redirect to dashboard
+    _checkAuthStatus();
+  }
+
+  Future<void> _checkAuthStatus() async {
+    try {
+      final userCubit = UserCubit(UserRepository());
+      await userCubit.fetchCurrentUser();
+      
+      if (mounted) {
+        if (userCubit.state.status == UserStatus.loaded && userCubit.state.currentUser != null) {
+          // User is already logged in, go to dashboard
+          Navigator.pushReplacementNamed(context, '/dashboard');
+        }
+      }
+    } catch (e) {
+      print('Error checking auth status in role selection: $e');
+    }
+  }
+
   void _selectRole(String role) {
     setState(() {
       _selectedRole = role;
     });
-    // TODO: Navigate to next page or save role
+    // Navigate to dashboard after role selection
+    Navigator.pushReplacementNamed(context, '/dashboard');
   }
 
   @override
@@ -30,7 +59,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Text(
-                  'Select Your Role',
+                  'Pilih Peranan Anda',
                   style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                     fontFamily: 'Kahfi',
                     color: AppColors.primary,
@@ -42,7 +71,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
                 const SizedBox(height: 32),
                 _buildRoleCard(
                   icon: Icons.school,
-                  label: 'Trainer',
+                  label: 'Jurulatih',
                   selected: _selectedRole == 'Trainer',
                   onTap: () => _selectRole('Trainer'),
                   color: AppColors.primary,

@@ -78,7 +78,7 @@ class AdCarousel extends StatelessWidget {
                     const SizedBox(width: 16),
                     Expanded(
                       child: Text(
-                        ad.title ?? 'Advertisement',
+                        ad.title ?? 'Iklan',
                         style: TextStyle(
                           color: isDark ? AppColors.darkCard : AppColors.text,
                           fontWeight: FontWeight.bold,

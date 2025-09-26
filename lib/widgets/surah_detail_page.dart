@@ -24,9 +24,9 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
   bool _isPlaying = false;
 
   final Map<String, String> _translations = {
-    'indonesian': 'Bahasa Indonesia (Closest to Malay)',
-    'enSaheeh': 'English (Saheeh International)',
-    'enClearQuran': 'English (Clear Quran)',
+    'indonesian': 'Bahasa Indonesia (Paling hampir dengan Bahasa Melayu)',
+    'enSaheeh': 'Bahasa Inggeris (Saheeh International)',
+    'enClearQuran': 'Bahasa Inggeris (Clear Quran)',
     'urdu': 'Urdu',
     'french': 'French',
     'turkish': 'Turkish',

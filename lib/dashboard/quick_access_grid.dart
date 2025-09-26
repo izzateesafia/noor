@@ -9,7 +9,7 @@ class QuickAccessGrid extends StatelessWidget {
     final List<_QuickAccessItem> quickAccessItems = [
       _QuickAccessItem(
         icon: Icons.menu_book,
-        label: 'Quran',
+        label: 'Al-Quran',
         onTap: () {
           Navigator.of(context).pushNamed('/quran');
         },
@@ -30,21 +30,21 @@ class QuickAccessGrid extends StatelessWidget {
       ),
       _QuickAccessItem(
         icon: Icons.favorite,
-        label: 'Duas',
+        label: 'Doa',
         onTap: () {
           Navigator.of(context).pushNamed('/duas');
         },
       ),
       _QuickAccessItem(
         icon: Icons.school,
-        label: 'Classes',
+        label: 'Kelas',
         onTap: () {
           Navigator.of(context).pushNamed('/classes');
         },
       ),
       _QuickAccessItem(
         icon: Icons.book,
-        label: 'Hadiths',
+        label: 'Hadis',
         onTap: () {
           Navigator.of(context).pushNamed('/hadiths');
         },
@@ -58,16 +58,16 @@ class QuickAccessGrid extends StatelessWidget {
       ),
       _QuickAccessItem(
         icon: Icons.mic,
-        label: 'Hifz Checker',
+        label: 'Pemeriksa Hifz',
         onTap: () {
           Navigator.of(context).pushNamed('/hifdh_checker');
         },
       ),
       _QuickAccessItem(
-        icon: Icons.chrome_reader_mode,
-        label: 'Mushaf Mode',
+        icon: Icons.volume_up,
+        label: 'Penguji Azan',
         onTap: () {
-          // TODO: Navigate to Mushaf Mode
+          Navigator.of(context).pushNamed('/adhan_tester');
         },
       ),
     ];
@@ -91,7 +91,7 @@ class QuickAccessGrid extends StatelessWidget {
                   Padding(
                     padding: const EdgeInsets.only(left: 4, bottom: 12, top: 4),
                     child: Text(
-                      'Quick Access',
+                      'Akses Pantas',
                       style: Theme.of(context).textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,

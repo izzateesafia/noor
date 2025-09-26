@@ -44,7 +44,7 @@ class _DailyTrackerHistoryPageState extends State<DailyTrackerHistoryPage>
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
-        title: const Text('Daily Tracker History'),
+        title: const Text('Sejarah Penjejak Harian'),
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
         elevation: 0,
@@ -75,7 +75,7 @@ class _DailyTrackerHistoryPageState extends State<DailyTrackerHistoryPage>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Show last: ',
+                  'Tunjukkan yang terakhir: ',
                   style: TextStyle(
                     fontSize: 16,
                     color: Theme.of(context).colorScheme.onSurface,
@@ -86,7 +86,7 @@ class _DailyTrackerHistoryPageState extends State<DailyTrackerHistoryPage>
                   spacing: 8,
                   runSpacing: 8,
                   children: [7, 30, 90].map((days) => ChoiceChip(
-                    label: Text('$days days'),
+                    label: Text('$days hari'),
                     selected: _selectedDays == days,
                     onSelected: (selected) {
                       if (selected) {
@@ -109,9 +109,9 @@ class _DailyTrackerHistoryPageState extends State<DailyTrackerHistoryPage>
               unselectedLabelColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
               indicatorColor: Theme.of(context).colorScheme.primary,
               tabs: const [
-                Tab(text: 'Statistics'),
-                Tab(text: 'History'),
-                Tab(text: 'Calendar'),
+                Tab(text: 'Statistik'),
+                Tab(text: 'Sejarah'),
+                Tab(text: 'Kalendar'),
               ],
             ),
           ),
@@ -156,7 +156,7 @@ class _DailyTrackerHistoryPageState extends State<DailyTrackerHistoryPage>
                   children: [
                     Expanded(
                       child: _buildStatCard(
-                        'Total Days',
+                        'Jumlah Hari',
                         '${stats['totalDays'] ?? 0}',
                         Icons.calendar_today,
                         Colors.blue,

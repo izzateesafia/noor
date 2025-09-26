@@ -3,9 +3,9 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>134970392054-vrjkt6ellgsc6rioo67im24bqu4tsfv1.apps.googleusercontent.com</string>
+	<string>134970392054-86d1gomong6gdbdtu6c62p4knpouqh02.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.134970392054-vrjkt6ellgsc6rioo67im24bqu4tsfv1</string>
+	<string>com.googleusercontent.apps.134970392054-86d1gomong6gdbdtu6c62p4knpouqh02</string>
 	<key>API_KEY</key>
 	<string>AIzaSyCPqueAYkiwLd3h2Xm9rX-nkAnqsStr-zs</string>
 	<key>GCM_SENDER_ID</key>
@@ -13,7 +13,7 @@
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.example.noor</string>
+	<string>com.hexahelix.dq</string>
 	<key>PROJECT_ID</key>
 	<string>uwais-manage</string>
 	<key>STORAGE_BUCKET</key>
@@ -29,6 +29,6 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:134970392054:ios:e0b67b6528170b4cbedbd7</string>
+	<string>1:134970392054:ios:21818c1e78079ba7bedbd7</string>
 </dict>
 </plist>

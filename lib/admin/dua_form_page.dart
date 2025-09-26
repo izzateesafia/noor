@@ -54,10 +54,10 @@ class _DuaFormPageState extends State<DuaFormPage> {
       final openSettings = await showDialog<bool>(
         context: context,
         builder: (ctx) => AlertDialog(
-          title: const Text('Permission Required'),
+          title: const Text('Kebenaran Diperlukan'),
           content: Text(
             source == ImageSource.camera
-              ? 'Camera permission is permanently denied. Please enable it in your device settings.'
+              ? 'Kebenaran kamera telah ditolak secara kekal. Sila aktifkan dalam tetapan peranti anda.'
               : 'Gallery permission is permanently denied. Please enable it in your device settings.'
           ),
           actions: [

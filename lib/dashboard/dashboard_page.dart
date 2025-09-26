@@ -71,11 +71,11 @@ class _DashboardPageState extends State<DashboardPage> {
               if (userState.status == UserStatus.error) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(userState.error ?? 'Failed to load user data'),
+                    content: Text(userState.error ?? 'Gagal memuatkan data pengguna'),
                     backgroundColor: Colors.red,
                     duration: const Duration(seconds: 4),
                     action: SnackBarAction(
-                      label: 'Retry',
+                      label: 'Cuba Lagi',
                       onPressed: () {
                         context.read<UserCubit>().fetchCurrentUser();
                       },
@@ -94,7 +94,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       children: [
                         CircularProgressIndicator(),
                         SizedBox(height: 16),
-                        Text('Loading user data...'),
+                        Text('Memuatkan data pengguna...'),
                       ],
                     ),
                   ),
@@ -174,7 +174,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 if (currentLiveStream == null) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('No live stream available at the moment. Please check back later or contact admin.'),
+                      content: Text('Tiada siaran langsung tersedia pada masa ini. Sila periksa semula kemudian atau hubungi admin.'),
                       backgroundColor: Colors.orange,
                       duration: Duration(seconds: 3),
                     ),
@@ -185,7 +185,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 if (!currentLiveStream!.isActive) {
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(
-                      content: Text('This live stream is currently inactive'),
+                      content: Text('Siaran langsung ini tidak aktif pada masa ini'),
                       backgroundColor: Colors.orange,
                       duration: Duration(seconds: 3),
                     ),
@@ -217,7 +217,7 @@ class _DashboardPageState extends State<DashboardPage> {
                       const SizedBox(height: 18),
                       ListTile(
                         leading: const Icon(Icons.live_tv, color: Colors.red),
-                        title: const Text('Watch on TikTok'),
+                        title: const Text('Tonton di TikTok'),
                         subtitle: Text(liveStream.tiktokLiveLink),
                         onTap: () async {
                           Navigator.of(context).pop();
@@ -228,7 +228,7 @@ class _DashboardPageState extends State<DashboardPage> {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
                                 const SnackBar(
-                                  content: Text('Could not open TikTok link'),
+                                  content: Text('Tidak dapat membuka pautan TikTok'),
                                   backgroundColor: Colors.red,
                                 ),
                               );
@@ -288,7 +288,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                         : const Icon(Icons.live_tv),
                                     label: Row(
                                       children: [
-                                        Text(isLoading ? 'Loading...' : 'Watch Live'),
+                                        Text(isLoading ? 'Memuatkan...' : 'Tonton Langsung'),
                                         if (isLive && !isLoading)
                                           Container(
                                             margin: const EdgeInsets.only(left: 10),
@@ -327,7 +327,7 @@ class _DashboardPageState extends State<DashboardPage> {
                                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                       ),
                                       icon: const Icon(Icons.bug_report, size: 16),
-                                      label: const Text('Test', style: TextStyle(fontSize: 12)),
+                                      label: const Text('Ujian', style: TextStyle(fontSize: 12)),
                                     ),
                                   // Theme mode switch
                                   ValueListenableBuilder<ThemeMode>(

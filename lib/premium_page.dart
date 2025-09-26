@@ -7,18 +7,18 @@ class PremiumPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final List<String> benefits = [
-      'Unlock all Rukun Solat videos',
-      'Access exclusive content and features',
-      'Ad-free experience',
-      'Priority support',
+      'Buka kunci semua video Rukun Solat',
+      'Akses kandungan dan ciri eksklusif',
+      'Pengalaman tanpa iklan',
+      'Sokongan keutamaan',
     ];
     final List<_PremiumPlan> plans = [
-      _PremiumPlan(name: 'Monthly', price: 'RM 9.90', description: 'Billed monthly, cancel anytime'),
-      _PremiumPlan(name: 'Yearly', price: 'RM 99.00', description: 'Save 17% compared to monthly'),
+      _PremiumPlan(name: 'Bulanan', price: 'RM 9.90', description: 'Ditagih bulanan, batal bila-bila masa'),
+      _PremiumPlan(name: 'Tahunan', price: 'RM 99.00', description: 'Jimat 17% berbanding bulanan'),
     ];
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Premium Plans'),
+        title: const Text('Pelan Premium'),
         backgroundColor: AppColors.appBar,
         foregroundColor: AppColors.onAppBar,
       ),
@@ -34,14 +34,14 @@ class PremiumPage extends StatelessWidget {
             const SizedBox(height: 12),
             Center(
               child: Text(
-                'Go Premium',
+                'Jadi Premium',
                 style: Theme.of(context).textTheme.headlineLarge?.copyWith(fontSize: 20),
               ),
             ),
             const SizedBox(height: 8),
             Center(
               child: Text(
-                'Unlock all features and support Daily Quran!',
+                'Buka kunci semua ciri dan sokong Al-Quran Harian!',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(fontSize: 13),
               ),
             ),

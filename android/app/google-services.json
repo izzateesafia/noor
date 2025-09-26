@@ -7,12 +7,20 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:134970392054:android:61375a474c43957abedbd7",
+        "mobilesdk_app_id": "1:134970392054:android:c051dc2ff0a20a79bedbd7",
         "android_client_info": {
-          "package_name": "com.example.noor"
+          "package_name": "com.hexahelix.dq"
         }
       },
       "oauth_client": [
+        {
+          "client_id": "134970392054-a3mnct9j41oduvhil3csvkkevn7rjjsp.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.hexahelix.dq",
+            "certificate_hash": "c2ec1e91393fede31e857f9d4ca7add9e7916914"
+          }
+        },
         {
           "client_id": "134970392054-02lgr84huva74u0ef9o1h58ucnkev3va.apps.googleusercontent.com",
           "client_type": 3
@@ -31,10 +39,10 @@
               "client_type": 3
             },
             {
-              "client_id": "134970392054-vrjkt6ellgsc6rioo67im24bqu4tsfv1.apps.googleusercontent.com",
+              "client_id": "134970392054-86d1gomong6gdbdtu6c62p4knpouqh02.apps.googleusercontent.com",
               "client_type": 2,
               "ios_info": {
-                "bundle_id": "com.example.noor"
+                "bundle_id": "com.hexahelix.dq"
               }
             }
           ]

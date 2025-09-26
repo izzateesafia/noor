@@ -75,7 +75,7 @@ class _DailyTrackerState extends State<DailyTracker> {
         prayersCompleted[prayer] = !newValue;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update prayer: $e')),
+        SnackBar(content: Text('Gagal mengemas kini solat: $e')),
       );
     }
   }
@@ -106,12 +106,29 @@ class _DailyTrackerState extends State<DailyTracker> {
         quranRecited = !newValue;
       });
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update Quran recitation: $e')),
+        SnackBar(content: Text('Gagal mengemas kini bacaan Al-Quran: $e')),
       );
     }
   }
 
   bool get allPrayersCompleted => prayersCompleted.values.every((v) => v);
+
+  String _getPrayerDisplayName(String prayerName) {
+    switch (prayerName) {
+      case 'Fajr':
+        return 'Subuh';
+      case 'Dhuhr':
+        return 'Zuhur';
+      case 'Asr':
+        return 'Asar';
+      case 'Maghrib':
+        return 'Maghrib';
+      case 'Isha':
+        return 'Isya';
+      default:
+        return prayerName;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -147,7 +164,7 @@ class _DailyTrackerState extends State<DailyTracker> {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          'Daily Tracker',
+                          'Penjejak Harian',
                           style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontSize: 15),
                         ),
                         const Spacer(),
@@ -168,7 +185,7 @@ class _DailyTrackerState extends State<DailyTracker> {
                             color: Theme.of(context).colorScheme.primary,
                             size: 20,
                           ),
-                          tooltip: 'View History',
+                          tooltip: 'Lihat Sejarah',
                         ),
                       ],
                     ),
@@ -189,7 +206,7 @@ class _DailyTrackerState extends State<DailyTracker> {
                               ),
                               const SizedBox(height: 6),
                               Text(
-                                entry.key,
+                                _getPrayerDisplayName(entry.key),
                                 style: TextStyle(
                                   color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                                   fontWeight: FontWeight.w500,
@@ -213,7 +230,7 @@ class _DailyTrackerState extends State<DailyTracker> {
                           ),
                           const SizedBox(width: 8),
                           Text(
-                            'Quran Recitation',
+                            'Bacaan Al-Quran',
                             style: TextStyle(
                               color: Theme.of(context).colorScheme.primary,
                               fontWeight: FontWeight.bold,
@@ -231,7 +248,7 @@ class _DailyTrackerState extends State<DailyTracker> {
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
-                                      'Completed', 
+                                      'Selesai', 
                                       style: TextStyle(
                                         color: Theme.of(context).colorScheme.primary, 
                                         fontWeight: FontWeight.w600
@@ -248,7 +265,7 @@ class _DailyTrackerState extends State<DailyTracker> {
                                     ),
                                     const SizedBox(width: 6),
                                     Text(
-                                      'Not yet', 
+                                      'Belum lagi', 
                                       style: TextStyle(
                                         color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3)
                                       )

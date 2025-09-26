@@ -99,14 +99,14 @@ class _DailyVerseWidgetState extends State<DailyVerseWidget> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Daily Verse',
+                          'Ayat Harian',
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: AppColors.primary,
                           ),
                         ),
                         Text(
-                          '$_surahName, Verse $_verseNumber',
+                          '$_surahName, Ayat $_verseNumber',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: Colors.grey[600],
                           ),
@@ -121,7 +121,7 @@ class _DailyVerseWidgetState extends State<DailyVerseWidget> {
                       color: AppColors.primary,
                       size: 20,
                     ),
-                    tooltip: 'New Verse',
+                    tooltip: 'Ayat Baru',
                   ),
                 ],
               ),
@@ -172,7 +172,7 @@ class _DailyVerseWidgetState extends State<DailyVerseWidget> {
                         Navigator.of(context).pushNamed('/quran');
                       },
                       icon: const Icon(Icons.visibility, size: 16),
-                      label: const Text('Read Full Surah'),
+                      label: const Text('Baca Surah Penuh'),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.primary,
                         side: BorderSide(color: AppColors.primary),
@@ -187,7 +187,7 @@ class _DailyVerseWidgetState extends State<DailyVerseWidget> {
                         _playAudio();
                       },
                       icon: const Icon(Icons.play_arrow, size: 16),
-                      label: const Text('Listen'),
+                      label: const Text('Dengar'),
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
                         foregroundColor: Colors.white,

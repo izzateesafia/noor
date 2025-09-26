@@ -48,17 +48,17 @@ class _ManageClassesPageState extends State<ManageClassesPage> {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Class'),
-        content: Text('Are you sure you want to delete "${classModel.title}"?'),
+        title: const Text('Padam Kelas'),
+        content: Text('Adakah anda pasti mahu memadam "${classModel.title}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('Cancel'),
+            child: const Text('Batal'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Delete'),
+            child: const Text('Padam'),
           ),
         ],
       ),
@@ -77,7 +77,7 @@ class _ManageClassesPageState extends State<ManageClassesPage> {
         if (state.status == ClassStatus.error) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
-              content: Text('Error: ${state.error}'),
+              content: Text('Ralat: ${state.error}'),
               backgroundColor: Colors.red,
             ),
           );

@@ -49,8 +49,8 @@ class _ClassesPageState extends State<ClassesPage> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Enrollment Successful'),
-        content: Text('You have enrolled in ${classModel.title}.'),
+        title: const Text('Pendaftaran Berjaya'),
+        content: Text('Anda telah mendaftar dalam ${classModel.title}.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -65,7 +65,7 @@ class _ClassesPageState extends State<ClassesPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Classes'),
+        title: const Text('Kelas'),
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
       ),
@@ -75,7 +75,7 @@ class _ClassesPageState extends State<ClassesPage> {
           if (state.status == ClassStatus.loading) {
             return const Center(child: CircularProgressIndicator());
           } else if (state.status == ClassStatus.error) {
-            return Center(child: Text('Failed to load classes', style: TextStyle(color: Theme.of(context).colorScheme.error)));
+            return Center(child: Text('Gagal memuatkan kelas', style: TextStyle(color: Theme.of(context).colorScheme.error)));
           } else if (state.status == ClassStatus.loaded && state.classes.isNotEmpty) {
             return ListView.builder(
               padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),

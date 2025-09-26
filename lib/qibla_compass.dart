@@ -53,7 +53,7 @@ class _QiblaCompassState extends State<QiblaCompass> {
                     ),
                     const Expanded(
                       child: Text(
-                        'Qibla Compass',
+                        'Kompas Qiblah',
                         style: TextStyle(
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
@@ -89,7 +89,7 @@ class _QiblaCompassState extends State<QiblaCompass> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20.0),
                 child: Text(
-                  'Find the direction to the Kaaba in Makkah',
+                  'Cari arah ke Kaabah di Makkah',
                   style: TextStyle(
                     fontSize: 16,
                     color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
@@ -116,7 +116,7 @@ class _QiblaCompassState extends State<QiblaCompass> {
                               CupertinoActivityIndicator(radius: 20),
                               SizedBox(height: 20),
                               Text(
-                                'Checking location services...',
+                                'Memeriksa perkhidmatan lokasi...',
                                 style: TextStyle(
                                   fontSize: 16,
                                 ),
@@ -134,12 +134,12 @@ class _QiblaCompassState extends State<QiblaCompass> {
                   
                           case LocationPermission.denied:
                             return LocationErrorWidget(
-                              error: "Location service permission denied",
+                              error: "Kebenaran perkhidmatan lokasi ditolak",
                               callback: _checkLocationStatus,
                             );
                           case LocationPermission.deniedForever:
                             return LocationErrorWidget(
-                              error: "Location service Denied Forever !",
+                              error: "Perkhidmatan lokasi ditolak selamanya!",
                               callback: _checkLocationStatus,
                             );
                           default:
@@ -147,7 +147,7 @@ class _QiblaCompassState extends State<QiblaCompass> {
                         }
                       } else {
                         return LocationErrorWidget(
-                          error: "Please enable Location service",
+                          error: "Sila aktifkan perkhidmatan lokasi",
                           callback: _checkLocationStatus,
                         );
                       }
@@ -271,7 +271,7 @@ class QiblahCompassWidget extends StatelessWidget {
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        'Qibla Direction: ${qiblahDirection.qiblah.toStringAsFixed(1)}°',
+                        'Arah Qiblah: ${qiblahDirection.qiblah.toStringAsFixed(1)}°',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -282,7 +282,7 @@ class QiblahCompassWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: 15),
                   Text(
-                    'Align both arrow heads to find the correct direction',
+                    'Selaraskan kedua-dua kepala anak panah untuk mencari arah yang betul',
                     style: TextStyle(
                       fontSize: 16,
                       color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
@@ -318,7 +318,7 @@ class QiblahCompassWidget extends StatelessWidget {
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        'How to Use',
+                        'Cara Menggunakan',
                         style: TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
@@ -329,22 +329,22 @@ class QiblahCompassWidget extends StatelessWidget {
                   ),
                   const SizedBox(height: 15),
                   _buildInstructionItem(
-                    '1. Hold your device flat and level',
+                    '1. Pegang peranti anda rata dan mendatar',
                     Icons.phone_android,
                     context,
                   ),
                   _buildInstructionItem(
-                    '2. Rotate until the red arrow points to the Kaaba',
+                    '2. Putar sehingga anak panah merah menunjuk ke Kaabah',
                     Icons.rotate_right,
                     context,
                   ),
                   _buildInstructionItem(
-                    '3. Keep away from metal objects and magnets',
+                    '3. Jauhkan dari objek logam dan magnet',
                     Icons.block,
                     context,
                   ),
                   _buildInstructionItem(
-                    '4. Calibrate the compass before each use',
+                    '4. Kalibrasi kompas sebelum setiap penggunaan',
                     Icons.refresh,
                     context,
                   ),

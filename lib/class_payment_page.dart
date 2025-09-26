@@ -12,7 +12,7 @@ class ClassPaymentPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Class Payment'),
+        title: const Text('Pembayaran Kelas'),
         backgroundColor: AppColors.appBar,
         foregroundColor: AppColors.onAppBar,
       ),
@@ -32,7 +32,7 @@ class ClassPaymentPage extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              'Instructor: ${classModel.instructor}',
+              'Pengajar: ${classModel.instructor}',
               style: TextStyle(
                 color: AppColors.secondary,
                 fontSize: 16,
@@ -50,7 +50,7 @@ class ClassPaymentPage extends StatelessWidget {
             Row(
               children: [
                 Text(
-                  'Amount:',
+                  'Jumlah:',
                   style: TextStyle(
                     color: AppColors.text,
                     fontWeight: FontWeight.bold,
@@ -73,7 +73,7 @@ class ClassPaymentPage extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton.icon(
                 icon: const Icon(Icons.payment),
-                label: const Text('Pay with Stripe'),
+                label: const Text('Bayar dengan Stripe'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,

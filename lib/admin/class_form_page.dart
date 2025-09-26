@@ -29,8 +29,8 @@ class _ClassFormPageState extends State<ClassFormPage> {
   TimeOfDay? selectedTime;
   int durationMinutes = 60;
   List<String> selectedDays = [];
-  final List<String> allDays = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-  final List<String> levelChoices = ['Beginner', 'Intermediate', 'Advanced', 'All Levels'];
+  final List<String> allDays = ['Isnin', 'Selasa', 'Rabu', 'Khamis', 'Jumaat', 'Sabtu', 'Ahad'];
+  final List<String> levelChoices = ['Pemula', 'Pertengahan', 'Lanjutan', 'Semua Tahap'];
   String? selectedLevel;
   bool isSubmitting = false;
 

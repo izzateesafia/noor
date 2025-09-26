@@ -12,11 +12,11 @@ class ManageHadithsPage extends StatefulWidget {
 class _ManageHadithsPageState extends State<ManageHadithsPage> {
   List<Hadith> hadiths = [
     Hadith(
-      title: 'Hadith on Intentions',
-      content: 'Actions are judged by intentions...',
+      title: 'Hadis Mengenai Niat',
+      content: 'Amalan dinilai berdasarkan niat...',
       image: 'assets/images/hadith_intentions.png',
       link: 'https://hadiths.com/intentions',
-      notes: 'First hadith in Sahih Bukhari',
+      notes: 'Hadis pertama dalam Sahih Bukhari',
     ),
   ];
 
@@ -52,13 +52,13 @@ class _ManageHadithsPageState extends State<ManageHadithsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manage Hadiths'),
+        title: const Text('Urus Hadis'),
         backgroundColor: AppColors.appBar,
         foregroundColor: AppColors.onAppBar,
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            tooltip: 'Add Hadith',
+            tooltip: 'Tambah Hadis',
             onPressed: _addHadith,
           ),
         ],

@@ -79,23 +79,23 @@ class _BiodataPageState extends State<BiodataPage> {
 
   String? _validateName(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Full name is required';
+      return 'Nama penuh diperlukan';
     }
     if (value.trim().length < 2) {
-      return 'Name must be at least 2 characters';
+      return 'Nama mestilah sekurang-kurangnya 2 aksara';
     }
     if (value.trim().length > 50) {
-      return 'Name must be less than 50 characters';
+      return 'Nama mestilah kurang daripada 50 aksara';
     }
     return null;
   }
 
   String? _validatePhone(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Phone number is required';
+      return 'Nombor telefon diperlukan';
     }
     if (value.trim().length < 10) {
-      return 'Please enter a valid phone number';
+      return 'Sila masukkan nombor telefon yang sah';
     }
     return null;
   }
