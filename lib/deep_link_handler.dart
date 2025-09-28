@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:uni_links/uni_links.dart';
+import 'package:app_links/app_links.dart';
 import 'dart:async';
 
 class DeepLinkHandler {
@@ -17,19 +17,19 @@ class DeepLinkHandler {
     _context = context;
     
     try {
+      final appLinks = AppLinks();
+      
       // Handle initial link if app was opened via deep link
-      final initialLink = await getInitialLink();
+      final initialLink = await appLinks.getInitialAppLink();
       if (initialLink != null) {
         print('Initial deep link: $initialLink');
-        _handleDeepLink(initialLink);
+        _handleDeepLink(initialLink.toString());
       }
 
       // Listen for incoming links when app is already running
-      _subscription = uriLinkStream.listen((Uri? uri) {
-        if (uri != null) {
-          print('Incoming deep link: ${uri.toString()}');
-          _handleDeepLink(uri.toString());
-        }
+      _subscription = appLinks.uriLinkStream.listen((Uri uri) {
+        print('Incoming deep link: ${uri.toString()}');
+        _handleDeepLink(uri.toString());
       }, onError: (err) {
         print('Deep link error: $err');
       });

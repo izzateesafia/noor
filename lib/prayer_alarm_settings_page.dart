@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
-import '../services/prayer_alarm_service.dart';
+import '../services/scheduled_alarm_service.dart';
 import '../theme_constants.dart';
 
 class PrayerAlarmSettingsPage extends StatefulWidget {
@@ -11,9 +10,8 @@ class PrayerAlarmSettingsPage extends StatefulWidget {
 }
 
 class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
-  final PrayerAlarmService _prayerAlarmService = PrayerAlarmService();
+  final ScheduledAlarmService _prayerAlarmService = ScheduledAlarmService();
   bool _alarmEnabled = true;
-  double _alarmVolume = 1.0;
   Set<String> _enabledPrayers = {'Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'};
 
   String _getPrayerDisplayName(String prayerName) {
@@ -44,7 +42,6 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
     try {
       // Load current settings
       _alarmEnabled = _prayerAlarmService.isAlarmEnabled;
-      _alarmVolume = _prayerAlarmService.alarmVolume;
       _enabledPrayers = Set.from(_prayerAlarmService.enabledPrayers);
       
       setState(() {
@@ -65,7 +62,6 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
   Future<void> _saveSettings() async {
     try {
       await _prayerAlarmService.setAlarmEnabled(_alarmEnabled);
-      await _prayerAlarmService.setAlarmVolume(_alarmVolume);
       
       // Save individual prayer settings
       final allPrayers = {'Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'};
@@ -185,64 +181,6 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
               ),
             ),
 
-            const SizedBox(height: 16),
-
-            // Volume Control
-            if (_alarmEnabled) ...[
-              Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(Icons.volume_up, color: AppColors.primary, size: 24),
-                          const SizedBox(width: 12),
-                          Text(
-                            'Kelantangan Penggera',
-                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Icon(Icons.volume_down, color: Colors.grey[600]),
-                          Expanded(
-                            child: Slider(
-                              value: _alarmVolume,
-                              min: 0.0,
-                              max: 1.0,
-                              divisions: 10,
-                              label: '${(_alarmVolume * 100).round()}%',
-                              onChanged: (value) {
-                                setState(() {
-                                  _alarmVolume = value;
-                                });
-                              },
-                              activeColor: AppColors.primary,
-                            ),
-                          ),
-                          Icon(Icons.volume_up, color: Colors.grey[600]),
-                        ],
-                      ),
-                      Text(
-                        '${(_alarmVolume * 100).round()}%',
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: 16),
-            ],
 
             // Prayer Selection
             if (_alarmEnabled) ...[
@@ -361,24 +299,118 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
 
             const SizedBox(height: 16),
 
-            // Adhan Tester Button
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/adhan_tester');
-                },
-                icon: const Icon(Icons.play_arrow),
-                label: const Text('Buka Penguji Azan'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.primary,
-                  side: BorderSide(color: AppColors.primary),
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+            // iOS Setup Guide
+            Card(
+              color: Colors.orange[50],
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.phone_iphone, color: Colors.orange[700], size: 24),
+                        const SizedBox(width: 8),
+                        Text(
+                          'iOS Users - Important!',
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: Colors.orange[700],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Apple limits background audio for third-party apps. For best results, please check the iOS setup guide.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.orange[700],
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/ios_setup_guide');
+                        },
+                        icon: const Icon(Icons.settings),
+                        label: const Text('iOS Setup Guide'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange[700],
+                          foregroundColor: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
+            ),
+
+            const SizedBox(height: 16),
+
+            // Test Buttons
+            Column(
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/test_scheduled_alarm');
+                        },
+                        icon: const Icon(Icons.schedule),
+                        label: const Text('Penguji Azan Terjadual'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.green,
+                          side: BorderSide(color: Colors.green),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/test_simple_alarm');
+                        },
+                        icon: const Icon(Icons.alarm),
+                        label: const Text('Penguji Azan Timer'),
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: AppColors.primary,
+                          side: BorderSide(color: AppColors.primary),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/adhan_tester');
+                    },
+                    icon: const Icon(Icons.play_arrow),
+                    label: const Text('Penguji Azan Lama'),
+                    style: OutlinedButton.styleFrom(
+                      foregroundColor: Colors.grey[600],
+                      side: BorderSide(color: Colors.grey[600]!),
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
             ),
 
             const SizedBox(height: 16),

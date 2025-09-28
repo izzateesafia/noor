@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -130,8 +131,10 @@ class AlarmService {
             enableVibration: true,
             showWhen: true,
             icon: '@mipmap/ic_launcher',
-            // Use default sound for now (custom sound might not be found)
-            // sound: RawResourceAndroidNotificationSound('azan'),
+            // Use the appropriate adhan sound based on prayer
+            sound: RawResourceAndroidNotificationSound(
+              prayerName.toLowerCase() == 'fajr' ? 'azan_fajr' : 'azan'
+            ),
             // Make it a high priority notification
             fullScreenIntent: true,
             category: AndroidNotificationCategory.alarm,
@@ -142,12 +145,17 @@ class AlarmService {
             // Additional settings for better reliability
             ongoing: false,
             silent: false,
+            // Enable heads-up notification
+            enableLights: true,
+            ledColor: const Color(0xFFD32F2F), // Red color for alarm
+            ledOnMs: 1000,
+            ledOffMs: 500,
           ),
           iOS: DarwinNotificationDetails(
             presentAlert: true,
             presentBadge: true,
             presentSound: true,
-            sound: 'azan.mp3',
+            sound: prayerName.toLowerCase() == 'fajr' ? 'azan_fajr.mp3' : 'azan.mp3',
             interruptionLevel: InterruptionLevel.critical,
           ),
         ),

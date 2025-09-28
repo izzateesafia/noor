@@ -36,8 +36,8 @@ dependencies:
   cupertino_icons: ^1.0.8
   intl: ^0.18.1
   lottie: ^3.3.1
-  geolocator: ^10.1.0
-  flutter_qiblah: ^2.1.0
+  geolocator: ^13.0.4
+  flutter_qiblah: ^3.1.0+1
   image_picker: ^1.1.2
   permission_handler: ^11.3.1
   url_launcher: ^6.2.5
@@ -50,7 +50,7 @@ dependencies:
   http: ^1.4.0
   firebase_messaging: ^15.2.10
   equatable: ^2.0.7
-  uni_links: ^0.5.1
+  app_links: ^3.5.1
   google_sign_in: ^6.2.1
   flutter_svg: ^2.0.10+1
   shimmer: ^3.0.0
@@ -58,7 +58,7 @@ dependencies:
   quran: ^1.4.1
   google_fonts: ^6.2.1
   shared_preferences: ^2.2.2
-  workmanager: ^0.5.2
+  workmanager: ^0.9.0
 
 
 dev_dependencies:

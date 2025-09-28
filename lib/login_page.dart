@@ -131,26 +131,19 @@ class LoginPage extends StatelessWidget {
               Navigator.pushReplacementNamed(context, '/biodata', arguments: user);
             } else {
               // User has completed biodata, navigate to role selection
-              Navigator.pushReplacementNamed(context, '/role');
+              Navigator.pushReplacementNamed(context, '/main');
             }
-          } else if (state.status == UserStatus.error) {
-            // Show error message
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(state.error ?? 'An error occurred'),
-                backgroundColor: Colors.red,
-              ),
-            );
           }
+          // Removed error snackbar - it was showing annoying messages on page load
         },
         builder: (context, state) {
           return Scaffold(
-            appBar: AppBar(title: const Text('Log Masuk')),
-            body: Padding(
+            body: SingleChildScrollView(
               padding: const EdgeInsets.all(24.0),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  const SizedBox(height: 60), // Add top spacing since no AppBar
                   Text(
                     'Al-Quran Harian',
                     style: TextStyle(
@@ -265,15 +258,6 @@ class LoginPage extends StatelessWidget {
                       },
                       child: const Text('Reset (Debug)'),
                     ),
-                  const SizedBox(height: 8),
-                  TextButton(
-                    onPressed: () async {
-                      print('Testing Google Sign-In configuration...');
-                      final googleAuthService = GoogleAuthService();
-                      await googleAuthService.testGoogleSignInConfig();
-                    },
-                    child: const Text('Test Google Config (Debug)'),
-                  ),
                 ],
               ),
             ),

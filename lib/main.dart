@@ -8,6 +8,8 @@ import 'login_page.dart';
 import 'signup_page.dart';
 import 'role_selection_page.dart';
 import 'dashboard/dashboard_page.dart';
+import 'main_navigation_page.dart';
+import 'menu_page.dart';
 import 'theme_constants.dart';
 import 'theme.dart';
 import 'duas_page.dart';
@@ -26,10 +28,13 @@ import 'quran_reader_page.dart';
 import 'quran_search_page.dart';
 import 'mushaf_reader_page.dart';
 import 'prayer_alarm_settings_page.dart';
-import 'services/prayer_alarm_service.dart';
+import 'services/scheduled_alarm_service.dart';
 import 'services/alarm_service.dart';
 import 'test_prayer_alarm.dart';
 import 'adhan_tester_page.dart';
+import 'test_simple_alarm.dart';
+import 'test_scheduled_alarm.dart';
+import 'ios_setup_guide_page.dart';
 import 'cubit/user_cubit.dart';
 import 'cubit/class_cubit.dart';
 import 'cubit/dua_cubit.dart';
@@ -70,8 +75,8 @@ void main() async {
   await setupNotifications();
   await saveUserToken();
   
-  // Initialize prayer alarm service
-  await PrayerAlarmService().initialize();
+  // Initialize scheduled alarm service
+  await ScheduledAlarmService().initialize();
   
   // Initialize alarm service
   await AlarmService().initialize();
@@ -255,7 +260,8 @@ class MyApp extends StatelessWidget {
                 '/login': (context) => const LoginPage(),
                 '/signup': (context) => const SignupPage(),
                 '/role': (context) => const RoleSelectionPage(),
-                '/dashboard': (context) => const DashboardPage(),
+                '/dashboard': (context) => const MainNavigationPage(),
+                '/main': (context) => const MainNavigationPage(),
                 '/duas': (context) => const DuasPage(),
                 '/hifdh_checker': (context) => const HifdhCheckerPage(),
                 '/admin': (context) => const AdminPage(),
@@ -274,6 +280,9 @@ class MyApp extends StatelessWidget {
                 '/prayer_alarm_settings': (context) => const PrayerAlarmSettingsPage(),
                 '/test_prayer_alarm': (context) => const TestPrayerAlarmPage(),
                 '/adhan_tester': (context) => const AdhanTesterPage(),
+        '/test_simple_alarm': (context) => const TestSimpleAlarmPage(),
+        '/test_scheduled_alarm': (context) => const TestScheduledAlarmPage(),
+        '/ios_setup_guide': (context) => const IOSSetupGuidePage(),
               },
               builder: (context, child) {
                 // Initialize deep links with proper context

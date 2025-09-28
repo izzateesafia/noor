@@ -31,7 +31,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
       if (mounted) {
         if (userCubit.state.status == UserStatus.loaded && userCubit.state.currentUser != null) {
           // User is already logged in, go to dashboard
-          Navigator.pushReplacementNamed(context, '/dashboard');
+          Navigator.pushReplacementNamed(context, '/main');
         }
       }
     } catch (e) {
@@ -44,7 +44,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
       _selectedRole = role;
     });
     // Navigate to dashboard after role selection
-    Navigator.pushReplacementNamed(context, '/dashboard');
+                          Navigator.pushReplacementNamed(context, '/main');
   }
 
   @override
@@ -103,7 +103,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
                   ),
                   onPressed: _selectedRole != null
                       ? () {
-                          Navigator.pushReplacementNamed(context, '/dashboard');
+                          Navigator.pushReplacementNamed(context, '/main');
                         }
                       : null,
                   child: const Text(

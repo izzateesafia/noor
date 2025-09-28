@@ -24,10 +24,20 @@ class HeaderSection extends StatelessWidget {
               child: const Text('Batal'),
             ),
             TextButton(
-              onPressed: () {
+              onPressed: () async {
                 Navigator.of(context).pop();
-                context.read<UserCubit>().signOut();
-                Navigator.of(context).pushReplacementNamed('/login');
+                try {
+                  await context.read<UserCubit>().signOut();
+                  if (context.mounted) {
+                    Navigator.of(context).pushReplacementNamed('/login');
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Gagal log keluar: $e')),
+                    );
+                  }
+                }
               },
               child: const Text('Log Keluar'),
             ),

@@ -136,8 +136,8 @@ class _MushafReaderPageState extends State<MushafReaderPage> {
         itemBuilder: (context, index) {
           return MushafPage(
             pageNumber: index + 1,
-            showTranslation: _showTranslation,
-            selectedTranslation: _selectedTranslation,
+            // showTranslation: _showTranslation,
+            // selectedTranslation: _selectedTranslation,
           );
         },
       ),

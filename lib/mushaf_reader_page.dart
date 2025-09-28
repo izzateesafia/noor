@@ -13,18 +13,8 @@ class MushafReaderPage extends StatefulWidget {
 
 class _MushafReaderPageState extends State<MushafReaderPage> {
   int _currentPage = 1;
-  bool _showTranslation = false;
-  String _selectedTranslation = 'indonesian';
+  String _currentViewMode = 'mushaf'; // Track current view mode
   final PageController _pageController = PageController();
-
-  final Map<String, String> _translations = {
-    'indonesian': 'Bahasa Indonesia (Closest to Malay)',
-    'enSaheeh': 'English (Saheeh International)',
-    'enClearQuran': 'English (Clear Quran)',
-    'urdu': 'Urdu',
-    'french': 'French',
-    'turkish': 'Turkish',
-  };
 
   @override
   void initState() {
@@ -59,28 +49,65 @@ class _MushafReaderPageState extends State<MushafReaderPage> {
           // View switcher
           PopupMenuButton<String>(
             onSelected: (value) {
+              setState(() {
+                _currentViewMode = value;
+              });
               if (value == 'surah') {
                 Navigator.of(context).pushNamed('/quran');
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'surah',
                 child: Row(
                   children: [
-                    Icon(Icons.list, size: 16),
-                    SizedBox(width: 8),
-                    Text('Surah View'),
+                    Icon(
+                      Icons.list, 
+                      size: 16,
+                      color: _currentViewMode == 'surah' ? AppColors.primary : Colors.grey[600],
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Surah View',
+                      style: TextStyle(
+                        color: _currentViewMode == 'surah' ? AppColors.primary : Theme.of(context).textTheme.bodyLarge?.color,
+                        fontWeight: _currentViewMode == 'surah' ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (_currentViewMode == 'surah')
+                      Icon(
+                        Icons.check,
+                        size: 16,
+                        color: AppColors.primary,
+                      ),
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'mushaf',
                 child: Row(
                   children: [
-                    Icon(Icons.book, size: 16),
-                    SizedBox(width: 8),
-                    Text('Mushaf View'),
+                    Icon(
+                      Icons.book, 
+                      size: 16,
+                      color: _currentViewMode == 'mushaf' ? AppColors.primary : Colors.grey[600],
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Mushaf View',
+                      style: TextStyle(
+                        color: _currentViewMode == 'mushaf' ? AppColors.primary : Theme.of(context).textTheme.bodyLarge?.color,
+                        fontWeight: _currentViewMode == 'mushaf' ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (_currentViewMode == 'mushaf')
+                      Icon(
+                        Icons.check,
+                        size: 16,
+                        color: AppColors.primary,
+                      ),
                   ],
                 ),
               ),
@@ -90,32 +117,6 @@ class _MushafReaderPageState extends State<MushafReaderPage> {
               child: Icon(Icons.view_module),
             ),
             tooltip: 'Switch View',
-          ),
-          // Translation toggle
-          IconButton(
-            onPressed: () {
-              setState(() {
-                _showTranslation = !_showTranslation;
-              });
-            },
-            icon: Icon(
-              _showTranslation ? Icons.translate : Icons.translate_outlined,
-            ),
-            tooltip: 'Toggle Translation',
-          ),
-          // Translation selection
-          PopupMenuButton<String>(
-            onSelected: (value) {
-              setState(() {
-                _selectedTranslation = value;
-              });
-            },
-            itemBuilder: (context) => _translations.entries.map((entry) {
-              return PopupMenuItem(
-                value: entry.key,
-                child: Text(entry.value),
-              );
-            }).toList(),
           ),
           // Jump to page
           IconButton(
@@ -136,8 +137,6 @@ class _MushafReaderPageState extends State<MushafReaderPage> {
         itemBuilder: (context, index) {
           return MushafPage(
             pageNumber: index + 1,
-            showTranslation: _showTranslation,
-            selectedTranslation: _selectedTranslation,
           );
         },
       ),

@@ -5,14 +5,10 @@ import '../theme_constants.dart';
 
 class MushafPage extends StatelessWidget {
   final int pageNumber;
-  final bool showTranslation;
-  final String selectedTranslation;
 
   const MushafPage({
     super.key,
     required this.pageNumber,
-    this.showTranslation = false,
-    this.selectedTranslation = 'indonesian',
   });
 
   @override
@@ -20,7 +16,7 @@ class MushafPage extends StatelessWidget {
     return Container(
       width: double.infinity,
       height: double.infinity,
-      color: Colors.white,
+      color: Theme.of(context).scaffoldBackgroundColor,
       child: _buildSinglePage(context, pageNumber, isLeftPage: true),
     );
   }
@@ -51,9 +47,18 @@ class MushafPage extends StatelessWidget {
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.grey[50],
+                      color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: Colors.grey[200]!),
+                      border: Border.all(
+                        color: Theme.of(context).dividerColor.withOpacity(0.3),
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Theme.of(context).shadowColor.withOpacity(0.1),
+                          blurRadius: 4,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
                     ),
                     child: Text(
                       versesText,
@@ -61,7 +66,7 @@ class MushafPage extends StatelessWidget {
                       style: GoogleFonts.amiriQuran(
                         fontSize: 24,
                         height: 2.2,
-                        color: Colors.black87,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                       ),
                     ),
                   ),
@@ -70,16 +75,8 @@ class MushafPage extends StatelessWidget {
               
               const SizedBox(height: 16),
               
-              // Translation (if enabled) - smaller to fit
-              if (showTranslation) ...[
-                Expanded(
-                  flex: 1,
-                  child: _buildCompactTranslation(pageNumber),
-                ),
-              ],
-              
               // Minimal footer
-              _buildMinimalFooter(pageNumber),
+              _buildMinimalFooter(context, pageNumber),
             ],
           ),
         ),
@@ -90,106 +87,18 @@ class MushafPage extends StatelessWidget {
     );
   }
 
-  Widget _buildMinimalFooter(int pageNumber) {
+  Widget _buildMinimalFooter(BuildContext context, int pageNumber) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 8),
       child: Text(
         'Juz ${_getJuzFromPage(pageNumber)} • Halaman $pageNumber daripada ${quran.totalPagesCount}',
         style: TextStyle(
-          color: Colors.grey[600],
+          color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7),
           fontSize: 12,
         ),
         textAlign: TextAlign.center,
       ),
     );
-  }
-
-  Widget _buildCompactTranslation(int pageNumber) {
-    final pageData = quran.getPageData(pageNumber);
-    final translations = <String>[];
-    
-    for (final surahData in pageData) {
-      final surahNumber = surahData['surahNumber'] as int;
-      final startVerse = surahData['startVerse'] as int;
-      final endVerse = surahData['endVerse'] as int;
-      
-      for (int verseNumber = startVerse; verseNumber <= endVerse; verseNumber++) {
-        final translation = _getTranslation(surahNumber, verseNumber);
-        translations.add('$verseNumber. $translation');
-      }
-    }
-    
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.blue[50],
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: Colors.blue[200]!),
-      ),
-      child: SingleChildScrollView(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: translations.map((translation) => Padding(
-            padding: const EdgeInsets.only(bottom: 2),
-            child: Text(
-              translation,
-              style: const TextStyle(
-                fontSize: 12,
-                height: 1.3,
-                color: Colors.black87,
-              ),
-            ),
-          )).toList(),
-        ),
-      ),
-    );
-  }
-
-  String _getTranslation(int surahNumber, int verseNumber) {
-    switch (selectedTranslation) {
-      case 'indonesian':
-        return quran.getVerseTranslation(
-          surahNumber,
-          verseNumber,
-          translation: quran.Translation.indonesian,
-        );
-      case 'enSaheeh':
-        return quran.getVerseTranslation(
-          surahNumber,
-          verseNumber,
-          translation: quran.Translation.enSaheeh,
-        );
-      case 'enClearQuran':
-        return quran.getVerseTranslation(
-          surahNumber,
-          verseNumber,
-          translation: quran.Translation.enClearQuran,
-        );
-      case 'urdu':
-        return quran.getVerseTranslation(
-          surahNumber,
-          verseNumber,
-          translation: quran.Translation.urdu,
-        );
-      case 'french':
-        return quran.getVerseTranslation(
-          surahNumber,
-          verseNumber,
-          translation: quran.Translation.frHamidullah,
-        );
-      case 'turkish':
-        return quran.getVerseTranslation(
-          surahNumber,
-          verseNumber,
-          translation: quran.Translation.trSaheeh,
-        );
-      default:
-        return quran.getVerseTranslation(
-          surahNumber,
-          verseNumber,
-          translation: quran.Translation.indonesian,
-        );
-    }
   }
 
   int _getJuzFromPage(int pageNumber) {

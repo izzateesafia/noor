@@ -55,6 +55,12 @@
 	<string>This app needs photo library access to select images for advertisements.</string>
 	<key>NSUserNotificationUsageDescription</key>
 	<string>This app uses notifications to alert you about live events and important updates.</string>
+	<key>NSUserNotificationsUsageDescription</key>
+	<string>This app needs notification permission to alert you about prayer times and play adhan.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>This app needs microphone access for audio features.</string>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>This app needs access to play adhan audio for prayer times.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UIBackgroundModes</key>
@@ -62,6 +68,8 @@
 		<string>fetch</string>
 		<string>remote-notification</string>
 		<string>processing</string>
+		<string>audio</string>
+		<string>background-processing</string>
 	</array>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>

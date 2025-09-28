@@ -13,6 +13,7 @@ class QuranReaderPage extends StatefulWidget {
 
 class _QuranReaderPageState extends State<QuranReaderPage> {
   List<int> _filteredSurahs = [];
+  String _currentViewMode = 'surah'; // Track current view mode
 
   @override
   void initState() {
@@ -38,28 +39,65 @@ class _QuranReaderPageState extends State<QuranReaderPage> {
           // View switcher
           PopupMenuButton<String>(
             onSelected: (value) {
+              setState(() {
+                _currentViewMode = value;
+              });
               if (value == 'mushaf') {
                 Navigator.of(context).pushNamed('/mushaf');
               }
             },
             itemBuilder: (context) => [
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'surah',
                 child: Row(
                   children: [
-                    Icon(Icons.list, size: 16),
-                    SizedBox(width: 8),
-                    Text('Surah View'),
+                    Icon(
+                      Icons.list, 
+                      size: 16,
+                      color: _currentViewMode == 'surah' ? AppColors.primary : Colors.grey[600],
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Surah View',
+                      style: TextStyle(
+                        color: _currentViewMode == 'surah' ? AppColors.primary : Theme.of(context).textTheme.bodyLarge?.color,
+                        fontWeight: _currentViewMode == 'surah' ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (_currentViewMode == 'surah')
+                      Icon(
+                        Icons.check,
+                        size: 16,
+                        color: AppColors.primary,
+                      ),
                   ],
                 ),
               ),
-              const PopupMenuItem(
+              PopupMenuItem(
                 value: 'mushaf',
                 child: Row(
                   children: [
-                    Icon(Icons.book, size: 16),
-                    SizedBox(width: 8),
-                    Text('Mushaf View'),
+                    Icon(
+                      Icons.book, 
+                      size: 16,
+                      color: _currentViewMode == 'mushaf' ? AppColors.primary : Colors.grey[600],
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Mushaf View',
+                      style: TextStyle(
+                        color: _currentViewMode == 'mushaf' ? AppColors.primary : Theme.of(context).textTheme.bodyLarge?.color,
+                        fontWeight: _currentViewMode == 'mushaf' ? FontWeight.w600 : FontWeight.normal,
+                      ),
+                    ),
+                    const Spacer(),
+                    if (_currentViewMode == 'mushaf')
+                      Icon(
+                        Icons.check,
+                        size: 16,
+                        color: AppColors.primary,
+                      ),
                   ],
                 ),
               ),

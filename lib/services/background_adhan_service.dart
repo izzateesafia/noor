@@ -94,7 +94,7 @@ class BackgroundAdhanService {
         'Waktu $prayerDisplayName',
         'Azan akan dimainkan sekarang',
         scheduledTz,
-        const NotificationDetails(
+        NotificationDetails(
           android: AndroidNotificationDetails(
             'adhan_channel',
             'Azan Notifications',
@@ -110,6 +110,8 @@ class BackgroundAdhanService {
             presentAlert: true,
             presentBadge: true,
             presentSound: true,
+            sound: prayerName.toLowerCase() == 'fajr' ? 'azan_fajr.mp3' : 'azan.mp3',
+            interruptionLevel: InterruptionLevel.critical,
           ),
         ),
         androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,

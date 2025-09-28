@@ -108,7 +108,7 @@ class _DailyVerseWidgetState extends State<DailyVerseWidget> {
                         Text(
                           '$_surahName, Ayat $_verseNumber',
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
+                            color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7),
                           ),
                         ),
                       ],
@@ -133,9 +133,16 @@ class _DailyVerseWidgetState extends State<DailyVerseWidget> {
                 width: double.infinity,
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Colors.grey[50],
+                  color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey[200]!),
+                  border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.3)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).shadowColor.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, 2),
+                    ),
+                  ],
                 ),
                 child: Text(
                   _arabicVerse,
@@ -143,7 +150,7 @@ class _DailyVerseWidgetState extends State<DailyVerseWidget> {
                   style: GoogleFonts.amiriQuran(
                     fontSize: 22,
                     height: 1.8,
-                    color: Colors.grey[800],
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                   ),
                 ),
               ),
@@ -155,7 +162,7 @@ class _DailyVerseWidgetState extends State<DailyVerseWidget> {
                 _translation,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   height: 1.5,
-                  color: Colors.grey[700],
+                  color: Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7),
                   fontStyle: FontStyle.italic,
                 ),
               ),
