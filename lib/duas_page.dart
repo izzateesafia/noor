@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'models/dua.dart';
@@ -56,12 +57,49 @@ class DuasPage extends StatelessWidget {
                             padding: const EdgeInsets.only(bottom: 12),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(12),
-                              child: Image.asset(
-                                dua.image!,
-                                height: 120,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                              ),
+                              child: dua.image!.startsWith('assets/')
+                                  ? Image.asset(
+                                      dua.image!,
+                                      height: 120,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          height: 120,
+                                          width: double.infinity,
+                                          decoration: BoxDecoration(
+                                            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Icon(
+                                            Icons.image,
+                                            color: Theme.of(context).colorScheme.primary,
+                                            size: 40,
+                                          ),
+                                        );
+                                      },
+                                    )
+                                  : Image.file(
+                                      File(dua.image!),
+                                      height: 120,
+                                      width: double.infinity,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          height: 120,
+                                          width: double.infinity,
+                                          decoration: BoxDecoration(
+                                            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Icon(
+                                            Icons.image,
+                                            color: Theme.of(context).colorScheme.primary,
+                                            size: 40,
+                                          ),
+                                        );
+                                      },
+                                    ),
                             ),
                           ),
                         Text(

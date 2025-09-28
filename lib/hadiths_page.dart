@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'theme_constants.dart';
 
@@ -83,27 +84,49 @@ class HadithsPage extends StatelessWidget {
                       if (hadith.image != null && hadith.image!.isNotEmpty)
                         ClipRRect(
                           borderRadius: BorderRadius.circular(10),
-                          child: Image.asset(
-                            hadith.image!,
-                            width: 80,
-                            height: 80,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                width: 80,
-                                height: 80,
-                                decoration: BoxDecoration(
-                                  color: AppColors.primary.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(10),
+                          child: hadith.image!.startsWith('assets/')
+                              ? Image.asset(
+                                  hadith.image!,
+                                  width: 80,
+                                  height: 80,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      width: 80,
+                                      height: 80,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Icon(
+                                        Icons.book,
+                                        color: AppColors.primary,
+                                        size: 40,
+                                      ),
+                                    );
+                                  },
+                                )
+                              : Image.file(
+                                  File(hadith.image!),
+                                  width: 80,
+                                  height: 80,
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) {
+                                    return Container(
+                                      width: 80,
+                                      height: 80,
+                                      decoration: BoxDecoration(
+                                        color: AppColors.primary.withOpacity(0.1),
+                                        borderRadius: BorderRadius.circular(10),
+                                      ),
+                                      child: Icon(
+                                        Icons.book,
+                                        color: AppColors.primary,
+                                        size: 40,
+                                      ),
+                                    );
+                                  },
                                 ),
-                                child: Icon(
-                                  Icons.book,
-                                  color: AppColors.primary,
-                                  size: 40,
-                                ),
-                              );
-                            },
-                          ),
                         ),
                       const SizedBox(width: 18),
                       Expanded(
