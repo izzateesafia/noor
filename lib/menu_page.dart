@@ -45,12 +45,6 @@ class MenuPage extends StatelessWidget {
             description: 'Panduan rukun solat',
             onTap: () => Navigator.of(context).pushNamed('/rukun_solat'),
           ),
-          MenuItem(
-            icon: Icons.explore,
-            label: 'Arah Qiblah',
-            description: 'Tentukan arah kiblat',
-            onTap: () => Navigator.of(context).pushNamed('/qiblah'),
-          ),
         ],
       ),
       MenuSection(
@@ -67,12 +61,6 @@ class MenuPage extends StatelessWidget {
             label: 'Hadis',
             description: 'Koleksi hadis-hadis sahih',
             onTap: () => Navigator.of(context).pushNamed('/hadiths'),
-          ),
-          MenuItem(
-            icon: Icons.mic,
-            label: 'Pemeriksa Hifz',
-            description: 'Uji hafalan Al-Quran',
-            onTap: () => Navigator.of(context).pushNamed('/hifdh_checker'),
           ),
         ],
       ),

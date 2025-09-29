@@ -37,7 +37,6 @@ dependencies:
   intl: ^0.18.1
   lottie: ^3.3.1
   geolocator: ^13.0.4
-  flutter_qiblah: ^3.1.0+1
   image_picker: ^1.1.2
   permission_handler: ^11.3.1
   url_launcher: ^6.2.5
@@ -47,10 +46,13 @@ dependencies:
   flutter_slidable: ^3.0.1
   flutter_local_notifications: ^17.1.2
   timezone: ^0.9.2
+  path_provider: ^2.1.2
+  path: ^1.9.0
   http: ^1.4.0
   firebase_messaging: ^15.2.10
   equatable: ^2.0.7
   app_links: ^3.5.1
+  flutter_stripe: ^11.1.0
   google_sign_in: ^6.2.1
   flutter_svg: ^2.0.10+1
   shimmer: ^3.0.0
@@ -59,6 +61,9 @@ dependencies:
   google_fonts: ^6.2.1
   shared_preferences: ^2.2.2
   workmanager: ^0.9.0
+  flutter_credit_card: ^3.0.1
+  dio: ^5.4.0
+  json_annotation: ^4.8.1
 
 
 dev_dependencies:
@@ -71,6 +76,9 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  build_runner: ^2.4.7
+  json_annotation: ^4.8.1
+  json_serializable: ^6.7.1
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

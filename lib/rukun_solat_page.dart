@@ -1,13 +1,43 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'theme_constants.dart';
+import 'cubit/user_cubit.dart';
+import 'cubit/user_states.dart';
 
-class RukunSolatPage extends StatelessWidget {
+class RukunSolatPage extends StatefulWidget {
   final bool isPremium;
   const RukunSolatPage({super.key, this.isPremium = false});
 
   @override
+  State<RukunSolatPage> createState() => _RukunSolatPageState();
+}
+
+class _RukunSolatPageState extends State<RukunSolatPage> {
+  @override
+  void initState() {
+    super.initState();
+    // Ensure user data is loaded
+    final userCubit = context.read<UserCubit>();
+    if (userCubit.state.status == UserStatus.initial) {
+      userCubit.fetchCurrentUser();
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final List<RukunSolat> rukunList = [
+    return BlocBuilder<UserCubit, UserState>(
+      builder: (context, userState) {
+        // Use the latest user data instead of the passed parameter
+        final isPremium = userState.currentUser?.isPremium ?? widget.isPremium;
+        
+        // Debug logging
+        print('Rukun Solat: UserState: $userState');
+        print('Rukun Solat: CurrentUser: ${userState.currentUser}');
+        print('Rukun Solat: isPremium: $isPremium');
+        print('Rukun Solat: widget.isPremium: ${widget.isPremium}');
+        
+        final List<RukunSolat> rukunList = [
       RukunSolat(
         title: 'Niat',
         image: 'assets/images/niat.png',
@@ -165,50 +195,80 @@ class RukunSolatPage extends StatelessWidget {
                             Positioned.fill(
                               child: GestureDetector(
                                 onTap: () {
-                                  showDialog(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      title: const Text('Premium Feature'),
-                                      content: const Text('This video is for premium users. Would you like to view premium plans?'),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () => Navigator.of(context).pop(),
-                                          child: const Text('Cancel'),
-                                        ),
-                                        ElevatedButton(
-                                          onPressed: () {
-                                            Navigator.of(context).pop();
-                                            Navigator.of(context).pushNamed('/premium');
-                                          },
-                                          child: const Text('View Premium'),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.45),
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                  child: Center(
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.lock, color: Colors.white, size: 32),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          'Premium Only',
-                                          style: TextStyle(
-                                            color: Colors.white,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 14,
+                                  if (isPremium) {
+                                    // Premium user - play video
+                                    // _playVideo(context, rukun.videoUrl);
+                                  } else {
+                                    // Non-premium user - show premium gate
+                                    showDialog(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: const Text('Premium Feature'),
+                                        content: const Text('This video is for premium users. Would you like to view premium plans?'),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.of(context).pop(),
+                                            child: const Text('Cancel'),
                                           ),
+                                          ElevatedButton(
+                                            onPressed: () {
+                                              Navigator.of(context).pop();
+                                              Navigator.of(context).pushNamed('/premium');
+                                            },
+                                            child: const Text('View Premium'),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                  }
+                                },
+                                child: isPremium 
+                                  ? Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(0.3),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Center(
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.play_circle_fill, color: Colors.white, size: 32),
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              'Tap to Play',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ],
                                         ),
-                                      ],
+                                      ),
+                                    )
+                                  : Container(
+                                      decoration: BoxDecoration(
+                                        color: Colors.black.withOpacity(0.45),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Center(
+                                        child: Column(
+                                          mainAxisAlignment: MainAxisAlignment.center,
+                                          children: [
+                                            Icon(Icons.lock, color: Colors.white, size: 32),
+                                            const SizedBox(height: 6),
+                                            Text(
+                                              'Premium Only',
+                                              style: TextStyle(
+                                                color: Colors.white,
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 14,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
                                     ),
-                                  ),
-                                ),
                               ),
                             ),
                           ],
@@ -220,6 +280,32 @@ class RukunSolatPage extends StatelessWidget {
         },
       ),
     );
+      },
+    );
+  }
+
+  void _playVideo(BuildContext context, String? videoUrl) async {
+    if (videoUrl == null || videoUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Video URL not available')),
+      );
+      return;
+    }
+
+    try {
+      final Uri url = Uri.parse(videoUrl);
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not launch video')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error launching video: $e')),
+      );
+    }
   }
 }
 

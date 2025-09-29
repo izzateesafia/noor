@@ -1,8 +1,9 @@
-import 'package:daily_quran/qibla_compass.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'firebase_options.dart';
+import 'blocs/payment/payment_bloc.dart';
 import 'splash_screen.dart';
 import 'login_page.dart';
 import 'signup_page.dart';
@@ -36,6 +37,7 @@ import 'test_simple_alarm.dart';
 import 'test_scheduled_alarm.dart';
 import 'ios_setup_guide_page.dart';
 import 'cubit/user_cubit.dart';
+import 'cubit/user_states.dart';
 import 'cubit/class_cubit.dart';
 import 'cubit/dua_cubit.dart';
 import 'cubit/hadith_cubit.dart';
@@ -80,6 +82,10 @@ void main() async {
   
   // Initialize alarm service
   await AlarmService().initialize();
+  
+  // Initialize Stripe
+  Stripe.publishableKey = const String.fromEnvironment('STRIPE_PUBLISHABLE_KEY', defaultValue: 'pk_test_your_stripe_publishable_key_here');
+  Stripe.merchantIdentifier = 'merchant.com.hexahelix.dq';
   
   runApp(const MyApp());
 }
@@ -248,6 +254,9 @@ class MyApp extends StatelessWidget {
                   context.read<DailyTrackerRepository>(),
                 ),
               ),
+              BlocProvider<PaymentBloc>(
+                create: (context) => PaymentBloc(),
+              ),
             ],
             child: MaterialApp(
               title: 'Al-Quran Harian',
@@ -267,13 +276,18 @@ class MyApp extends StatelessWidget {
                 '/admin': (context) => const AdminPage(),
                 '/classes': (context) => const ClassesPage(),
                 '/hadiths': (context) => const HadithsPage(),
-                '/rukun_solat': (context) => const RukunSolatPage(),
+                '/rukun_solat': (context) => BlocBuilder<UserCubit, UserState>(
+                  builder: (context, state) {
+                    return RukunSolatPage(
+                      isPremium: state.currentUser?.isPremium ?? false,
+                    );
+                  },
+                ),
                 '/premium': (context) => const PremiumPage(),
                 '/enroll_class': (context) => const ClassEnrollmentPage(),
                 '/profile': (context) => const UserProfilePage(),
                 '/biodata': (context) => const BiodataPage(),
                 '/deep_link_test': (context) => const DeepLinkTestPage(),
-                '/qiblah': (context) => const QiblaCompass(),
                 '/quran': (context) => const QuranReaderPage(),
                 '/quran_search': (context) => const QuranSearchPage(),
                 '/mushaf': (context) => const MushafReaderPage(),
@@ -282,7 +296,7 @@ class MyApp extends StatelessWidget {
                 '/adhan_tester': (context) => const AdhanTesterPage(),
         '/test_simple_alarm': (context) => const TestSimpleAlarmPage(),
         '/test_scheduled_alarm': (context) => const TestScheduledAlarmPage(),
-        '/ios_setup_guide': (context) => const IOSSetupGuidePage(),
+                '/ios_setup_guide': (context) => const IOSSetupGuidePage(),
               },
               builder: (context, child) {
                 // Initialize deep links with proper context

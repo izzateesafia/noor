@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 import '../theme_constants.dart';
 import 'dart:io';
 import 'manage_hadiths_page.dart';
@@ -92,11 +94,42 @@ class _HadithFormPageState extends State<HadithFormPage> {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: source, imageQuality: 80);
     if (picked != null) {
-      setState(() {
-        _imageFile = File(picked.path);
-        _imagePath = picked.path;
-      });
+      try {
+        // Copy the temporary file to a permanent location
+        final permanentPath = await _copyImageToPermanentLocation(picked.path);
+        setState(() {
+          _imageFile = File(permanentPath);
+          _imagePath = permanentPath;
+        });
+      } catch (e) {
+        print('Error copying image: $e');
+        // Fallback to temporary path if copying fails
+        setState(() {
+          _imageFile = File(picked.path);
+          _imagePath = picked.path;
+        });
+      }
     }
+  }
+
+  Future<String> _copyImageToPermanentLocation(String tempPath) async {
+    final tempFile = File(tempPath);
+    final appDir = await getApplicationDocumentsDirectory();
+    final imagesDir = Directory(path.join(appDir.path, 'images'));
+    
+    // Create images directory if it doesn't exist
+    if (!await imagesDir.exists()) {
+      await imagesDir.create(recursive: true);
+    }
+    
+    // Generate a unique filename
+    final fileName = 'hadith_${DateTime.now().millisecondsSinceEpoch}${path.extension(tempPath)}';
+    final permanentPath = path.join(imagesDir.path, fileName);
+    
+    // Copy the file
+    await tempFile.copy(permanentPath);
+    
+    return permanentPath;
   }
 
   void _submit() {

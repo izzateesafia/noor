@@ -51,6 +51,8 @@
 	<string>This app needs camera access to take photos for advertisements.</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
 	<string>This app needs access to your location to determine the Qiblah direction.</string>
+	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+	<string>This app needs access to your location to determine the Qiblah direction and provide accurate compass readings.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>This app needs photo library access to select images for advertisements.</string>
 	<key>NSUserNotificationUsageDescription</key>

@@ -40,11 +40,6 @@
             android:exported="false">
         </receiver>
         
-        <!-- Alarm Service -->
-        <service android:name="com.hexahelix.dq.AlarmService"
-            android:enabled="true"
-            android:exported="false"
-            android:foregroundServiceType="mediaPlayback" />
         <activity
             android:name="com.hexahelix.dq.MainActivity"
             android:exported="true"

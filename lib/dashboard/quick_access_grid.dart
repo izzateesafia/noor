@@ -56,20 +56,6 @@ class QuickAccessGrid extends StatelessWidget {
           Navigator.of(context).pushNamed('/rukun_solat');
         },
       ),
-      _QuickAccessItem(
-        icon: Icons.mic,
-        label: 'Pemeriksa Hifz',
-        onTap: () {
-          Navigator.of(context).pushNamed('/hifdh_checker');
-        },
-      ),
-      _QuickAccessItem(
-        icon: Icons.volume_up,
-        label: 'Penguji Azan',
-        onTap: () {
-          Navigator.of(context).pushNamed('/adhan_tester');
-        },
-      ),
     ];
 
     return Padding(

@@ -1,0 +1,18 @@
+{
+  "provider": "apple_pay",
+  "data": {
+    "merchantIdentifier": "merchant.com.hexahelix.dq",
+    "displayName": "Daily Quran",
+    "merchantCapabilities": ["3DS", "debit", "credit"],
+    "supportedNetworks": ["visa", "masterCard", "amex"],
+    "countryCode": "MY",
+    "currencyCode": "MYR",
+    "paymentItems": [
+      {
+        "label": "Premium Subscription",
+        "amount": "9.90"
+      }
+    ]
+  }
+}
+

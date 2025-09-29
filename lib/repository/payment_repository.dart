@@ -1,256 +1,175 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/payment.dart';
+import '../models/payment/order.dart' as payment_models;
+import '../models/payment/payment_plan.dart';
+import '../services/payment_service.dart';
 
 class PaymentRepository {
-  final _db = FirebaseFirestore.instance;
-  
-  // TODO: Replace with your actual Stripe keys
-  final String _stripeSecretKey = 'sk_test_YOUR_STRIPE_SECRET_KEY_HERE';
-  final String _stripePublishableKey = 'pk_test_YOUR_STRIPE_PUBLISHABLE_KEY_HERE';
-  final String _stripeBaseUrl = 'https://api.stripe.com/v1';
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final PaymentService _paymentService = PaymentService();
 
-  // Create payment intent with Stripe
-  Future<Map<String, dynamic>> createPaymentIntent({
+  // Create order
+  Future<payment_models.Order> createOrder({
+    required String userId,
+    required String planId,
     required double amount,
     required String currency,
-    required String description,
-    Map<String, dynamic>? metadata,
+    String? description,
   }) async {
     try {
-      // Build request body
-      final Map<String, String> body = {
-        'amount': (amount * 100).round().toString(), // Convert to cents
-        'currency': currency.toLowerCase(),
-        'description': description,
-        'automatic_payment_methods[enabled]': 'true',
+      // Create payment intent with Stripe
+      final paymentIntent = await _paymentService.createPaymentIntent(
+        amount: amount,
+        currency: currency,
+        userId: userId,
+        description: description ?? 'Premium subscription',
+        metadata: {
+          'plan_id': planId,
+          'type': planId.startsWith('class_') ? 'class_enrollment' : 'subscription',
+        },
+      );
+
+      // Create order document in Firestore
+      final orderData = {
+        'userId': userId,
+        'planId': planId,
+        'amount': amount,
+        'currency': currency,
+        'description': description ?? 'Premium subscription',
+        'status': 'pending',
+        'paymentIntentId': paymentIntent['id'],
+        'secretKey': paymentIntent['client_secret'],
+        'createdAt': FieldValue.serverTimestamp(),
+        'updatedAt': FieldValue.serverTimestamp(),
       };
 
-      // Add metadata if provided
-      if (metadata != null) {
-        for (final entry in metadata.entries) {
-          body['metadata[$entry.key]'] = entry.value.toString();
-        }
-      }
-
-      final response = await http.post(
-        Uri.parse('$_stripeBaseUrl/payment_intents'),
-        headers: {
-          'Authorization': 'Bearer $_stripeSecretKey',
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: body,
-      );
-
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        final errorData = json.decode(response.body);
-        throw Exception('Stripe API Error: ${errorData['error']?['message'] ?? 'Unknown error'}');
-      }
+      final docRef = await _firestore.collection('orders').add(orderData);
+      
+      return payment_models.Order.fromJson({
+        'id': docRef.id,
+        ...orderData,
+        'createdAt': DateTime.now().toIso8601String(),
+        'updatedAt': DateTime.now().toIso8601String(),
+      });
     } catch (e) {
-      throw Exception('Error creating payment intent: $e');
+      throw Exception('Error creating order: $e');
     }
   }
 
-  // Confirm payment intent
-  Future<Map<String, dynamic>> confirmPaymentIntent({
-    required String paymentIntentId,
-    required String paymentMethodId,
-  }) async {
+  // Update order status
+  Future<void> updateOrderStatus(String orderId, String status) async {
     try {
-      final response = await http.post(
-        Uri.parse('$_stripeBaseUrl/payment_intents/$paymentIntentId/confirm'),
-        headers: {
-          'Authorization': 'Bearer $_stripeSecretKey',
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: {
-          'payment_method': paymentMethodId,
-        },
-      );
-
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        final errorData = json.decode(response.body);
-        throw Exception('Stripe API Error: ${errorData['error']?['message'] ?? 'Unknown error'}');
-      }
+      await _firestore.collection('orders').doc(orderId).update({
+        'status': status,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
     } catch (e) {
-      throw Exception('Error confirming payment: $e');
+      throw Exception('Error updating order status: $e');
     }
   }
 
-  // Save payment to Firestore
-  Future<void> savePayment(Payment payment) async {
+  // Get user orders
+  Future<List<payment_models.Order>> getUserOrders(String userId) async {
     try {
-      final data = payment.toJson();
-      data.remove('id');
-      await _db.collection('payments').add(data);
-    } catch (e) {
-      throw Exception('Error saving payment to Firestore: $e');
-    }
-  }
-
-  // Get user payments from Firestore
-  Future<List<Payment>> getUserPayments(String userId) async {
-    try {
-      final snapshot = await _db
-          .collection('payments')
+      final snapshot = await _firestore
+          .collection('orders')
           .where('userId', isEqualTo: userId)
           .orderBy('createdAt', descending: true)
           .get();
-      
-      return snapshot.docs
-          .map((doc) => Payment.fromJson({...doc.data(), 'id': doc.id}))
-          .toList();
+
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        return payment_models.Order.fromJson({
+          'id': doc.id,
+          ...data,
+          'createdAt': data['createdAt']?.toDate()?.toIso8601String(),
+          'updatedAt': data['updatedAt']?.toDate()?.toIso8601String(),
+        });
+      }).toList();
     } catch (e) {
-      throw Exception('Error fetching user payments: $e');
+      throw Exception('Error fetching user orders: $e');
     }
   }
 
-  // Update payment status in Firestore
-  Future<void> updatePaymentStatus(String paymentId, PaymentStatus status, {String? errorMessage}) async {
+  // Get order by ID
+  Future<payment_models.Order?> getOrder(String orderId) async {
     try {
-      await _db.collection('payments').doc(paymentId).update({
-        'status': status.toString().split('.').last,
-        'completedAt': status == PaymentStatus.completed ? DateTime.now().toIso8601String() : null,
-        'errorMessage': errorMessage,
-      });
+      final doc = await _firestore.collection('orders').doc(orderId).get();
+      if (doc.exists) {
+        final data = doc.data()!;
+        return payment_models.Order.fromJson({
+          'id': doc.id,
+          ...data,
+          'createdAt': data['createdAt']?.toDate()?.toIso8601String(),
+          'updatedAt': data['updatedAt']?.toDate()?.toIso8601String(),
+        });
+      }
+      return null;
     } catch (e) {
-      throw Exception('Error updating payment status: $e');
+      throw Exception('Error fetching order: $e');
     }
   }
 
-  // Create subscription in Firestore
-  Future<void> createSubscription(Subscription subscription) async {
-    try {
-      final data = subscription.toJson();
-      data.remove('id');
-      await _db.collection('subscriptions').add(data);
-    } catch (e) {
-      throw Exception('Error creating subscription: $e');
-    }
-  }
-
-  // Get user subscription from Firestore
-  Future<Subscription?> getUserSubscription(String userId) async {
-    try {
-      final snapshot = await _db
-          .collection('subscriptions')
-          .where('userId', isEqualTo: userId)
-          .where('isActive', isEqualTo: true)
-          .limit(1)
-          .get();
-      
-      if (snapshot.docs.isEmpty) return null;
-      
-      final doc = snapshot.docs.first;
-      return Subscription.fromJson({...doc.data(), 'id': doc.id});
-    } catch (e) {
-      throw Exception('Error fetching user subscription: $e');
-    }
-  }
-
-  // Cancel subscription in Firestore
-  Future<void> cancelSubscription(String subscriptionId) async {
-    try {
-      await _db.collection('subscriptions').doc(subscriptionId).update({
-        'isActive': false,
-        'endDate': DateTime.now().toIso8601String(),
-        'status': PaymentStatus.cancelled.toString().split('.').last,
-      });
-    } catch (e) {
-      throw Exception('Error cancelling subscription: $e');
-    }
-  }
-
-  // Get available payment plans from Firestore
+  // Get available payment plans
   Future<List<PaymentPlan>> getAvailablePlans() async {
     try {
-      final snapshot = await _db
+      // For now, return hardcoded payment plans
+      // In production, you would fetch from Firestore
+      return [
+        const PaymentPlan(
+          id: 'monthly',
+          name: 'Monthly Premium',
+          description: 'Access to all premium features for one month',
+          price: 9.90,
+          currency: 'MYR',
+          interval: 'monthly',
+          features: [
+            'Unlock all Rukun Solat videos',
+            'Ad-free experience',
+            'Priority support',
+            'Exclusive content access',
+          ],
+          isPopular: false,
+        ),
+        const PaymentPlan(
+          id: 'yearly',
+          name: 'Yearly Premium',
+          description: 'Access to all premium features for one year',
+          price: 99.00,
+          currency: 'MYR',
+          interval: 'yearly',
+          features: [
+            'Unlock all Rukun Solat videos',
+            'Ad-free experience',
+            'Priority support',
+            'Exclusive content access',
+            'Save 17% compared to monthly',
+          ],
+          isPopular: true,
+        ),
+      ];
+      
+      // Uncomment this code when you have payment plans in Firestore:
+      /*
+      final snapshot = await _firestore
           .collection('payment_plans')
           .where('isActive', isEqualTo: true)
           .orderBy('price')
           .get();
-      
-      return snapshot.docs
-          .map((doc) => PaymentPlan.fromJson({...doc.data(), 'id': doc.id}))
-          .toList();
+
+      return snapshot.docs.map((doc) {
+        final data = doc.data();
+        return PaymentPlan.fromJson({
+          'id': doc.id,
+          ...data,
+        });
+      }).toList();
+      */
     } catch (e) {
       throw Exception('Error fetching payment plans: $e');
     }
   }
 
-  // Create payment plan in Firestore (for admin use)
-  Future<void> createPaymentPlan(PaymentPlan plan) async {
-    try {
-      final data = plan.toJson();
-      data.remove('id');
-      await _db.collection('payment_plans').add(data);
-    } catch (e) {
-      throw Exception('Error creating payment plan: $e');
-    }
-  }
-
-  // Process refund through Stripe
-  Future<Map<String, dynamic>> processRefund({
-    required String paymentIntentId,
-    required double amount,
-    String? reason,
-  }) async {
-    try {
-      final response = await http.post(
-        Uri.parse('$_stripeBaseUrl/refunds'),
-        headers: {
-          'Authorization': 'Bearer $_stripeSecretKey',
-          'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: {
-          'payment_intent': paymentIntentId,
-          'amount': (amount * 100).round().toString(),
-          if (reason != null) 'reason': reason,
-        },
-      );
-
-      if (response.statusCode == 200) {
-        return json.decode(response.body);
-      } else {
-        final errorData = json.decode(response.body);
-        throw Exception('Stripe API Error: ${errorData['error']?['message'] ?? 'Unknown error'}');
-      }
-    } catch (e) {
-      throw Exception('Error processing refund: $e');
-    }
-  }
-
-  // Get payment analytics
-  Future<Map<String, dynamic>> getPaymentAnalytics(String userId) async {
-    try {
-      final payments = await getUserPayments(userId);
-      
-      final totalSpent = payments
-          .where((p) => p.status == PaymentStatus.completed)
-          .fold(0.0, (sum, payment) => sum + payment.amount);
-      
-      final totalPayments = payments.length;
-      final successfulPayments = payments.where((p) => p.status == PaymentStatus.completed).length;
-      final failedPayments = payments.where((p) => p.status == PaymentStatus.failed).length;
-      
-      return {
-        'totalSpent': totalSpent,
-        'totalPayments': totalPayments,
-        'successfulPayments': successfulPayments,
-        'failedPayments': failedPayments,
-        'successRate': totalPayments > 0 ? (successfulPayments / totalPayments) * 100.0 : 0.0,
-      };
-    } catch (e) {
-      throw Exception('Error getting payment analytics: $e');
-    }
-  }
-
-  // Initialize default payment plans (for first-time setup)
+  // Initialize default payment plans
   Future<void> initializeDefaultPlans() async {
     try {
       final defaultPlans = [
@@ -258,8 +177,8 @@ class PaymentRepository {
           id: 'monthly',
           name: 'Monthly Premium',
           description: 'Perfect for getting started',
-          price: 9.99,
-          currency: 'USD',
+          price: 9.90,
+          currency: 'MYR',
           interval: 'monthly',
           features: [
             '✨ Unlimited access to all premium content',
@@ -273,9 +192,9 @@ class PaymentRepository {
         PaymentPlan(
           id: 'yearly',
           name: 'Yearly Premium',
-          description: 'Best value - Save 40%',
-          price: 59.99,
-          currency: 'USD',
+          description: 'Best value - Save 17%',
+          price: 99.00,
+          currency: 'MYR',
           interval: 'yearly',
           features: [
             '✨ All monthly features',
@@ -291,8 +210,8 @@ class PaymentRepository {
           id: 'lifetime',
           name: 'Lifetime Premium',
           description: 'One-time payment, forever access',
-          price: 199.99,
-          currency: 'USD',
+          price: 299.00,
+          currency: 'MYR',
           interval: 'lifetime',
           features: [
             '✨ All yearly features',
@@ -306,10 +225,69 @@ class PaymentRepository {
       ];
 
       for (final plan in defaultPlans) {
-        await createPaymentPlan(plan);
+        await _firestore.collection('payment_plans').doc(plan.id).set({
+          'name': plan.name,
+          'description': plan.description,
+          'price': plan.price,
+          'currency': plan.currency,
+          'interval': plan.interval,
+          'features': plan.features,
+          'isPopular': plan.isPopular,
+          'isActive': true,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
       }
     } catch (e) {
       throw Exception('Error initializing default plans: $e');
     }
   }
-} 
+
+  // Update user premium status
+  Future<void> updateUserPremiumStatus({
+    required String userId,
+    required bool isPremium,
+    required DateTime premiumExpiryDate,
+    required String planId,
+  }) async {
+    try {
+      await _firestore.collection('users').doc(userId).update({
+        'isPremium': isPremium,
+        'premiumExpiryDate': premiumExpiryDate.toIso8601String(),
+        'premiumPlanId': planId,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    } catch (e) {
+      throw Exception('Error updating user premium status: $e');
+    }
+  }
+
+  // Confirm payment
+  Future<Map<String, dynamic>> confirmPayment({
+    required String paymentIntentId,
+    required String paymentMethodId,
+  }) async {
+    try {
+      return await _paymentService.confirmPaymentIntent(
+        paymentIntentId: paymentIntentId,
+        paymentMethodId: paymentMethodId,
+      );
+    } catch (e) {
+      throw Exception('Error confirming payment: $e');
+    }
+  }
+
+  // Create payment method
+  Future<Map<String, dynamic>> createPaymentMethod({
+    required Map<String, dynamic> cardData,
+    required Map<String, dynamic> billingDetails,
+  }) async {
+    try {
+      return await _paymentService.createPaymentMethod(
+        cardData: cardData,
+        billingDetails: billingDetails,
+      );
+    } catch (e) {
+      throw Exception('Error creating payment method: $e');
+    }
+  }
+}

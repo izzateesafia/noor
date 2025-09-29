@@ -2,16 +2,14 @@ import 'package:daily_quran/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'models/payment.dart';
+import 'models/payment/order.dart' as payment_models;
 import 'models/class_model.dart';
 import 'cubit/user_cubit.dart';
 import 'cubit/user_states.dart';
-import 'cubit/payment_cubit.dart';
-import 'cubit/payment_states.dart';
+import 'blocs/payment/payment_bloc.dart';
 import 'cubit/class_cubit.dart';
 import 'cubit/class_states.dart';
 import 'repository/user_repository.dart';
-import 'repository/payment_repository.dart';
 import 'repository/class_repository.dart';
 
 class UserProfilePage extends StatelessWidget {
@@ -22,7 +20,7 @@ class UserProfilePage extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider(create: (_) => UserCubit(UserRepository())..fetchCurrentUser()),
-        BlocProvider(create: (_) => PaymentCubit(PaymentRepository())),
+        BlocProvider(create: (_) => PaymentBloc()),
         BlocProvider(create: (_) => ClassCubit(ClassRepository())),
       ],
       child: const _UserProfileView(),
@@ -46,9 +44,7 @@ class _UserProfileViewState extends State<_UserProfileView> {
       final userCubit = context.read<UserCubit>();
       if (userCubit.state.currentUser != null) {
         final userId = userCubit.state.currentUser!.id;
-        context.read<PaymentCubit>()
-          ..getUserPayments(userId)
-          ..getUserSubscription(userId);
+        context.read<PaymentBloc>().add(LoadUserOrders(userId: userId));
         // Fetch classes to display enrolled classes
         context.read<ClassCubit>().fetchClasses();
       }
@@ -88,16 +84,16 @@ class _UserProfileViewState extends State<_UserProfileView> {
                 const SizedBox(height: 32),
                 
                 // Subscription Info
-                BlocBuilder<PaymentCubit, PaymentState>(
+                BlocBuilder<PaymentBloc, PaymentState>(
                   builder: (context, paymentState) {
-                    if (paymentState.currentSubscription != null) {
-                      return _buildSubscriptionInfo(paymentState.currentSubscription!);
+                    if (paymentState is UserOrdersLoaded && paymentState.orders.isNotEmpty) {
+                      return _buildSubscriptionInfo(paymentState.orders.first);
                     }
                     return const SizedBox.shrink();
                   },
                 ),
                 
-                if (user.isPremium || context.read<PaymentCubit>().state.currentSubscription != null) 
+                if (user.isPremium) 
                   const SizedBox(height: 32),
                 
                 // Enrolled Classes
@@ -151,7 +147,7 @@ class _UserProfileViewState extends State<_UserProfileView> {
     );
   }
 
-  Widget _buildSubscriptionInfo(Subscription subscription) {
+  Widget _buildSubscriptionInfo(payment_models.Order order) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -171,13 +167,11 @@ class _UserProfileViewState extends State<_UserProfileView> {
               ],
             ),
             const SizedBox(height: 12),
-            _buildInfoRow('Plan', subscription.planName),
-            _buildInfoRow('Price', '\$${subscription.price.toStringAsFixed(2)} ${subscription.currency.toUpperCase()}'),
-            _buildInfoRow('Interval', subscription.interval),
-            _buildInfoRow('Started', DateFormat('MMM dd, yyyy').format(subscription.startDate)),
-            if (subscription.endDate != null)
-              _buildInfoRow('Expires', DateFormat('MMM dd, yyyy').format(subscription.endDate!)),
-            _buildInfoRow('Status', subscription.isActive ? 'Active' : 'Inactive'),
+            _buildInfoRow('Plan', order.description ?? 'Premium Subscription'),
+            _buildInfoRow('Price', 'RM${order.amount?.toStringAsFixed(2) ?? '0.00'} ${order.currency?.toUpperCase() ?? 'MYR'}'),
+            _buildInfoRow('Order ID', order.id ?? 'N/A'),
+            _buildInfoRow('Created', DateFormat('MMM dd, yyyy').format(order.createdAt ?? DateTime.now())),
+            _buildInfoRow('Status', order.status?.toUpperCase() ?? 'UNKNOWN'),
           ],
         ),
       ),
@@ -399,13 +393,13 @@ class _UserProfileViewState extends State<_UserProfileView> {
           style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
-        BlocBuilder<PaymentCubit, PaymentState>(
+        BlocBuilder<PaymentBloc, PaymentState>(
           builder: (context, paymentState) {
-            if (paymentState.isLoading) {
+            if (paymentState is PaymentLoading) {
               return const Center(child: CircularProgressIndicator());
             }
 
-            if (paymentState.hasError) {
+            if (paymentState is PaymentError) {
               return Card(
                 color: Colors.red.shade50,
                 child: Padding(
@@ -423,7 +417,7 @@ class _UserProfileViewState extends State<_UserProfileView> {
                         onPressed: () {
                           final userCubit = context.read<UserCubit>();
                           if (userCubit.state.currentUser != null) {
-                            context.read<PaymentCubit>().getUserPayments(userCubit.state.currentUser!.id);
+                            context.read<PaymentBloc>().add(LoadUserOrders(userId: userCubit.state.currentUser!.id));
                           }
                         },
                         child: const Text('Retry'),
@@ -434,7 +428,7 @@ class _UserProfileViewState extends State<_UserProfileView> {
               );
             }
 
-            if (!paymentState.hasPayments) {
+            if (paymentState is! UserOrdersLoaded || paymentState.orders.isEmpty) {
               return Card(
                 child: Padding(
                   padding: const EdgeInsets.all(24),
@@ -472,16 +466,16 @@ class _UserProfileViewState extends State<_UserProfileView> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: [
-                        _buildPaymentStat('Total', paymentState.payments.length.toString()),
-                        _buildPaymentStat('Successful', paymentState.successfulPayments.length.toString()),
-                        _buildPaymentStat('Total Spent', '\$${paymentState.totalSpent.toStringAsFixed(2)}'),
+                        _buildPaymentStat('Total', paymentState.orders.length.toString()),
+                        _buildPaymentStat('Successful', paymentState.orders.where((o) => o.status == 'completed').length.toString()),
+                        _buildPaymentStat('Total Spent', 'RM${paymentState.orders.fold(0.0, (sum, o) => sum + (o.amount ?? 0)).toStringAsFixed(2)}'),
                       ],
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
                 // Payment List
-                ...paymentState.payments.map((payment) => _buildPaymentCard(payment)).toList(),
+                ...paymentState.orders.map((order) => _buildPaymentCard(order)).toList(),
               ],
             );
           },
@@ -512,30 +506,30 @@ class _UserProfileViewState extends State<_UserProfileView> {
     );
   }
 
-  Widget _buildPaymentCard(Payment payment) {
+  Widget _buildPaymentCard(payment_models.Order order) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: _getPaymentStatusColor(payment.status).withOpacity(0.1),
+          backgroundColor: _getPaymentStatusColor(order.status).withOpacity(0.1),
           child: Icon(
-            _getPaymentStatusIcon(payment.status),
-            color: _getPaymentStatusColor(payment.status),
+            _getPaymentStatusIcon(order.status),
+            color: _getPaymentStatusColor(order.status),
           ),
         ),
         title: Text(
-          '${payment.type.toString().split('.').last} - \$${payment.amount.toStringAsFixed(2)}',
+          '${order.description ?? 'Payment'} - RM${order.amount?.toStringAsFixed(2) ?? '0.00'}',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${payment.currency.toUpperCase()} • ${DateFormat('MMM dd, yyyy').format(payment.createdAt)}',
+              '${order.currency?.toUpperCase() ?? 'MYR'} • ${DateFormat('MMM dd, yyyy').format(order.createdAt ?? DateTime.now())}',
             ),
-            if (payment.description != null)
+            if (order.description != null)
               Text(
-                payment.description!,
+                order.description!,
                 style: TextStyle(fontSize: 12, color: Colors.grey[600]),
               ),
           ],
@@ -545,15 +539,15 @@ class _UserProfileViewState extends State<_UserProfileView> {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              payment.status.toString().split('.').last.toUpperCase(),
+              order.status?.toUpperCase() ?? 'UNKNOWN',
               style: TextStyle(
-                color: _getPaymentStatusColor(payment.status),
+                color: _getPaymentStatusColor(order.status),
                 fontWeight: FontWeight.bold,
                 fontSize: 12,
               ),
             ),
             Text(
-              payment.method.toString().split('.').last,
+              'Card',
               style: TextStyle(
                 color: Colors.grey[600],
                 fontSize: 10,
@@ -565,34 +559,38 @@ class _UserProfileViewState extends State<_UserProfileView> {
     );
   }
 
-  Color _getPaymentStatusColor(PaymentStatus status) {
+  Color _getPaymentStatusColor(String? status) {
     switch (status) {
-      case PaymentStatus.completed:
+      case 'completed':
         return Colors.green;
-      case PaymentStatus.pending:
-      case PaymentStatus.processing:
+      case 'pending':
+      case 'processing':
         return Colors.orange;
-      case PaymentStatus.failed:
+      case 'failed':
         return Colors.red;
-      case PaymentStatus.cancelled:
+      case 'cancelled':
         return Colors.grey;
-      case PaymentStatus.initial:
+      case 'initial':
         return Colors.blue;
+      default:
+        return Colors.grey;
     }
   }
 
-  IconData _getPaymentStatusIcon(PaymentStatus status) {
+  IconData _getPaymentStatusIcon(String? status) {
     switch (status) {
-      case PaymentStatus.completed:
+      case 'completed':
         return Icons.check_circle;
-      case PaymentStatus.pending:
-      case PaymentStatus.processing:
+      case 'pending':
+      case 'processing':
         return Icons.pending;
-      case PaymentStatus.failed:
+      case 'failed':
         return Icons.error;
-      case PaymentStatus.cancelled:
+      case 'cancelled':
         return Icons.cancel;
-      case PaymentStatus.initial:
+      case 'initial':
+        return Icons.info;
+      default:
         return Icons.info;
     }
   }

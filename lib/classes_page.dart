@@ -6,6 +6,8 @@ import 'models/class_model.dart';
 import 'class_payment_page.dart';
 import 'cubit/class_cubit.dart';
 import 'cubit/class_states.dart';
+import 'cubit/user_cubit.dart';
+import 'cubit/user_states.dart';
 
 class ClassesPage extends StatefulWidget {
   const ClassesPage({super.key});
@@ -15,17 +17,6 @@ class ClassesPage extends StatefulWidget {
 }
 
 class _ClassesPageState extends State<ClassesPage> {
-  // Mock user (replace with real user from provider/auth)
-  UserModel user = UserModel(
-    phone: '',
-    id: 'u1',
-    name: 'Ali',
-    email: 'ali@email.com',
-    userType: UserType.nonAdmin,
-    isPremium: false,
-    enrolledClassIds: [],
-  );
-
   @override
   void initState() {
     super.initState();
@@ -34,7 +25,7 @@ class _ClassesPageState extends State<ClassesPage> {
     });
   }
 
-  void _enroll(ClassModel classModel) {
+  void _enroll(ClassModel classModel, UserModel user) {
     if (classModel.price > 0.0) {
       Navigator.of(context).push(
         MaterialPageRoute(
@@ -63,7 +54,25 @@ class _ClassesPageState extends State<ClassesPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BlocBuilder<UserCubit, UserState>(
+      builder: (context, userState) {
+        // Ensure user data is loaded if needed
+        if (userState.status == UserStatus.initial) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            context.read<UserCubit>().fetchCurrentUser();
+          });
+        }
+        
+        final user = userState.currentUser;
+        if (user == null) {
+          return const Scaffold(
+            body: Center(
+              child: CircularProgressIndicator(),
+            ),
+          );
+        }
+        
+        return Scaffold(
       appBar: AppBar(
         title: const Text('Kelas'),
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
@@ -166,7 +175,7 @@ class _ClassesPageState extends State<ClassesPage> {
                             ),
                             const Spacer(),
                             ElevatedButton(
-                              onPressed: enrolled ? null : () => _enroll(classItem),
+                              onPressed: enrolled ? null : () => _enroll(classItem, user),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: enrolled
                                     ? Theme.of(context).disabledColor
@@ -190,6 +199,8 @@ class _ClassesPageState extends State<ClassesPage> {
           }
         },
       ),
+    );
+      },
     );
   }
 } 
