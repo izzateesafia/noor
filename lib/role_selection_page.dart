@@ -15,27 +15,31 @@ class RoleSelectionPage extends StatefulWidget {
 
 class _RoleSelectionPageState extends State<RoleSelectionPage> {
   String? _selectedRole;
+  bool _isSaving = false;
+  UserModel? _currentUser;
+  bool _isLoadingUser = true;
 
   @override
   void initState() {
     super.initState();
-    // Check if user is already logged in and redirect to dashboard
-    _checkAuthStatus();
+    _fetchUserInfo();
   }
 
-  Future<void> _checkAuthStatus() async {
+  Future<void> _fetchUserInfo() async {
+    setState(() {
+      _isLoadingUser = true;
+    });
+
     try {
-      final userCubit = UserCubit(UserRepository());
-      await userCubit.fetchCurrentUser();
-      
-      if (mounted) {
-        if (userCubit.state.status == UserStatus.loaded && userCubit.state.currentUser != null) {
-          // User is already logged in, go to dashboard
-          Navigator.pushReplacementNamed(context, '/main');
-        }
-      }
+      // Fetch current user from Firebase
+      context.read<UserCubit>().fetchCurrentUser();
     } catch (e) {
-      print('Error checking auth status in role selection: $e');
+      print('Error fetching user info: $e');
+      if (mounted) {
+        setState(() {
+          _isLoadingUser = false;
+        });
+      }
     }
   }
 
@@ -43,13 +47,163 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
     setState(() {
       _selectedRole = role;
     });
-    // Navigate to dashboard after role selection
-                          Navigator.pushReplacementNamed(context, '/main');
+  }
+
+  Future<void> _saveRole() async {
+    if (_selectedRole == null) return;
+    
+    // Refresh user info before checking
+    await _fetchUserInfo();
+    
+    if (_currentUser == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Gagal memuatkan maklumat pengguna. Sila cuba lagi.'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Map selection to UserType
+    UserType targetType = UserType.student;
+    if (_selectedRole == 'Trainer' || _selectedRole == 'Jurulatih') {
+      targetType = UserType.trainer;
+    } else if (_selectedRole == 'Master Trainer') {
+      targetType = UserType.masterTrainer;
+    } else {
+      targetType = UserType.student;
+    }
+
+    // Check if selected role matches user's userType or roles
+    final userType = _currentUser!.userType;
+    final userRoles = _currentUser!.roles;
+    
+    // Admin can access all roles - skip validation
+    bool isAdmin = userType == UserType.admin || userRoles.contains(UserType.admin);
+    
+    bool roleMatches = false;
+    
+    if (isAdmin) {
+      // Admin can select any role
+      roleMatches = true;
+    } else {
+      // Check if userType matches
+      if (userType == targetType) {
+        roleMatches = true;
+      }
+      
+      // Also check if role is in the roles array
+      if (!roleMatches && userRoles.contains(targetType)) {
+        roleMatches = true;
+      }
+    }
+
+    if (!roleMatches) {
+      // Role doesn't match - show snackbar
+      String roleName = _selectedRole!;
+      String userRoleName = _getRoleName(userType);
+      
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            'Peranan yang dipilih ($roleName) tidak sepadan dengan peranan anda ($userRoleName). Sila pilih peranan yang betul.',
+          ),
+          backgroundColor: Colors.red,
+          duration: const Duration(seconds: 4),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
+        ),
+      );
+      return;
+    }
+
+    // Role matches - proceed to save and navigate
+    setState(() {
+      _isSaving = true;
+    });
+
+    // Hide any existing snackbars before navigation
+    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+    ScaffoldMessenger.of(context).clearSnackBars();
+
+    // For admins, add the selected role to their roles array without changing userType
+    if (isAdmin) {
+      final current = _currentUser!;
+      // Ensure admin role is preserved and add the selected role
+      final updatedRoles = {
+        ...current.roles,
+        UserType.admin, // Preserve admin role
+        targetType, // Add selected role
+      }.toList();
+      final updated = current.copyWith(roles: updatedRoles);
+      await context.read<UserCubit>().updateUser(updated);
+    } else {
+      // For non-admins, update userType as before
+      await context.read<UserCubit>().updateUserType(targetType);
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _isSaving = false;
+    });
+
+    Navigator.pushReplacementNamed(context, '/main');
+  }
+
+  String _getRoleName(UserType role) {
+    switch (role) {
+      case UserType.student:
+        return 'Pelajar';
+      case UserType.trainer:
+        return 'Jurulatih';
+      case UserType.masterTrainer:
+        return 'Master Trainer';
+      case UserType.admin:
+        return 'Admin';
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return BlocListener<UserCubit, UserState>(
+      listener: (context, state) {
+        if (state.status == UserStatus.loaded && state.currentUser != null) {
+          setState(() {
+            _currentUser = state.currentUser;
+            _isLoadingUser = false;
+          });
+        } else if (state.status == UserStatus.error) {
+          setState(() {
+            _isLoadingUser = false;
+          });
+        }
+      },
+      child: BlocBuilder<UserCubit, UserState>(
+        builder: (context, state) {
+          if (_isLoadingUser || state.status == UserStatus.loading) {
+            return Scaffold(
+              body: SafeArea(
+                child: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const CircularProgressIndicator(),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Memuatkan maklumat pengguna...',
+                        style: Theme.of(context).textTheme.bodyLarge,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            );
+          }
+
+          return Scaffold(
       body: SafeArea(
         child: Center(
           child: Padding(
@@ -101,25 +255,35 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
                     ),
                     padding: const EdgeInsets.symmetric(vertical: 16),
                   ),
-                  onPressed: _selectedRole != null
-                      ? () {
-                          Navigator.pushReplacementNamed(context, '/main');
-                        }
+                  onPressed: _selectedRole != null && !_isSaving
+                      ? _saveRole
                       : null,
-                  child: const Text(
-                    'Continue',
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      fontSize: 18,
-                    ),
-                  ),
+                  child: _isSaving
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : const Text(
+                          'Continue',
+                          style: TextStyle(
+                            fontFamily: 'Montserrat',
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white,
+                            fontSize: 18,
+                          ),
+                        ),
                 ),
               ],
             ),
           ),
         ),
+      ),
+    );
+        },
       ),
     );
   }
