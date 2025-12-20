@@ -50,18 +50,18 @@ class _TestPrayerAlarmPageState extends State<TestPrayerAlarmPage> {
     }
   }
 
-  Future<void> _testAdhan(String prayerName) async {
-    try {
-      await _prayerAlarmService.testAdhan(prayerName);
-      setState(() {
-        _status = 'Menguji azan untuk $prayerName...';
-      });
-    } catch (e) {
-      setState(() {
-        _status = 'Ralat menguji azan: $e';
-      });
-    }
-  }
+  // Future<void> _testAdhan(String prayerName) async {
+  //   try {
+  //     await _prayerAlarmService.testAdhan(prayerName);
+  //     setState(() {
+  //       _status = 'Menguji azan untuk $prayerName...';
+  //     });
+  //   } catch (e) {
+  //     setState(() {
+  //       _status = 'Ralat menguji azan: $e';
+  //     });
+  //   }
+  // }
 
   @override
   Widget build(BuildContext context) {
@@ -107,13 +107,13 @@ class _TestPrayerAlarmPageState extends State<TestPrayerAlarmPage> {
             ...['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].map((prayer) {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4),
-                child: SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () => _testAdhan(prayer),
-                    child: Text('Uji Azan ${_getPrayerDisplayName(prayer)}'),
-                  ),
-                ),
+                // child: SizedBox(
+                //   width: double.infinity,
+                //   child: ElevatedButton(
+                //     onPressed: () => _testAdhan(prayer),
+                //     child: Text('Uji Azan ${_getPrayerDisplayName(prayer)}'),
+                //   ),
+                // ),
               );
             }).toList(),
             const SizedBox(height: 16),

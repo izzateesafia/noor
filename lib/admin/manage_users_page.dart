@@ -214,14 +214,14 @@ class _ManageUsersViewState extends State<_ManageUsersView> {
                             contentPadding: const EdgeInsets.all(16),
                             leading: CircleAvatar(
                               radius: 25,
-                              backgroundColor: user.userType == UserType.admin
+                              backgroundColor: user.roles.contains(UserType.admin)
                                   ? Colors.red.shade100
                                   : Colors.blue.shade100,
                               child: Icon(
-                                user.userType == UserType.admin
+                                user.roles.contains(UserType.admin)
                                     ? Icons.admin_panel_settings
                                     : Icons.person,
-                                color: user.userType == UserType.admin
+                                color: user.roles.contains(UserType.admin)
                                     ? Colors.red
                                     : Colors.blue,
                                 size: 28,

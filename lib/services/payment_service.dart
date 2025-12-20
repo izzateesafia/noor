@@ -7,6 +7,13 @@ class PaymentService {
   factory PaymentService() => _instance ??= PaymentService._();
 
   PaymentService._() {
+    // TODO: Store Stripe secret key securely using environment variables or secure storage
+    // For now, using a placeholder - replace with actual key from secure storage
+    final stripeSecretKey = const String.fromEnvironment(
+      'STRIPE_SECRET_KEY',
+      defaultValue: 'YOUR_STRIPE_SECRET_KEY_HERE',
+    );
+    
     _dio = Dio(
       BaseOptions(
         baseUrl: 'https://api.stripe.com/v1', // Replace with your backend API
@@ -15,7 +22,7 @@ class PaymentService {
         sendTimeout: const Duration(seconds: 20),
         headers: {
           'Content-Type': 'application/x-www-form-urlencoded',
-          'Authorization': 'Bearer ${const String.fromEnvironment('STRIPE_SECRET_KEY', defaultValue: 'sk_test_your_stripe_secret_key_here')}',
+          'Authorization': 'Bearer $stripeSecretKey',
         },
       ),
     );

@@ -1,12 +1,9 @@
 import 'package:daily_quran/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
-import 'models/payment/order.dart' as payment_models;
 import 'models/class_model.dart';
 import 'cubit/user_cubit.dart';
 import 'cubit/user_states.dart';
-import 'blocs/payment/payment_bloc.dart';
 import 'cubit/class_cubit.dart';
 import 'cubit/class_states.dart';
 import 'repository/user_repository.dart';
@@ -19,9 +16,13 @@ class UserProfilePage extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(create: (_) => UserCubit(UserRepository())..fetchCurrentUser()),
-        BlocProvider(create: (_) => PaymentBloc()),
-        BlocProvider(create: (_) => ClassCubit(ClassRepository())),
+        // Use existing cubits from parent context if available, otherwise create new ones
+        BlocProvider<UserCubit>.value(
+          value: context.read<UserCubit>(),
+        ),
+        BlocProvider<ClassCubit>.value(
+          value: context.read<ClassCubit>(),
+        ),
       ],
       child: const _UserProfileView(),
     );
@@ -39,26 +40,45 @@ class _UserProfileViewState extends State<_UserProfileView> {
   @override
   void initState() {
     super.initState();
-    // Fetch payment history and subscription after user is loaded
+    // Always fetch classes when the page loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userCubit = context.read<UserCubit>();
-      if (userCubit.state.currentUser != null) {
-        final userId = userCubit.state.currentUser!.id;
-        context.read<PaymentBloc>().add(LoadUserOrders(userId: userId));
-        // Fetch classes to display enrolled classes
-        context.read<ClassCubit>().fetchClasses();
-      }
+      context.read<ClassCubit>().fetchClasses();
+    });
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    // Refresh user data when page becomes visible (e.g., returning from payment)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<UserCubit>().fetchCurrentUser();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<UserCubit, UserState>(
-      builder: (context, userState) {
-        final user = userState.currentUser;
-        if (user == null) {
-          return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    return BlocListener<UserCubit, UserState>(
+      listener: (context, userState) {
+        // Automatically fetch classes when user data is loaded
+        if (userState.status == UserStatus.loaded && userState.currentUser != null) {
+          // Only fetch classes if they haven't been loaded yet
+          final classCubit = context.read<ClassCubit>();
+          if (classCubit.state.status == ClassStatus.initial) {
+            classCubit.fetchClasses();
+          }
         }
+      },
+      child: BlocBuilder<UserCubit, UserState>(
+        builder: (context, userState) {
+          // Debug logging
+          print('Profile Page BlocBuilder: UserState: $userState');
+          print('Profile Page BlocBuilder: Status: ${userState.status}');
+          print('Profile Page BlocBuilder: CurrentUser: ${userState.currentUser}');
+          
+          final user = userState.currentUser;
+          if (user == null) {
+            return const Scaffold(body: Center(child: CircularProgressIndicator()));
+          }
 
         return Scaffold(
           appBar: AppBar(
@@ -70,6 +90,25 @@ class _UserProfileViewState extends State<_UserProfileView> {
                   child: Chip(
                     label: const Text('Premium', style: TextStyle(color: Colors.white)),
                     backgroundColor: Colors.amber,
+                  ),
+                )
+              else
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).pushNamed('/premium');
+                    },
+                    icon: const Icon(Icons.star, size: 16),
+                    label: const Text('Upgrade'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.amber,
+                      foregroundColor: Colors.white,
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
                   ),
                 ),
             ],
@@ -83,30 +122,18 @@ class _UserProfileViewState extends State<_UserProfileView> {
                 _buildUserInfo(user),
                 const SizedBox(height: 32),
                 
-                // Subscription Info
-                BlocBuilder<PaymentBloc, PaymentState>(
-                  builder: (context, paymentState) {
-                    if (paymentState is UserOrdersLoaded && paymentState.orders.isNotEmpty) {
-                      return _buildSubscriptionInfo(paymentState.orders.first);
-                    }
-                    return const SizedBox.shrink();
-                  },
-                ),
-                
-                if (user.isPremium) 
-                  const SizedBox(height: 32),
-                
                 // Enrolled Classes
                 _buildEnrolledClasses(user),
                 const SizedBox(height: 32),
                 
-                // Payment History
-                _buildPaymentHistory(),
+                // Logout Button
+                _buildLogoutButton(),
               ],
             ),
           ),
         );
-      },
+        },
+      ),
     );
   }
 
@@ -147,62 +174,6 @@ class _UserProfileViewState extends State<_UserProfileView> {
     );
   }
 
-  Widget _buildSubscriptionInfo(payment_models.Order order) {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Icon(Icons.star, color: Colors.amber, size: 24),
-                const SizedBox(width: 8),
-                const Text(
-                  'Active Subscription',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            _buildInfoRow('Plan', order.description ?? 'Premium Subscription'),
-            _buildInfoRow('Price', 'RM${order.amount?.toStringAsFixed(2) ?? '0.00'} ${order.currency?.toUpperCase() ?? 'MYR'}'),
-            _buildInfoRow('Order ID', order.id ?? 'N/A'),
-            _buildInfoRow('Created', DateFormat('MMM dd, yyyy').format(order.createdAt ?? DateTime.now())),
-            _buildInfoRow('Status', order.status?.toUpperCase() ?? 'UNKNOWN'),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildInfoRow(String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          Text(
-            label,
-            style: TextStyle(
-              color: Colors.grey[600],
-              fontSize: 14,
-            ),
-          ),
-          Text(
-            value,
-            style: const TextStyle(
-              fontWeight: FontWeight.w500,
-              fontSize: 14,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildEnrolledClasses(UserModel user) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -210,7 +181,7 @@ class _UserProfileViewState extends State<_UserProfileView> {
         Row(
           children: [
             const Text(
-              'Enrolled Classes',
+              'Kelas Yang Didaftar',
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(width: 8),
@@ -228,6 +199,16 @@ class _UserProfileViewState extends State<_UserProfileView> {
                   fontSize: 14,
                 ),
               ),
+            ),
+            const Spacer(),
+            IconButton(
+              onPressed: () {
+                // Refresh user data and classes
+                context.read<UserCubit>().fetchCurrentUser();
+                context.read<ClassCubit>().fetchClasses();
+              },
+              icon: const Icon(Icons.refresh, size: 20),
+              tooltip: 'Muat Semula',
             ),
           ],
         ),
@@ -248,7 +229,7 @@ class _UserProfileViewState extends State<_UserProfileView> {
                       Icon(Icons.error_outline, color: Colors.red, size: 32),
                       const SizedBox(height: 8),
                       Text(
-                        'Error loading enrolled classes',
+                        'Ralat memuatkan kelas yang didaftar',
                         style: TextStyle(color: Colors.red[700]),
                       ),
                       const SizedBox(height: 8),
@@ -256,7 +237,7 @@ class _UserProfileViewState extends State<_UserProfileView> {
                         onPressed: () {
                           context.read<ClassCubit>().fetchClasses();
                         },
-                        child: const Text('Retry'),
+                        child: const Text('Cuba Lagi'),
                       ),
                     ],
                   ),
@@ -269,6 +250,11 @@ class _UserProfileViewState extends State<_UserProfileView> {
                 .where((classModel) => user.enrolledClassIds.contains(classModel.id))
                 .toList();
 
+            // Debug logging
+            print('Profile Page: User enrolledClassIds: ${user.enrolledClassIds}');
+            print('Profile Page: Available classes: ${classState.classes.map((c) => c.id).toList()}');
+            print('Profile Page: Enrolled classes found: ${enrolledClasses.map((c) => c.title).toList()}');
+
             if (enrolledClasses.isEmpty) {
               return Card(
                 child: Padding(
@@ -278,7 +264,7 @@ class _UserProfileViewState extends State<_UserProfileView> {
                       Icon(Icons.school, color: Colors.grey, size: 48),
                       const SizedBox(height: 16),
                       Text(
-                        'No classes enrolled yet',
+                        'Belum ada kelas yang didaftar',
                         style: TextStyle(
                           fontSize: 16,
                           color: Colors.grey[600],
@@ -286,7 +272,7 @@ class _UserProfileViewState extends State<_UserProfileView> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'You can enroll in classes from the main menu.',
+                        'Anda boleh mendaftar kelas dari menu utama.',
                         style: TextStyle(
                           fontSize: 14,
                           color: Colors.grey[500],
@@ -298,7 +284,7 @@ class _UserProfileViewState extends State<_UserProfileView> {
                           Navigator.of(context).pushNamed('/classes');
                         },
                         icon: const Icon(Icons.add),
-                        label: const Text('Browse Classes'),
+                        label: const Text('Jelajah Kelas'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.red,
                           foregroundColor: Colors.white,
@@ -321,7 +307,7 @@ class _UserProfileViewState extends State<_UserProfileView> {
                       Navigator.of(context).pushNamed('/classes');
                     },
                     icon: const Icon(Icons.school),
-                    label: const Text('View All Classes'),
+                    label: const Text('Lihat Semua Kelas'),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: Colors.blue,
                       side: BorderSide(color: Colors.blue),
@@ -384,214 +370,72 @@ class _UserProfileViewState extends State<_UserProfileView> {
     );
   }
 
-  Widget _buildPaymentHistory() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Payment History',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 12),
-        BlocBuilder<PaymentBloc, PaymentState>(
-          builder: (context, paymentState) {
-            if (paymentState is PaymentLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            if (paymentState is PaymentError) {
-              return Card(
-                color: Colors.red.shade50,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: [
-                      Icon(Icons.error_outline, color: Colors.red, size: 32),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Error loading payments',
-                        style: TextStyle(color: Colors.red[700]),
-                      ),
-                      const SizedBox(height: 8),
-                      ElevatedButton(
-                        onPressed: () {
-                          final userCubit = context.read<UserCubit>();
-                          if (userCubit.state.currentUser != null) {
-                            context.read<PaymentBloc>().add(LoadUserOrders(userId: userCubit.state.currentUser!.id));
-                          }
-                        },
-                        child: const Text('Retry'),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-
-            if (paymentState is! UserOrdersLoaded || paymentState.orders.isEmpty) {
-              return Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    children: [
-                      Icon(Icons.receipt_long, color: Colors.grey, size: 48),
-                      const SizedBox(height: 16),
-                      Text(
-                        'No payments found',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[600],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Your payment history will appear here',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.grey[500],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-
-            return Column(
-              children: [
-                // Payment Summary
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: [
-                        _buildPaymentStat('Total', paymentState.orders.length.toString()),
-                        _buildPaymentStat('Successful', paymentState.orders.where((o) => o.status == 'completed').length.toString()),
-                        _buildPaymentStat('Total Spent', 'RM${paymentState.orders.fold(0.0, (sum, o) => sum + (o.amount ?? 0)).toStringAsFixed(2)}'),
-                      ],
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                // Payment List
-                ...paymentState.orders.map((order) => _buildPaymentCard(order)).toList(),
-              ],
-            );
-          },
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPaymentStat(String label, String value) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: Colors.blue,
-          ),
-        ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildPaymentCard(payment_models.Order order) {
-    return Card(
-      margin: const EdgeInsets.only(bottom: 8),
-      child: ListTile(
-        leading: CircleAvatar(
-          backgroundColor: _getPaymentStatusColor(order.status).withOpacity(0.1),
-          child: Icon(
-            _getPaymentStatusIcon(order.status),
-            color: _getPaymentStatusColor(order.status),
-          ),
-        ),
-        title: Text(
-          '${order.description ?? 'Payment'} - RM${order.amount?.toStringAsFixed(2) ?? '0.00'}',
-          style: const TextStyle(fontWeight: FontWeight.bold),
-        ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              '${order.currency?.toUpperCase() ?? 'MYR'} • ${DateFormat('MMM dd, yyyy').format(order.createdAt ?? DateTime.now())}',
-            ),
-            if (order.description != null)
-              Text(
-                order.description!,
-                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
-              ),
-          ],
-        ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              order.status?.toUpperCase() ?? 'UNKNOWN',
-              style: TextStyle(
-                color: _getPaymentStatusColor(order.status),
-                fontWeight: FontWeight.bold,
-                fontSize: 12,
+  Widget _buildLogoutButton() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () => _showLogoutDialog(context),
+            icon: const Icon(Icons.logout),
+            label: const Text('Log Keluar'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.red,
+              side: const BorderSide(color: Colors.red),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
             ),
-            Text(
-              'Card',
-              style: TextStyle(
-                color: Colors.grey[600],
-                fontSize: 10,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );
   }
 
-  Color _getPaymentStatusColor(String? status) {
-    switch (status) {
-      case 'completed':
-        return Colors.green;
-      case 'pending':
-      case 'processing':
-        return Colors.orange;
-      case 'failed':
-        return Colors.red;
-      case 'cancelled':
-        return Colors.grey;
-      case 'initial':
-        return Colors.blue;
-      default:
-        return Colors.grey;
-    }
-  }
-
-  IconData _getPaymentStatusIcon(String? status) {
-    switch (status) {
-      case 'completed':
-        return Icons.check_circle;
-      case 'pending':
-      case 'processing':
-        return Icons.pending;
-      case 'failed':
-        return Icons.error;
-      case 'cancelled':
-        return Icons.cancel;
-      case 'initial':
-        return Icons.info;
-      default:
-        return Icons.info;
-    }
+  void _showLogoutDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text('Log Keluar'),
+          content: const Text('Adakah anda pasti mahu log keluar?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Batal'),
+            ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+                try {
+                  await context.read<UserCubit>().signOut();
+                  if (context.mounted) {
+                    Navigator.of(context).pushNamedAndRemoveUntil(
+                      '/login',
+                      (route) => false,
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Gagal log keluar: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red,
+              ),
+              child: const Text('Log Keluar'),
+            ),
+          ],
+        );
+      },
+    );
   }
 } 

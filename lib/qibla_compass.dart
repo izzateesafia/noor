@@ -47,12 +47,12 @@ class _QiblaCompassState extends State<QiblaCompass> {
 
               case LocationPermission.denied:
                 return LocationErrorWidget(
-                  error: "Location service permission denied",
+                  error: "Kebenaran perkhidmatan lokasi ditolak",
                   callback: _checkLocationStatus,
                 );
               case LocationPermission.deniedForever:
                 return LocationErrorWidget(
-                  error: "Location service Denied Forever !",
+                  error: "Perkhidmatan lokasi ditolak selama-lamanya!",
                   callback: _checkLocationStatus,
                 );
               // case GeolocationStatus.unknown:
@@ -65,7 +65,7 @@ class _QiblaCompassState extends State<QiblaCompass> {
             }
           } else {
             return LocationErrorWidget(
-              error: "Please enable Location service",
+              error: "Sila aktifkan perkhidmatan lokasi",
               callback: _checkLocationStatus,
             );
           }
@@ -136,7 +136,7 @@ class QiblahCompassWidget extends StatelessWidget {
                 const Align(
                   alignment: Alignment.bottomCenter,
                   child: Text(
-                    "Preparing compass...\nPlease wait...",
+                    "Menyediakan kompas...\nSila tunggu...",
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.white),
                   ),
@@ -171,7 +171,7 @@ class QiblahCompassWidget extends StatelessWidget {
             const Align(
               alignment: Alignment.bottomCenter,
               child: Text(
-                "Align both arrow head\nDo not put device close to metal object.\nCalibrate the compass eveytime you use it.",
+                "Selaraskan kedua-dua kepala anak panah\nJangan letakkan peranti dekat dengan objek logam.\nTentukur kompas setiap kali anda menggunakannya.",
                 textAlign: TextAlign.center,
               ),
             )

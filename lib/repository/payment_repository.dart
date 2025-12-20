@@ -242,6 +242,34 @@ class PaymentRepository {
     }
   }
 
+  // Update user class enrollment
+  Future<void> updateUserClassEnrollment({
+    required String userId,
+    required String classId,
+  }) async {
+    try {
+      print('PaymentRepository: Attempting to enroll user $userId in class $classId');
+      
+      await _firestore.collection('users').doc(userId).update({
+        'enrolledClassIds': FieldValue.arrayUnion([classId]),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      
+      print('PaymentRepository: User $userId enrolled in class $classId');
+      
+      // Verify the update by reading the document
+      final doc = await _firestore.collection('users').doc(userId).get();
+      if (doc.exists) {
+        final data = doc.data()!;
+        final enrolledClassIds = List<String>.from(data['enrolledClassIds'] ?? []);
+        print('PaymentRepository: Verified - User $userId enrolled classes: $enrolledClassIds');
+      }
+    } catch (e) {
+      print('Error updating user class enrollment: $e');
+      rethrow;
+    }
+  }
+
   // Update user premium status
   Future<void> updateUserPremiumStatus({
     required String userId,

@@ -17,7 +17,7 @@ class _ClassEnrollmentPageState extends State<ClassEnrollmentPage> {
     id: 'u1',
     name: 'Ali',
     email: 'ali@email.com',
-    userType: UserType.nonAdmin,
+    roles: const [UserType.student],
     isPremium: false,
     enrolledClassIds: [],
   );

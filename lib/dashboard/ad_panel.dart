@@ -15,7 +15,7 @@ class AdPanel extends StatelessWidget {
     }
     
     final String adImage = ad!.image ?? 'assets/images/ad_sample.png';
-    final String adTitle = ad!.title ?? 'Tingkatkan ke Al-Quran Harian Premium!';
+    final String adTitle = ad!.title ?? 'Tingkatkan ke Daily Quran Premium!';
     final String adDescription = ad!.description ?? 'Nikmati pengalaman tanpa iklan dan buka kunci semua ciri.';
 
     return Padding(

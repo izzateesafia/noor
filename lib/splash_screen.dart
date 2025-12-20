@@ -81,7 +81,7 @@ class _SplashScreenState extends State<SplashScreen> {
             Icon(Icons.flash_on, size: 100, color: Colors.red.shade900),
             const SizedBox(height: 24),
             Text(
-              'Al-Quran Harian',
+              'Daily Quran',
               style: TextStyle(
                 color: Colors.red.shade900,
                 fontSize: 40,

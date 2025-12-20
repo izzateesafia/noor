@@ -27,18 +27,18 @@ class _TestSimpleAlarmPageState extends State<TestSimpleAlarmPage> {
     });
   }
 
-  Future<void> _testAdhan(String prayerName) async {
-    try {
-      await _alarmService.testAdhan(prayerName);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Testing adhan for $prayerName')),
-      );
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error testing adhan: $e')),
-      );
-    }
-  }
+  // Future<void> _testAdhan(String prayerName) async {
+  //   try {
+  //     await _alarmService.testAdhan(prayerName);
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Testing adhan for $prayerName')),
+  //     );
+  //   } catch (e) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(content: Text('Error testing adhan: $e')),
+  //     );
+  //   }
+  // }
 
   Future<void> _testSimpleNotification() async {
     try {
@@ -185,26 +185,26 @@ class _TestSimpleAlarmPageState extends State<TestSimpleAlarmPage> {
                     foregroundColor: Colors.white,
                   ),
                 ),
-                ElevatedButton(
-                  onPressed: () => _testAdhan('Fajr'),
-                  child: const Text('Test Fajr'),
-                ),
-                ElevatedButton(
-                  onPressed: () => _testAdhan('Dhuhr'),
-                  child: const Text('Test Dhuhr'),
-                ),
-                ElevatedButton(
-                  onPressed: () => _testAdhan('Asr'),
-                  child: const Text('Test Asr'),
-                ),
-                ElevatedButton(
-                  onPressed: () => _testAdhan('Maghrib'),
-                  child: const Text('Test Maghrib'),
-                ),
-                ElevatedButton(
-                  onPressed: () => _testAdhan('Isha'),
-                  child: const Text('Test Isha'),
-                ),
+                // ElevatedButton(
+                //   onPressed: () => _testAdhan('Fajr'),
+                //   child: const Text('Test Fajr'),
+                // ),
+                // ElevatedButton(
+                //   onPressed: () => _testAdhan('Dhuhr'),
+                //   child: const Text('Test Dhuhr'),
+                // ),
+                // ElevatedButton(
+                //   onPressed: () => _testAdhan('Asr'),
+                //   child: const Text('Test Asr'),
+                // ),
+                // ElevatedButton(
+                //   onPressed: () => _testAdhan('Maghrib'),
+                //   child: const Text('Test Maghrib'),
+                // ),
+                // ElevatedButton(
+                //   onPressed: () => _testAdhan('Isha'),
+                //   child: const Text('Test Isha'),
+                // ),
               ],
             ),
             

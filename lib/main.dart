@@ -32,7 +32,8 @@ import 'prayer_alarm_settings_page.dart';
 import 'services/scheduled_alarm_service.dart';
 import 'services/alarm_service.dart';
 import 'test_prayer_alarm.dart';
-import 'adhan_tester_page.dart';
+// import 'adhan_tester_page.dart';
+import 'qibla_compass.dart';
 import 'test_simple_alarm.dart';
 import 'test_scheduled_alarm.dart';
 import 'ios_setup_guide_page.dart';
@@ -52,6 +53,8 @@ import 'repository/hadith_repository.dart';
 import 'repository/prayer_times_repository.dart';
 import 'repository/live_stream_repository.dart';
 import 'repository/daily_tracker_repository.dart';
+import 'repository/news_repository.dart';
+import 'cubit/news_cubit.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
@@ -84,7 +87,7 @@ void main() async {
   await AlarmService().initialize();
   
   // Initialize Stripe
-  Stripe.publishableKey = const String.fromEnvironment('STRIPE_PUBLISHABLE_KEY', defaultValue: 'pk_test_your_stripe_publishable_key_here');
+  Stripe.publishableKey = 'pk_test_51NdTSTJGqj1qKGtVVMGDGpqQhBJ7dlrNrn0cy1ieMTbIhr1dzunjD00ctRYxYeOpoEjD0RDY5lKvtkrPE2EMdz8X00TGZ55T2Y';
   Stripe.merchantIdentifier = 'merchant.com.hexahelix.dq';
   
   runApp(const MyApp());
@@ -216,6 +219,9 @@ class MyApp extends StatelessWidget {
             RepositoryProvider<DailyTrackerRepository>(
               create: (context) => DailyTrackerRepository(),
             ),
+            RepositoryProvider<NewsRepository>(
+              create: (context) => NewsRepository(),
+            ),
           ],
           child: MultiBlocProvider(
             providers: [
@@ -257,9 +263,14 @@ class MyApp extends StatelessWidget {
               BlocProvider<PaymentBloc>(
                 create: (context) => PaymentBloc(),
               ),
+              BlocProvider<NewsCubit>(
+                create: (context) => NewsCubit(
+                  context.read<NewsRepository>(),
+                ),
+              ),
             ],
             child: MaterialApp(
-              title: 'Al-Quran Harian',
+              title: 'Daily Quran',
               theme: lightTheme,
               darkTheme: darkTheme,
               themeMode: mode,
@@ -291,9 +302,17 @@ class MyApp extends StatelessWidget {
                 '/quran': (context) => const QuranReaderPage(),
                 '/quran_search': (context) => const QuranSearchPage(),
                 '/mushaf': (context) => const MushafReaderPage(),
+                '/qiblah': (context) => Scaffold(
+                  appBar: AppBar(
+                    title: const Text('Kompas Qibla'),
+                    backgroundColor: Theme.of(context).primaryColor,
+                    foregroundColor: Theme.of(context).primaryColor.computeLuminance() > 0.5 ? Colors.black : Colors.white,
+                  ),
+                  body: const QiblaCompass(),
+                ),
                 '/prayer_alarm_settings': (context) => const PrayerAlarmSettingsPage(),
                 '/test_prayer_alarm': (context) => const TestPrayerAlarmPage(),
-                '/adhan_tester': (context) => const AdhanTesterPage(),
+                // '/adhan_tester': (context) => const AdhanTesterPage(),
         '/test_simple_alarm': (context) => const TestSimpleAlarmPage(),
         '/test_scheduled_alarm': (context) => const TestScheduledAlarmPage(),
                 '/ios_setup_guide': (context) => const IOSSetupGuidePage(),

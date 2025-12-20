@@ -94,12 +94,18 @@ class _UserDetailViewState extends State<_UserDetailView> {
   }
 
   void _saveChanges() {
+    // Update roles: set selected type as primary (first in array)
+    final updatedRoles = [
+      _selectedUserType,
+      ...widget.user.roles.where((r) => r != _selectedUserType),
+    ];
+    
     final updatedUser = widget.user.copyWith(
       name: _nameController.text.trim(),
       email: _emailController.text.trim(),
       phone: _phoneController.text.trim(),
       address: _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
-      userType: _selectedUserType,
+      roles: updatedRoles,
       isPremium: _isPremium,
       birthDate: _selectedBirthDate,
     );
@@ -223,14 +229,14 @@ class _UserDetailViewState extends State<_UserDetailView> {
                 children: [
                   CircleAvatar(
                     radius: 40,
-                    backgroundColor: widget.user.userType == UserType.admin
+                    backgroundColor: widget.user.roles.contains(UserType.admin)
                         ? Colors.red.shade100
                         : Colors.blue.shade100,
                     child: Icon(
-                      widget.user.userType == UserType.admin
+                      widget.user.roles.contains(UserType.admin)
                           ? Icons.admin_panel_settings
                           : Icons.person,
-                      color: widget.user.userType == UserType.admin
+                      color: widget.user.roles.contains(UserType.admin)
                           ? Colors.red
                           : Colors.blue,
                       size: 40,
@@ -328,7 +334,7 @@ class _UserDetailViewState extends State<_UserDetailView> {
                       ),
                     _buildInfoRow(
                       'User Type',
-                      widget.user.userType == UserType.admin ? 'Admin' : 'User',
+                      widget.user.roles.contains(UserType.admin) ? 'Admin' : 'User',
                       icon: Icons.admin_panel_settings,
                     ),
                     _buildInfoRow(

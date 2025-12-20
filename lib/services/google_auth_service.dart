@@ -1,12 +1,18 @@
+import 'dart:io' show Platform;
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:google_sign_in/google_sign_in.dart';
 import '../models/user_model.dart';
 import '../repository/user_repository.dart';
+import '../main.dart';
 
 class GoogleAuthService {
   final firebase_auth.FirebaseAuth _auth = firebase_auth.FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-    clientId: '134970392054-86d1gomong6gdbdtu6c62p4knpouqh02.apps.googleusercontent.com',
+    // Only specify clientId for iOS, Android uses google-services.json automatically
+    clientId: Platform.isIOS 
+        ? '134970392054-86d1gomong6gdbdtu6c62p4knpouqh02.apps.googleusercontent.com'
+        : null,
+    scopes: ['email', 'profile'],
   );
   final UserRepository _userRepository = UserRepository();
 
@@ -16,30 +22,35 @@ class GoogleAuthService {
       print('GoogleAuthService: Starting Google Sign-In process...');
       print('GoogleAuthService: Client ID: 134970392054-86d1gomong6gdbdtu6c62p4knpouqh02.apps.googleusercontent.com');
       
-      // Check if Google Sign-In is available
-      print('GoogleAuthService: Checking if Google Sign-In is available...');
-      final bool isAvailable = await _googleSignIn.isSignedIn();
-      print('GoogleAuthService: Google Sign-In available: $isAvailable');
-      
-      // Try to get current user first
-      print('GoogleAuthService: Attempting to get current user...');
-      final GoogleSignInAccount? currentUser = await _googleSignIn.signInSilently();
-      if (currentUser != null) {
-        print('GoogleAuthService: Found existing user: ${currentUser.email}');
-        // Continue with existing user
-      } else {
-        print('GoogleAuthService: No existing user, starting sign-in flow...');
+      // Try silent sign-in first (faster if user already signed in)
+      print('GoogleAuthService: Attempting silent sign-in...');
+      GoogleSignInAccount? googleUser;
+      try {
+        googleUser = await _googleSignIn.signInSilently().timeout(
+          const Duration(seconds: 5),
+          onTimeout: () {
+            print('GoogleAuthService: Silent sign-in timed out, proceeding with interactive sign-in');
+            return null;
+          },
+        );
+        if (googleUser != null) {
+          print('GoogleAuthService: Silent sign-in successful for: ${googleUser.email}');
+        }
+      } catch (e) {
+        print('GoogleAuthService: Silent sign-in failed: $e');
       }
       
-      // Trigger the authentication flow with timeout
-      print('GoogleAuthService: Calling _googleSignIn.signIn()...');
-      final GoogleSignInAccount? googleUser = await _googleSignIn.signIn().timeout(
-        const Duration(seconds: 15),
-        onTimeout: () {
-          print('GoogleAuthService: Sign-in timed out after 15 seconds');
-          throw Exception('Google Sign-In timed out - no response from Google');
-        },
-      );
+      // If silent sign-in didn't work, trigger interactive sign-in
+      if (googleUser == null) {
+        print('GoogleAuthService: Starting interactive sign-in flow...');
+        googleUser = await _googleSignIn.signIn().timeout(
+          const Duration(seconds: 120), // Increased timeout for user interaction
+          onTimeout: () {
+            print('GoogleAuthService: Sign-in timed out after 120 seconds');
+            throw Exception('Masa tamat - sila pastikan sambungan internet anda stabil dan cuba lagi');
+          },
+        );
+      }
       
       if (googleUser == null) {
         print('GoogleAuthService: User cancelled the sign-in');
@@ -51,7 +62,13 @@ class GoogleAuthService {
       
       // Obtain the auth details from the request
       print('GoogleAuthService: Getting authentication details...');
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+      final GoogleSignInAuthentication googleAuth = await googleUser.authentication.timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          print('GoogleAuthService: Getting auth details timed out');
+          throw Exception('Masa tamat semasa mendapatkan maklumat pengesahan. Sila cuba lagi.');
+        },
+      );
       
       print('GoogleAuthService: Access token: ${googleAuth.accessToken != null ? 'Present' : 'Missing'}');
       print('GoogleAuthService: ID token: ${googleAuth.idToken != null ? 'Present' : 'Missing'}');
@@ -64,7 +81,13 @@ class GoogleAuthService {
 
       print('GoogleAuthService: Signing in to Firebase...');
       // Sign in to Firebase with the credential
-      final firebase_auth.UserCredential userCredential = await _auth.signInWithCredential(credential);
+      final firebase_auth.UserCredential userCredential = await _auth.signInWithCredential(credential).timeout(
+        const Duration(seconds: 30),
+        onTimeout: () {
+          print('GoogleAuthService: Firebase sign-in timed out');
+          throw Exception('Masa tamat semasa log masuk ke Firebase. Sila cuba lagi.');
+        },
+      );
       final firebase_auth.User? firebaseUser = userCredential.user;
 
       if (firebaseUser != null) {
@@ -73,6 +96,16 @@ class GoogleAuthService {
         // Check if user already exists in Firestore
         UserModel? existingUser = await _userRepository.getUserById(firebaseUser.uid);
         
+        // Save user token for notifications
+        print('GoogleAuthService: Saving user token...');
+        try {
+          await saveUserToken();
+          print('GoogleAuthService: User token saved successfully');
+        } catch (e) {
+          print('GoogleAuthService: Error saving user token: $e');
+          // Continue even if token save fails
+        }
+
         if (existingUser != null) {
           print('GoogleAuthService: Returning existing user: ${existingUser.name}');
           // User exists, return the existing user
@@ -85,7 +118,7 @@ class GoogleAuthService {
             name: firebaseUser.displayName ?? 'Google User',
             email: firebaseUser.email ?? '',
             phone: firebaseUser.phoneNumber ?? 'N/A',
-            userType: UserType.nonAdmin,
+            roles: const [UserType.student],
             isPremium: false,
             profileImage: firebaseUser.photoURL,
             hasCompletedBiodata: false, // New users need to complete biodata

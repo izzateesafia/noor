@@ -75,12 +75,11 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
       targetType = UserType.student;
     }
 
-    // Check if selected role matches user's userType or roles
-    final userType = _currentUser!.userType;
+    // Check if selected role matches user's roles
     final userRoles = _currentUser!.roles;
     
     // Admin can access all roles - skip validation
-    bool isAdmin = userType == UserType.admin || userRoles.contains(UserType.admin);
+    bool isAdmin = userRoles.contains(UserType.admin);
     
     bool roleMatches = false;
     
@@ -88,21 +87,14 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
       // Admin can select any role
       roleMatches = true;
     } else {
-      // Check if userType matches
-      if (userType == targetType) {
-        roleMatches = true;
-      }
-      
-      // Also check if role is in the roles array
-      if (!roleMatches && userRoles.contains(targetType)) {
-        roleMatches = true;
-      }
+      // Check if role is in the roles array
+      roleMatches = userRoles.contains(targetType);
     }
 
     if (!roleMatches) {
       // Role doesn't match - show snackbar
       String roleName = _selectedRole!;
-      String userRoleName = _getRoleName(userType);
+      String userRoleName = _getRoleName(_currentUser!.userType);
       
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -129,19 +121,19 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
     ScaffoldMessenger.of(context).hideCurrentSnackBar();
     ScaffoldMessenger.of(context).clearSnackBars();
 
-    // For admins, add the selected role to their roles array without changing userType
+    // For admins, add the selected role to their roles array (set as primary)
     if (isAdmin) {
       final current = _currentUser!;
-      // Ensure admin role is preserved and add the selected role
-      final updatedRoles = {
-        ...current.roles,
-        UserType.admin, // Preserve admin role
-        targetType, // Add selected role
-      }.toList();
+      // Ensure admin role is preserved and set targetType as primary
+      final updatedRoles = [
+        targetType, // Set selected role as primary
+        ...current.roles.where((r) => r != targetType && r != UserType.admin),
+        UserType.admin, // Keep admin role but not as primary
+      ];
       final updated = current.copyWith(roles: updatedRoles);
       await context.read<UserCubit>().updateUser(updated);
     } else {
-      // For non-admins, update userType as before
+      // For non-admins, update roles (set targetType as primary)
       await context.read<UserCubit>().updateUserType(targetType);
     }
 

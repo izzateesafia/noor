@@ -27,7 +27,11 @@ import '../cubit/whats_new_cubit.dart';
 import '../repository/ad_repository.dart';
 import '../repository/whats_new_repository.dart';
 import '../cubit/prayer_times_cubit.dart';
+import '../cubit/news_cubit.dart';
+import '../cubit/news_states.dart';
+import '../repository/news_repository.dart';
 import '../widgets/daily_verse_widget.dart';
+import 'terkini_news_feed.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -45,6 +49,7 @@ class _DashboardPageState extends State<DashboardPage> {
       context.read<LiveStreamCubit>().getCurrentLiveStream();
       context.read<DuaCubit>().fetchDuas();
       context.read<HadithCubit>().fetchHadiths();
+      context.read<NewsCubit>().fetchNews();
       
       // Automatically fetch prayer times for default location (Kuala Lumpur)
       context.read<PrayerTimesCubit>().fetchHijriDate();
@@ -56,14 +61,33 @@ class _DashboardPageState extends State<DashboardPage> {
   Widget build(BuildContext context) {
             return MultiBlocProvider(
           providers: [
-            BlocProvider<UserCubit>(
-              create: (context) => UserCubit(UserRepository())..fetchCurrentUser(),
+            // Use existing cubits from parent context if available, otherwise create new ones
+            BlocProvider<UserCubit>.value(
+              value: context.read<UserCubit>(),
+            ),
+            BlocProvider<ClassCubit>.value(
+              value: context.read<ClassCubit>(),
+            ),
+            BlocProvider<DuaCubit>.value(
+              value: context.read<DuaCubit>(),
+            ),
+            BlocProvider<HadithCubit>.value(
+              value: context.read<HadithCubit>(),
+            ),
+            BlocProvider<LiveStreamCubit>.value(
+              value: context.read<LiveStreamCubit>(),
+            ),
+            BlocProvider<PrayerTimesCubit>.value(
+              value: context.read<PrayerTimesCubit>(),
             ),
             BlocProvider<AdCubit>(
               create: (context) => AdCubit(AdRepository())..fetchAds(),
             ),
             BlocProvider<WhatsNewCubit>(
               create: (context) => WhatsNewCubit(WhatsNewRepository())..fetchWhatsNew(),
+            ),
+            BlocProvider<NewsCubit>.value(
+              value: context.read<NewsCubit>(),
             ),
           ],
           child: BlocConsumer<UserCubit, UserState>(
@@ -128,7 +152,7 @@ class _DashboardPageState extends State<DashboardPage> {
                 name: 'User',
                 email: 'user@example.com',
                 phone: 'N/A',
-                userType: UserType.nonAdmin,
+                roles: const [UserType.student],
                 isPremium: false,
               );
 
@@ -250,6 +274,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         onRefresh: () async {
                           context.read<LiveStreamCubit>().getCurrentLiveStream();
                           context.read<ClassCubit>().fetchClasses();
+                          context.read<NewsCubit>().fetchNews();
                         },
                         child: SingleChildScrollView(
                           child: Column(
@@ -311,24 +336,24 @@ class _DashboardPageState extends State<DashboardPage> {
                                     ),
                                   ),
                                   // Test button for creating sample live stream (temporary)
-                                  if (user.userType == UserType.admin)
-                                    ElevatedButton.icon(
-                                      onPressed: () {
-                                        context.read<LiveStreamCubit>().addLiveStream(
-                                          title: 'Test Live Stream',
-                                          description: 'This is a test live stream for debugging',
-                                          tiktokLiveLink: 'https://www.tiktok.com/@testuser/live/123456789',
-                                        );
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Colors.orange,
-                                        foregroundColor: Colors.white,
-                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                      ),
-                                      icon: const Icon(Icons.bug_report, size: 16),
-                                      label: const Text('Ujian', style: TextStyle(fontSize: 12)),
-                                    ),
+                                  if (user.roles.contains(UserType.admin))
+                                    // ElevatedButton.icon(
+                                    //   onPressed: () {
+                                    //     context.read<LiveStreamCubit>().addLiveStream(
+                                    //       title: 'Test Live Stream',
+                                    //       description: 'This is a test live stream for debugging',
+                                    //       tiktokLiveLink: 'https://www.tiktok.com/@testuser/live/123456789',
+                                    //     );
+                                    //   },
+                                    //   style: ElevatedButton.styleFrom(
+                                    //     backgroundColor: Colors.orange,
+                                    //     foregroundColor: Colors.white,
+                                    //     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                                    //     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                    //   ),
+                                    //   icon: const Icon(Icons.bug_report, size: 16),
+                                    //   label: const Text('Ujian', style: TextStyle(fontSize: 12)),
+                                    // ),
                                   // Theme mode switch
                                   ValueListenableBuilder<ThemeMode>(
                                     valueListenable: themeModeNotifier,
@@ -359,6 +384,33 @@ class _DashboardPageState extends State<DashboardPage> {
                             ),
                             PrayerTimesCard(),
                             const DailyVerseWidget(),
+                            BlocBuilder<NewsCubit, NewsState>(
+                              builder: (context, newsState) {
+                                // Debug logging
+                                print('TerkiniNewsFeed - News count: ${newsState.news.length}, Loading: ${newsState.isLoading}, Error: ${newsState.error}');
+                                
+                                // Show loading state
+                                if (newsState.isLoading) {
+                                  return const SizedBox.shrink(); // Hide during loading
+                                }
+                                
+                                // Show error state
+                                if (newsState.error != null) {
+                                  print('NewsState error: ${newsState.error}');
+                                  return const SizedBox.shrink();
+                                }
+                                
+                                // Show news feed if there are news items
+                                if (newsState.news.isNotEmpty) {
+                                  print('TerkiniNewsFeed - Showing ${newsState.news.length} news items');
+                                  return TerkiniNewsFeed(news: newsState.news);
+                                }
+                                
+                                // Hide if no news items
+                                print('TerkiniNewsFeed - No news items, hiding widget');
+                                return const SizedBox.shrink();
+                              },
+                            ),
                             DailyTracker(user: user),
                             QuickAccessGrid(),
                             if (!user.isPremium) BlocBuilder<AdCubit, AdState>(
@@ -386,7 +438,7 @@ class _DashboardPageState extends State<DashboardPage> {
                         ),
                       ),
                       // Admin button - only visible for admin users
-                      if (user.userType == UserType.admin)
+                      if (user.roles.contains(UserType.admin))
                         Positioned(
                           top: 8,
                           right: 16,

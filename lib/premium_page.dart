@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:daily_quran/theme_constants.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_credit_card/flutter_credit_card.dart';
@@ -164,7 +165,7 @@ class _PremiumPageState extends State<PremiumPage> {
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [Colors.blue.shade600, Colors.blue.shade800],
+                colors: [AppColors.primary, AppColors.primary],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
@@ -233,8 +234,8 @@ class _PremiumPageState extends State<PremiumPage> {
             ),
             child: Row(
               children: [
-                _buildToggleButton("🍎 Apple Pay", 0),
-                _buildToggleButton("💳 Card", 1),
+                _buildToggleButton("Apple Pay", 0),
+                _buildToggleButton("Card", 1),
               ],
             ),
           ),
@@ -266,7 +267,7 @@ class _PremiumPageState extends State<PremiumPage> {
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
           color: plan.isPopular 
-              ? Colors.blue 
+              ? AppColors.primary
               : Theme.of(context).dividerColor.withOpacity(0.3),
           width: plan.isPopular ? 2 : 1,
         ),
@@ -314,7 +315,7 @@ class _PremiumPageState extends State<PremiumPage> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.blue,
+                        color: AppColors.primary,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: const Text(
@@ -333,7 +334,7 @@ class _PremiumPageState extends State<PremiumPage> {
                 'RM ${plan.price.toStringAsFixed(2)}',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: Colors.blue,
+                  color: AppColors.primary,
                 ),
               ),
               const SizedBox(height: 16),
@@ -376,7 +377,7 @@ class _PremiumPageState extends State<PremiumPage> {
           padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
             color: isSelected 
-                ? Colors.blue 
+                ? AppColors.primary
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(32),
           ),
@@ -438,10 +439,20 @@ class _PremiumPageState extends State<PremiumPage> {
             Expanded(
               child: TextField(
                 controller: _firstNameController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'First Name',
-                  border: OutlineInputBorder(),
+                  labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(color: Theme.of(context).dividerColor),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Theme.of(context).dividerColor),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: AppColors.primary),
+                  ),
                 ),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                 onChanged: (value) => _formData['first_name'] = value,
               ),
             ),
@@ -449,10 +460,20 @@ class _PremiumPageState extends State<PremiumPage> {
             Expanded(
               child: TextField(
                 controller: _lastNameController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Last Name',
-                  border: OutlineInputBorder(),
+                  labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+                  border: OutlineInputBorder(
+                    borderSide: BorderSide(color: Theme.of(context).dividerColor),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: Theme.of(context).dividerColor),
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderSide: BorderSide(color: AppColors.primary),
+                  ),
                 ),
+                style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                 onChanged: (value) => _formData['last_name'] = value,
               ),
             ),
@@ -461,20 +482,40 @@ class _PremiumPageState extends State<PremiumPage> {
         const SizedBox(height: 16),
         TextField(
           controller: _emailController,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Email',
-            border: OutlineInputBorder(),
+            labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+            border: OutlineInputBorder(
+              borderSide: BorderSide(color: Theme.of(context).dividerColor),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Theme.of(context).dividerColor),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: AppColors.primary),
+            ),
           ),
+          style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
           keyboardType: TextInputType.emailAddress,
           onChanged: (value) => _formData['email'] = value,
         ),
         const SizedBox(height: 16),
         TextField(
           controller: _phoneController,
-          decoration: const InputDecoration(
+          decoration: InputDecoration(
             labelText: 'Phone Number',
-            border: OutlineInputBorder(),
+            labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyMedium?.color),
+            border: OutlineInputBorder(
+              borderSide: BorderSide(color: Theme.of(context).dividerColor),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: Theme.of(context).dividerColor),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderSide: BorderSide(color: AppColors.primary),
+            ),
           ),
+          style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
           keyboardType: TextInputType.phone,
           onChanged: (value) => _formData['phone_number'] = value,
         ),
@@ -488,7 +529,7 @@ class _PremiumPageState extends State<PremiumPage> {
       child: ElevatedButton(
         onPressed: () => _processPayment(plans),
         style: ElevatedButton.styleFrom(
-          backgroundColor: Colors.blue,
+          backgroundColor: AppColors.primary,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
@@ -652,7 +693,7 @@ class _CreditCardFormWidgetState extends State<_CreditCardFormWidget> {
         // Notify parent widget
         widget.onCardDataChanged(_cardNumber, _expiryDate, _cardHolderName, _cvvCode, _isCvvFocused);
       },
-      themeColor: Colors.blue,
+      themeColor: AppColors.primary,
     );
   }
 }

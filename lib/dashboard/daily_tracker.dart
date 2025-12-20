@@ -155,41 +155,41 @@ class _DailyTrackerState extends State<DailyTracker> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
-                      children: [
-                        Icon(
-                          Icons.check_circle_outline, 
-                          color: Theme.of(context).colorScheme.primary, 
-                          size: 22
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Penjejak Harian',
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontSize: 15),
-                        ),
-                        const Spacer(),
-                        // History button
-                        IconButton(
-                          onPressed: () {
-                            Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (context) => BlocProvider.value(
-                                  value: context.read<DailyTrackerCubit>(),
-                                  child: DailyTrackerHistoryPage(user: widget.user),
-                                ),
-                              ),
-                            );
-                          },
-                          icon: Icon(
-                            Icons.history,
-                            color: Theme.of(context).colorScheme.primary,
-                            size: 20,
-                          ),
-                          tooltip: 'Lihat Sejarah',
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 18),
+                    // Row(
+                    //   children: [
+                    //     Icon(
+                    //       Icons.check_circle_outline,
+                    //       color: Theme.of(context).colorScheme.primary,
+                    //       size: 22
+                    //     ),
+                    //     const SizedBox(width: 8),
+                    //     Text(
+                    //       'Penjejak Harian',
+                    //       style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontSize: 15),
+                    //     ),
+                    //     const Spacer(),
+                    //     // History button
+                    //     IconButton(
+                    //       onPressed: () {
+                    //         Navigator.of(context).push(
+                    //           MaterialPageRoute(
+                    //             builder: (context) => BlocProvider.value(
+                    //               value: context.read<DailyTrackerCubit>(),
+                    //               child: DailyTrackerHistoryPage(user: widget.user),
+                    //             ),
+                    //           ),
+                    //         );
+                    //       },
+                    //       icon: Icon(
+                    //         Icons.history,
+                    //         color: Theme.of(context).colorScheme.primary,
+                    //         size: 20,
+                    //       ),
+                    //       tooltip: 'Lihat Sejarah',
+                    //     ),
+                    //   ],
+                    // ),
+                    // const SizedBox(height: 18),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: prayersCompleted.entries.map((entry) {
@@ -341,7 +341,7 @@ class _DailyTrackerState extends State<DailyTracker> {
         ),
         const SizedBox(height: 4),
         Text(
-          '$completedPrayers out of $totalPrayers prayers completed',
+          '$completedPrayers daripada $totalPrayers waktu solat dilaksanakan',
           style: TextStyle(
             color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
             fontSize: 12,

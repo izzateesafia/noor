@@ -6,6 +6,8 @@ import 'models/user_model.dart';
 import 'cubit/user_cubit.dart';
 import 'cubit/user_states.dart';
 import 'main.dart';
+import 'utils/toast_util.dart';
+import 'services/google_auth_service.dart';
 
 class SignupPage extends StatefulWidget {
   const SignupPage({super.key});
@@ -108,33 +110,53 @@ class _SignupPageState extends State<SignupPage> {
     });
 
     try {
-      // Create a temporary UserCubit for Google Sign-In
-      final userCubit = UserCubit(UserRepository());
-      await userCubit.signInWithGoogle();
+      // Use GoogleAuthService directly for signup
+      final googleAuthService = GoogleAuthService();
+      final user = await googleAuthService.signInWithGoogle();
       
-      if (userCubit.state.status == UserStatus.loaded && userCubit.state.currentUser != null) {
-        // Successfully signed in with Google
-        Navigator.pushReplacementNamed(context, '/role');
-      } else {
-        // Show error message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(userCubit.state.error ?? 'Log masuk Google gagal'),
-            backgroundColor: Colors.red,
-          ),
-        );
+      if (user != null && mounted) {
+        // Successfully signed in with Google - show loading while navigating
+        // Hide any existing snackbars
+        ScaffoldMessenger.of(context).hideCurrentSnackBar();
+        ScaffoldMessenger.of(context).clearSnackBars();
+        
+        // Keep loading state while navigating
+        // Check if user needs to complete biodata
+        if (!user.hasCompletedBiodata) {
+          Navigator.pushReplacementNamed(
+            context,
+            '/biodata',
+            arguments: user,
+          );
+        } else {
+          Navigator.pushReplacementNamed(context, '/role');
+        }
+      } else if (mounted) {
+        // User cancelled or sign-in failed
+        setState(() {
+          _isLoading = false;
+        });
+        // Don't show error if user cancelled
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Ralat log masuk Google: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } finally {
-      setState(() {
-        _isLoading = false;
-      });
+      if (mounted) {
+        String errorMessage = 'Log masuk Google gagal. Sila cuba lagi.';
+        if (e.toString().contains('cancelled')) {
+          // User cancelled, don't show error
+          setState(() {
+            _isLoading = false;
+          });
+          return;
+        } else if (e.toString().contains('network') || e.toString().contains('Network')) {
+          errorMessage = 'Masalah sambungan internet. Sila semak sambungan anda.';
+        } else if (e.toString().contains('timeout') || e.toString().contains('Timeout') || e.toString().contains('Masa tamat')) {
+          errorMessage = 'Masa tamat. Sila pastikan sambungan internet anda stabil dan cuba lagi.';
+        }
+        ToastUtil.showError(context, errorMessage);
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -150,6 +172,25 @@ class _SignupPageState extends State<SignupPage> {
     return null;
   }
 
+  String _getUserFriendlyError(String errorCode) {
+    switch (errorCode) {
+      case 'email-already-in-use':
+        return 'Emel ini sudah digunakan. Sila gunakan emel lain atau log masuk.';
+      case 'invalid-email':
+        return 'Format emel tidak sah. Sila masukkan emel yang betul.';
+      case 'weak-password':
+        return 'Kata laluan terlalu lemah. Sila gunakan kata laluan yang lebih kuat (minimum 6 aksara).';
+      case 'operation-not-allowed':
+        return 'Operasi tidak dibenarkan. Sila hubungi admin.';
+      case 'network-request-failed':
+        return 'Masalah sambungan internet. Sila semak sambungan anda.';
+      case 'too-many-requests':
+        return 'Terlalu banyak percubaan. Sila cuba lagi selepas beberapa minit.';
+      default:
+        return 'Pendaftaran gagal. Sila cuba lagi.';
+    }
+  }
+
   Future<void> _handleSignup() async {
     if (!_formKey.currentState!.validate()) {
       return;
@@ -158,9 +199,7 @@ class _SignupPageState extends State<SignupPage> {
     // Additional validation for birth date
     final birthDateError = _validateBirthDate();
     if (birthDateError != null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(birthDateError)),
-      );
+      ToastUtil.showError(context, birthDateError);
       return;
     }
 
@@ -177,7 +216,7 @@ class _SignupPageState extends State<SignupPage> {
         phone: _phoneController.text.trim(),
         birthDate: _selectedBirthDate,
         address: _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
-        userType: UserType.nonAdmin,
+        roles: const [UserType.student],
         isPremium: false,
       );
       
@@ -199,7 +238,7 @@ class _SignupPageState extends State<SignupPage> {
               TextButton(
                 onPressed: () async {
                   await cred.user?.sendEmailVerification();
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Emel pengesahan dihantar semula.')));
+                  ToastUtil.showSuccess(context, 'Emel pengesahan dihantar semula.');
                 },
                 child: const Text('Hantar Semula Emel'),
               ),
@@ -209,6 +248,9 @@ class _SignupPageState extends State<SignupPage> {
                   final refreshedUser = firebase_auth.FirebaseAuth.instance.currentUser;
                   if (refreshedUser != null && refreshedUser.emailVerified) {
                     Navigator.of(ctx).pop();
+                    // Hide any existing snackbars
+                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
+                    ScaffoldMessenger.of(context).clearSnackBars();
                     // After email verification, check if user needs to complete biodata
                     final userRepo = UserRepository();
                     final user = await userRepo.getCurrentUser();
@@ -218,7 +260,7 @@ class _SignupPageState extends State<SignupPage> {
                       Navigator.pushReplacementNamed(context, '/role');
                     }
                   } else {
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Emel belum disahkan lagi.')));
+                    ToastUtil.showError(context, 'Emel belum disahkan lagi.');
                   }
                 },
                 child: const Text('Saya telah sahkan'),
@@ -227,11 +269,14 @@ class _SignupPageState extends State<SignupPage> {
           ),
         );
       }
+    } on firebase_auth.FirebaseAuthException catch (e) {
+      if (mounted) {
+        final errorMessage = _getUserFriendlyError(e.code);
+        ToastUtil.showError(context, errorMessage);
+      }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Pendaftaran gagal: ${e.toString()}')),
-        );
+        ToastUtil.showError(context, 'Pendaftaran gagal. Sila cuba lagi.');
       }
     } finally {
       if (mounted) {
@@ -256,15 +301,26 @@ class _SignupPageState extends State<SignupPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Daftar')),
-      body: Padding(
-        padding: const EdgeInsets.all(24.0),
-        child: SingleChildScrollView(
-          padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
+      body: _isLoading
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  CircularProgressIndicator(),
+                  SizedBox(height: 16),
+                  Text('Memproses log masuk...'),
+                ],
+              ),
+            )
+          : Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: SingleChildScrollView(
+                padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
                 Text(
                   'Buat Akaun',
                   style: TextStyle(

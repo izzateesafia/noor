@@ -1,235 +1,317 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
-import 'theme_constants.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'cubit/hadith_cubit.dart';
+import 'cubit/hadith_states.dart';
 
-class HadithsPage extends StatelessWidget {
+class HadithsPage extends StatefulWidget {
   const HadithsPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    // Sample data - replace with real data later
-    final List<Hadith> hadiths = [
-      Hadith(
-        title: 'Hadis Mengenai Niat',
-        content: 'Amalan dinilai berdasarkan niat, dan setiap orang akan diberi ganjaran mengikut apa yang diniatkan. Maka sesiapa yang berhijrah kerana Allah dan Rasul-Nya, hijrahnya adalah untuk Allah dan Rasul-Nya. Dan sesiapa yang berhijrah untuk keuntungan duniawi atau untuk mengahwini seorang wanita, hijrahnya adalah untuk apa yang dia berhijrah.',
-        narrator: 'Umar ibn Al-Khattab',
-        source: 'Sahih Bukhari',
-        book: 'Kitab 1, Hadis 1',
-        image: 'assets/images/hadith_intentions.png',
-        category: 'Aqidah',
-      ),
-      Hadith(
-        title: 'Hadis Mengenai Akhlak Yang Baik',
-        content: 'Yang paling sempurna iman di kalangan orang beriman adalah yang paling baik akhlaknya, dan yang terbaik di antara kamu adalah yang paling baik kepada wanita mereka.',
-        narrator: 'Abu Huraira',
-        source: 'Sahih Muslim',
-        book: 'Kitab 1, Hadis 56',
-        image: 'assets/images/hadith_character.png',
-        category: 'Akhlak',
-      ),
-      Hadith(
-        title: 'Hadis Mengenai Ilmu',
-        content: 'Mencari ilmu adalah wajib ke atas setiap Muslim.',
-        narrator: 'Anas ibn Malik',
-        source: 'Ibn Majah',
-        book: 'Book 1, Hadith 224',
-        image: 'assets/images/hadith_knowledge.png',
-        category: 'Ilm',
-      ),
-      Hadith(
-        title: 'Hadith on Mercy',
-        content: 'The merciful will be shown mercy by the Most Merciful. Be merciful to those on earth, and the One in heaven will be merciful to you.',
-        narrator: 'Abdullah ibn Amr',
-        source: 'Abu Dawud',
-        book: 'Book 40, Hadith 4941',
-        image: 'assets/images/hadith_mercy.png',
-        category: 'Akhlak',
-      ),
-      Hadith(
-        title: 'Hadith on Brotherhood',
-        content: 'A Muslim is the brother of another Muslim. He does not wrong him, abandon him, or look down upon him. Piety is here (pointing to his chest). It is enough evil for a person to look down upon his Muslim brother.',
-        narrator: 'Abu Huraira',
-        source: 'Sahih Muslim',
-        book: 'Book 32, Hadith 6219',
-        image: 'assets/images/hadith_brotherhood.png',
-        category: 'Muamalat',
-      ),
-    ];
+  State<HadithsPage> createState() => _HadithsPageState();
+}
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Hadiths'),
-        backgroundColor: AppColors.appBar,
-        foregroundColor: AppColors.onAppBar,
-      ),
-      backgroundColor: AppColors.background,
-      body: ListView.builder(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-        itemCount: hadiths.length,
-        itemBuilder: (context, index) {
-          final hadith = hadiths[index];
-          return Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            color: Theme.of(context).cardColor,
-            margin: const EdgeInsets.only(bottom: 16),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (hadith.image != null && hadith.image!.isNotEmpty)
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: hadith.image!.startsWith('assets/')
-                              ? Image.asset(
-                                  hadith.image!,
-                                  width: 80,
-                                  height: 80,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      width: 80,
-                                      height: 80,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primary.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Icon(
-                                        Icons.book,
-                                        color: AppColors.primary,
-                                        size: 40,
-                                      ),
-                                    );
-                                  },
-                                )
-                              : Image.file(
-                                  File(hadith.image!),
-                                  width: 80,
-                                  height: 80,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      width: 80,
-                                      height: 80,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primary.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Icon(
-                                        Icons.book,
-                                        color: AppColors.primary,
-                                        size: 40,
-                                      ),
-                                    );
-                                  },
+class _HadithsPageState extends State<HadithsPage> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<HadithCubit>().fetchHadiths();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // Use existing HadithCubit from parent context if available, otherwise create new one
+    return BlocProvider.value(
+      value: context.read<HadithCubit>(),
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Hadis'),
+          backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+          foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
+        ),
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: BlocBuilder<HadithCubit, HadithState>(
+          builder: (context, state) {
+            if (state.status == HadithStatus.loading) {
+              return const Center(
+                child: CircularProgressIndicator(),
+              );
+            }
+
+            if (state.status == HadithStatus.error) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Gagal memuatkan hadis',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      state.error ?? 'Sila cuba lagi',
+                      style: Theme.of(context).textTheme.bodyMedium,
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 24),
+                    ElevatedButton(
+                      onPressed: () {
+                        context.read<HadithCubit>().fetchHadiths();
+                      },
+                      child: const Text('Cuba Lagi'),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            if (state.hadiths.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.book_outlined,
+                      size: 64,
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.5),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Tiada hadis',
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Belum ada hadis yang tersedia',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                    ),
+                  ],
+                ),
+              );
+            }
+
+            return RefreshIndicator(
+              onRefresh: () async {
+                context.read<HadithCubit>().fetchHadiths();
+              },
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                itemCount: state.hadiths.length,
+                itemBuilder: (context, index) {
+                  final hadith = state.hadiths[index];
+                  return Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                    color: Theme.of(context).cardColor,
+                    margin: const EdgeInsets.only(bottom: 16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              if (hadith.image != null && hadith.image!.isNotEmpty)
+                                ClipRRect(
+                                  borderRadius: BorderRadius.circular(10),
+                                  child: _buildHadithImage(context, hadith.image!),
                                 ),
-                        ),
-                      const SizedBox(width: 18),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              hadith.title,
-                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontSize: 15),
-                            ),
-                            const SizedBox(height: 4),
+                              const SizedBox(width: 18),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      hadith.title,
+                                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                    ),
+                                    if (hadith.source != null || hadith.book != null) ...[
+                                      const SizedBox(height: 4),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(12),
+                                        ),
+                                        child: Text(
+                                          hadith.source != null && hadith.book != null
+                                              ? '${hadith.source} - ${hadith.book}'
+                                              : hadith.source ?? hadith.book ?? '',
+                                          style: TextStyle(
+                                            color: Theme.of(context).colorScheme.primary,
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
+                          Text(
+                            hadith.content,
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.5, fontSize: 13),
+                          ),
+                          if (hadith.narrator != null || hadith.source != null || hadith.book != null) ...[
+                            const SizedBox(height: 16),
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: AppColors.primary.withOpacity(0.1),
+                                color: Theme.of(context).cardColor,
                                 borderRadius: BorderRadius.circular(12),
                               ),
-                              child: Text(
-                                hadith.category,
-                                style: TextStyle(
-                                  color: AppColors.primary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (hadith.narrator != null) ...[
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.person,
+                                          size: 16,
+                                          color: Theme.of(context).iconTheme.color?.withOpacity(0.6) ?? Colors.grey,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            'Diriwayatkan oleh: ${hadith.narrator}',
+                                            style: TextStyle(
+                                              color: Theme.of(context).iconTheme.color?.withOpacity(0.6) ?? Colors.grey,
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w500,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    if (hadith.source != null || hadith.book != null) const SizedBox(height: 8),
+                                  ],
+                                  if (hadith.source != null || hadith.book != null)
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.source,
+                                          size: 16,
+                                          color: Theme.of(context).iconTheme.color?.withOpacity(0.6) ?? Colors.grey,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            hadith.source != null && hadith.book != null
+                                                ? '${hadith.source} - ${hadith.book}'
+                                                : hadith.source ?? hadith.book ?? '',
+                                            style: TextStyle(
+                                              color: Theme.of(context).iconTheme.color?.withOpacity(0.6) ?? Colors.grey,
+                                              fontSize: 13,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                ],
                               ),
                             ),
                           ],
-                        ),
+                        ],
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    hadith.content,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(height: 1.5, fontSize: 13),
-                  ),
-                  const SizedBox(height: 16),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: AppColors.background,
-                      borderRadius: BorderRadius.circular(12),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.person, size: 16, color: AppColors.disabled),
-                            const SizedBox(width: 8),
-                            Text(
-                              'Narrated by: ${hadith.narrator}',
-                              style: TextStyle(
-                                color: AppColors.disabled,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Icon(Icons.source, size: 16, color: AppColors.disabled),
-                            const SizedBox(width: 8),
-                            Text(
-                              '${hadith.source} - ${hadith.book}',
-                              style: TextStyle(
-                                color: AppColors.disabled,
-                                fontSize: 13,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                  );
+                },
+              ),
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  Widget _buildHadithImage(BuildContext context, String imagePath) {
+    if (imagePath.startsWith('assets/')) {
+      return Image.asset(
+        imagePath,
+        width: 80,
+        height: 80,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildErrorImage(context);
+        },
+      );
+    } else if (imagePath.startsWith('/data/') || imagePath.startsWith('file://')) {
+      final file = File(imagePath.replaceFirst('file://', ''));
+      if (file.existsSync()) {
+        return Image.file(
+          file,
+          width: 80,
+          height: 80,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return _buildErrorImage(context);
+          },
+        );
+      }
+    } else {
+      // Assume it's a network image
+      return Image.network(
+        imagePath,
+        width: 80,
+        height: 80,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                    : null,
               ),
             ),
           );
         },
+        errorBuilder: (context, error, stackTrace) {
+          return _buildErrorImage(context);
+        },
+      );
+    }
+    return _buildErrorImage(context);
+  }
+
+  Widget _buildErrorImage(BuildContext context) {
+    return Container(
+      width: 80,
+      height: 80,
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Icon(
+        Icons.book,
+        color: Theme.of(context).colorScheme.primary,
+        size: 40,
       ),
     );
   }
-}
-
-class Hadith {
-  final String title;
-  final String content;
-  final String narrator;
-  final String source;
-  final String book;
-  final String? image;
-  final String category;
-  
-  const Hadith({
-    required this.title,
-    required this.content,
-    required this.narrator,
-    required this.source,
-    required this.book,
-    this.image,
-    required this.category,
-  });
 } 

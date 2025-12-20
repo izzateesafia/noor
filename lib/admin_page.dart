@@ -5,6 +5,7 @@ import 'admin/manage_hadiths_page.dart';
 import 'admin/manage_classes_page.dart';
 import 'admin/manage_users_page.dart';
 import 'admin/manage_live_streams_page.dart';
+import 'admin/manage_news_page.dart';
 import 'deep_link_test_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -144,119 +145,133 @@ class AdminPage extends StatelessWidget {
         foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
       ),
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            // Go Live button
-            Padding(
-              padding: const EdgeInsets.only(bottom: 18),
-              child: ElevatedButton.icon(
-                onPressed: () => _showGoLiveSheet(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).colorScheme.primary,
-                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+      body: SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // Go Live button
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 18),
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showGoLiveSheet(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    icon: const Icon(Icons.live_tv),
+                    label: const Text('Go Live'),
+                  ),
                 ),
-                icon: const Icon(Icons.live_tv),
-                label: const Text('Go Live'),
-              ),
-            ),
-            // Schedule Live button
-            Padding(
-              padding: const EdgeInsets.only(bottom: 18),
-              child: ElevatedButton.icon(
-                onPressed: () => _showScheduleLiveDialog(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.deepOrange,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                // Schedule Live button
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 18),
+                  child: ElevatedButton.icon(
+                    onPressed: () => _showScheduleLiveDialog(context),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepOrange,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    icon: const Icon(Icons.alarm),
+                    label: const Text('Schedule Live'),
+                  ),
                 ),
-                icon: const Icon(Icons.alarm),
-                label: const Text('Schedule Live'),
-              ),
+                Text(
+                  'What would you manage today?',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                  textAlign: TextAlign.center,
+                ),
+                const SizedBox(height: 32),
+                _AdminActionButton(
+                  icon: Icons.campaign,
+                  label: 'Manage Advertisement',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const ManageAdsPage()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 18),
+                _AdminActionButton(
+                  icon: Icons.menu_book,
+                  label: 'Manage Dua',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const ManageDuasPage()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 18),
+                _AdminActionButton(
+                  icon: Icons.book,
+                  label: 'Manage Hadith',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const ManageHadithsPage()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 18),
+                _AdminActionButton(
+                  icon: Icons.class_,
+                  label: 'Manage Class',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const ManageClassesPage()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 18),
+                _AdminActionButton(
+                  icon: Icons.people,
+                  label: 'Manage Users',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const ManageUsersPage()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 18),
+                _AdminActionButton(
+                  icon: Icons.live_tv,
+                  label: 'Manage Live Streams',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const ManageLiveStreamsPage()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 18),
+                _AdminActionButton(
+                  icon: Icons.article,
+                  label: 'Manage News (Terkini)',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const ManageNewsPage()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 18),
+                _AdminActionButton(
+                  icon: Icons.link,
+                  label: 'Deep Link Test',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const DeepLinkTestPage()),
+                    );
+                  },
+                ),
+              ],
             ),
-            Text(
-              'What would you manage today?',
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-              textAlign: TextAlign.center,
-            ),
-            const SizedBox(height: 32),
-            _AdminActionButton(
-              icon: Icons.campaign,
-              label: 'Manage Advertisement',
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const ManageAdsPage()),
-                );
-              },
-            ),
-            const SizedBox(height: 18),
-            _AdminActionButton(
-              icon: Icons.menu_book,
-              label: 'Manage Dua',
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const ManageDuasPage()),
-                );
-              },
-            ),
-            const SizedBox(height: 18),
-            _AdminActionButton(
-              icon: Icons.book,
-              label: 'Manage Hadith',
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const ManageHadithsPage()),
-                );
-              },
-            ),
-            const SizedBox(height: 18),
-            _AdminActionButton(
-              icon: Icons.class_,
-              label: 'Manage Class',
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const ManageClassesPage()),
-                );
-              },
-            ),
-            const SizedBox(height: 18),
-            _AdminActionButton(
-              icon: Icons.people,
-              label: 'Manage Users',
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const ManageUsersPage()),
-                );
-              },
-            ),
-            const SizedBox(height: 18),
-            _AdminActionButton(
-              icon: Icons.live_tv,
-              label: 'Manage Live Streams',
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const ManageLiveStreamsPage()),
-                );
-              },
-            ),
-            const SizedBox(height: 18),
-            _AdminActionButton(
-              icon: Icons.link,
-              label: 'Deep Link Test',
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(builder: (context) => const DeepLinkTestPage()),
-                );
-              },
-            ),
-          ],
+          ),
         ),
       ),
     );

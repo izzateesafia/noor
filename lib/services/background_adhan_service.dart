@@ -92,7 +92,7 @@ class BackgroundAdhanService {
       await _notifications.zonedSchedule(
         notificationId,
         'Waktu $prayerDisplayName',
-        'Azan akan dimainkan sekarang',
+        'Telah masuk waktu $prayerDisplayName',
         scheduledTz,
         NotificationDetails(
           android: AndroidNotificationDetails(

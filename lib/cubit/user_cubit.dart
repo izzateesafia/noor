@@ -47,6 +47,28 @@ class UserCubit extends Cubit<UserState> {
     }
   }
 
+  Future<void> updateUserType(UserType userType) async {
+    try {
+      emit(state.copyWith(status: UserStatus.loading));
+      final current = state.currentUser;
+      if (current == null) {
+        emit(state.copyWith(status: UserStatus.error, error: 'Tiada pengguna untuk dikemaskini'));
+        return;
+      }
+      // Update roles: set the new role as primary (first in array) and keep other roles
+      // Remove the new role from its current position if it exists, then add it as first
+      final updatedRoles = [
+        userType,
+        ...current.roles.where((r) => r != userType),
+      ];
+      final updated = current.copyWith(roles: updatedRoles);
+      await repository.updateUser(updated);
+      emit(state.copyWith(status: UserStatus.loaded, currentUser: updated));
+    } catch (e) {
+      emit(state.copyWith(status: UserStatus.error, error: e.toString()));
+    }
+  }
+
   Future<void> fetchCurrentUser() async {
     emit(state.copyWith(status: UserStatus.loading));
     try {
@@ -55,6 +77,7 @@ class UserCubit extends Cubit<UserState> {
       
       if (currentUser != null) {
         print('UserCubit: Successfully loaded user: ${currentUser.name}');
+        print('UserCubit: User enrolled classes: ${currentUser.enrolledClassIds}');
         emit(state.copyWith(
           status: UserStatus.loaded, 
           currentUser: currentUser,
@@ -81,10 +104,10 @@ class UserCubit extends Cubit<UserState> {
     try {
       print('UserCubit: Signing in with Google...');
       final user = await _googleAuthService.signInWithGoogle().timeout(
-        const Duration(seconds: 35),
+        const Duration(seconds: 70),
         onTimeout: () {
           print('UserCubit: Google sign-in timed out');
-          throw Exception('Google Sign-In timed out');
+          throw Exception('Google Sign-In timed out - sila pastikan sambungan internet anda stabil dan cuba lagi');
         },
       );
       

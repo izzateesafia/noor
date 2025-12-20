@@ -25,13 +25,17 @@ class _ClassesPageState extends State<ClassesPage> {
     });
   }
 
-  void _enroll(ClassModel classModel, UserModel user) {
+  void _enroll(ClassModel classModel, UserModel user) async {
     if (classModel.price > 0.0) {
-      Navigator.of(context).push(
+      await Navigator.of(context).push(
         MaterialPageRoute(
           builder: (context) => ClassPaymentPage(classModel: classModel, user: user),
         ),
       );
+      // Refresh user data after returning from payment page
+      if (mounted) {
+        context.read<UserCubit>().fetchCurrentUser();
+      }
       return;
     }
     setState(() {

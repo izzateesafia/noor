@@ -203,19 +203,19 @@ class _RukunSolatPageState extends State<RukunSolatPage> {
                                     showDialog(
                                       context: context,
                                       builder: (context) => AlertDialog(
-                                        title: const Text('Premium Feature'),
-                                        content: const Text('This video is for premium users. Would you like to view premium plans?'),
+                                        title: const Text('Ciri Premium'),
+                                        content: const Text('Video ini adalah untuk pengguna premium. Adakah anda ingin melihat pelan premium?'),
                                         actions: [
                                           TextButton(
                                             onPressed: () => Navigator.of(context).pop(),
-                                            child: const Text('Cancel'),
+                                            child: const Text('Batal'),
                                           ),
                                           ElevatedButton(
                                             onPressed: () {
                                               Navigator.of(context).pop();
                                               Navigator.of(context).pushNamed('/premium');
                                             },
-                                            child: const Text('View Premium'),
+                                            child: const Text('Lihat Premium'),
                                           ),
                                         ],
                                       ),
@@ -235,7 +235,7 @@ class _RukunSolatPageState extends State<RukunSolatPage> {
                                             Icon(Icons.play_circle_fill, color: Colors.white, size: 32),
                                             const SizedBox(height: 6),
                                             Text(
-                                              'Tap to Play',
+                                              'Ketuk untuk Main',
                                               style: TextStyle(
                                                 color: Colors.white,
                                                 fontWeight: FontWeight.bold,
@@ -258,7 +258,7 @@ class _RukunSolatPageState extends State<RukunSolatPage> {
                                             Icon(Icons.lock, color: Colors.white, size: 32),
                                             const SizedBox(height: 6),
                                             Text(
-                                              'Premium Only',
+                                              'Premium Sahaja',
                                               style: TextStyle(
                                                 color: Colors.white,
                                                 fontWeight: FontWeight.bold,
@@ -287,7 +287,7 @@ class _RukunSolatPageState extends State<RukunSolatPage> {
   void _playVideo(BuildContext context, String? videoUrl) async {
     if (videoUrl == null || videoUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Video URL not available')),
+        const SnackBar(content: Text('URL video tidak tersedia')),
       );
       return;
     }
@@ -298,12 +298,12 @@ class _RukunSolatPageState extends State<RukunSolatPage> {
         await launchUrl(url, mode: LaunchMode.externalApplication);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not launch video')),
+          const SnackBar(content: Text('Tidak dapat membuka video')),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error launching video: $e')),
+        SnackBar(content: Text('Ralat membuka video: $e')),
       );
     }
   }

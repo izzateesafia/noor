@@ -67,12 +67,12 @@ class MenuPage extends StatelessWidget {
       MenuSection(
         title: 'Alat & Utiliti',
         items: [
-          MenuItem(
-            icon: Icons.volume_up,
-            label: 'Penguji Azan',
-            description: 'Uji kualiti azan',
-            onTap: () => Navigator.of(context).pushNamed('/adhan_tester'),
-          ),
+          // MenuItem(
+          //   icon: Icons.volume_up,
+          //   label: 'Penguji Azan',
+          //   description: 'Uji kualiti azan',
+          //   onTap: () => Navigator.of(context).pushNamed('/adhan_tester'),
+          // ),
           MenuItem(
             icon: Icons.alarm,
             label: 'Tetapan Azan',

@@ -217,9 +217,14 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
   Future<void> _updateUserPremiumStatus(String userId, String planId) async {
     try {
       if (planId.startsWith('class_')) {
-        // Handle class enrollment - no premium status change needed
-        // You can add class enrollment logic here if needed
-        print('PaymentBloc: Class enrollment successful for user: $userId, class: $planId');
+        // Handle class enrollment - extract class ID from plan ID
+        final classId = planId.replaceFirst('class_', '');
+        print('PaymentBloc: Processing class enrollment - planId: $planId, extracted classId: $classId');
+        await repository.updateUserClassEnrollment(
+          userId: userId,
+          classId: classId,
+        );
+        print('PaymentBloc: Class enrollment successful for user: $userId, class: $classId');
         return;
       }
       

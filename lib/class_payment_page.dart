@@ -239,8 +239,8 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
           ),
           child: Row(
             children: [
-              _buildToggleButton("🍎 Apple Pay", 0),
-              _buildToggleButton("💳 Card", 1),
+              _buildToggleButton("Apple Pay", 0),
+              _buildToggleButton("Card", 1),
             ],
           ),
         ),

@@ -35,12 +35,11 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
       ];
     }
     
-    // Get roles from Firestore - this is the source of truth
+    // Get roles from Firestore - this is the single source of truth
     final roles = user.roles;
-    final userType = user.userType;
-    final isAdmin = userType == UserType.admin || roles.contains(UserType.admin);
+    final isAdmin = roles.contains(UserType.admin);
     print('MainNavigationPage: User roles from Firestore: ${roles.map((r) => r.toString()).join(', ')}');
-    print('MainNavigationPage: User userType: $userType');
+    print('MainNavigationPage: User primary role (userType): ${user.userType}');
     print('MainNavigationPage: Is Admin: $isAdmin');
     
     // Determine effective dashboard STRICTLY from roles (highest priority)
@@ -81,28 +80,12 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
         if (state.status == UserStatus.initial && state.currentUser == null) {
           Navigator.of(context).pushReplacementNamed('/login');
         }
-        // Warn if userType not in roles and enforce strict access
+        // Log role information for debugging
         if (mounted &&
             state.currentUser != null &&
             state.currentUser!.roles.isNotEmpty) {
           final user = state.currentUser!;
           final roles = user.roles;
-          
-          // Check if userType is in roles
-          if (!roles.contains(user.userType) && !_hasShownRoleWarning) {
-            _hasShownRoleWarning = true;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  'Akses ditolak: Anda tidak mempunyai peranan ${_getRoleName(user.userType)}. Peranan anda: ${roles.map(_getRoleName).join(', ')}'
-                ),
-                behavior: SnackBarBehavior.floating,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                duration: const Duration(seconds: 5),
-                backgroundColor: Colors.red,
-              ),
-            );
-          }
           
           // Strict enforcement: If user tries to access trainer dashboard but doesn't have trainer role
           final hasTrainerAccess = roles.contains(UserType.trainer) || roles.contains(UserType.masterTrainer);

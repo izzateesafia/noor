@@ -349,71 +349,71 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
 
             const SizedBox(height: 16),
 
-            // Test Buttons
-            Column(
-              children: [
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/test_scheduled_alarm');
-                        },
-                        icon: const Icon(Icons.schedule),
-                        label: const Text('Penguji Azan Terjadual'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.green,
-                          side: BorderSide(color: Colors.green),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/test_simple_alarm');
-                        },
-                        icon: const Icon(Icons.alarm),
-                        label: const Text('Penguji Azan Timer'),
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: AppColors.primary,
-                          side: BorderSide(color: AppColors.primary),
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () {
-                      Navigator.pushNamed(context, '/adhan_tester');
-                    },
-                    icon: const Icon(Icons.play_arrow),
-                    label: const Text('Penguji Azan Lama'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.grey[600],
-                      side: BorderSide(color: Colors.grey[600]!),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
-            const SizedBox(height: 16),
+            // // Test Buttons
+            // Column(
+            //   children: [
+            //     Row(
+            //       children: [
+            //         Expanded(
+            //           child: OutlinedButton.icon(
+            //             onPressed: () {
+            //               Navigator.pushNamed(context, '/test_scheduled_alarm');
+            //             },
+            //             icon: const Icon(Icons.schedule),
+            //             label: const Text('Penguji Azan Terjadual'),
+            //             style: OutlinedButton.styleFrom(
+            //               foregroundColor: Colors.green,
+            //               side: BorderSide(color: Colors.green),
+            //               padding: const EdgeInsets.symmetric(vertical: 16),
+            //               shape: RoundedRectangleBorder(
+            //                 borderRadius: BorderRadius.circular(12),
+            //               ),
+            //             ),
+            //           ),
+            //         ),
+            //         const SizedBox(width: 8),
+            //         Expanded(
+            //           child: OutlinedButton.icon(
+            //             onPressed: () {
+            //               Navigator.pushNamed(context, '/test_simple_alarm');
+            //             },
+            //             icon: const Icon(Icons.alarm),
+            //             label: const Text('Penguji Azan Timer'),
+            //             style: OutlinedButton.styleFrom(
+            //               foregroundColor: AppColors.primary,
+            //               side: BorderSide(color: AppColors.primary),
+            //               padding: const EdgeInsets.symmetric(vertical: 16),
+            //               shape: RoundedRectangleBorder(
+            //                 borderRadius: BorderRadius.circular(12),
+            //               ),
+            //             ),
+            //           ),
+            //         ),
+            //       ],
+            //     ),
+            //     const SizedBox(height: 8),
+            //     // SizedBox(
+            //     //   width: double.infinity,
+            //     //   child: OutlinedButton.icon(
+            //     //     onPressed: () {
+            //     //       Navigator.pushNamed(context, '/adhan_tester');
+            //     //     },
+            //     //     icon: const Icon(Icons.play_arrow),
+            //     //     label: const Text('Penguji Azan Lama'),
+            //     //     style: OutlinedButton.styleFrom(
+            //     //       foregroundColor: Colors.grey[600],
+            //     //       side: BorderSide(color: Colors.grey[600]!),
+            //     //       padding: const EdgeInsets.symmetric(vertical: 16),
+            //     //       shape: RoundedRectangleBorder(
+            //     //         borderRadius: BorderRadius.circular(12),
+            //     //       ),
+            //     //     ),
+            //     //   ),
+            //     // ),
+            //   ],
+            // ),
+            //
+            // const SizedBox(height: 16),
 
             // Save Button
             SizedBox(
