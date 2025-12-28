@@ -3,6 +3,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:quran/quran.dart' as quran;
 import 'theme_constants.dart';
 import 'widgets/surah_detail_page.dart';
+import 'repository/mushaf_repository.dart';
+import 'models/mushaf_model.dart';
+import 'pages/pdf_mushaf_viewer_page.dart';
 
 class QuranReaderPage extends StatefulWidget {
   const QuranReaderPage({super.key});
@@ -14,6 +17,7 @@ class QuranReaderPage extends StatefulWidget {
 class _QuranReaderPageState extends State<QuranReaderPage> {
   List<int> _filteredSurahs = [];
   String _currentViewMode = 'surah'; // Track current view mode
+  final MushafRepository _mushafRepository = MushafRepository();
 
   @override
   void initState() {
@@ -25,13 +29,79 @@ class _QuranReaderPageState extends State<QuranReaderPage> {
     _filteredSurahs = List.generate(quran.totalSurahCount, (index) => index + 1);
   }
 
+  /// Fetch Madinah Old mushaf and navigate to PDF viewer
+  Future<void> _navigateToMadinahOldMushaf() async {
+    try {
+      // Show loading indicator
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => const Center(
+          child: CircularProgressIndicator(),
+        ),
+      );
+
+      // Fetch all mushafs
+      final mushafs = await _mushafRepository.getAllMushafs();
+      
+      // Find Madinah Old mushaf (case-insensitive search)
+      MushafModel? madinahOldMushaf;
+      for (var mushaf in mushafs) {
+        final nameLower = mushaf.name.toLowerCase();
+        if (nameLower.contains('madinah') && nameLower.contains('old')) {
+          madinahOldMushaf = mushaf;
+          break;
+        }
+      }
+
+      // Close loading dialog
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+
+      if (madinahOldMushaf != null) {
+        // Navigate to PDF viewer with Madinah Old mushaf
+        if (mounted) {
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => PDFMushafViewerPage(mushaf: madinahOldMushaf!),
+            ),
+          );
+        }
+      } else {
+        // Show error if mushaf not found
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Madinah Old mushaf not found. Please try again.'),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      // Close loading dialog if still open
+      if (mounted) {
+        Navigator.of(context).pop();
+      }
+      
+      // Show error message
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error loading mushaf: $e'),
+          ),
+        );
+      }
+    }
+  }
+
 
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Quran Reader'),
+        title: const Text('Surah-surah'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,
@@ -43,7 +113,7 @@ class _QuranReaderPageState extends State<QuranReaderPage> {
                 _currentViewMode = value;
               });
               if (value == 'mushaf') {
-                Navigator.of(context).pushNamed('/mushaf');
+                _navigateToMadinahOldMushaf();
               }
             },
             itemBuilder: (context) => [
@@ -58,7 +128,7 @@ class _QuranReaderPageState extends State<QuranReaderPage> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Surah View',
+                      'Surah-surah',
                       style: TextStyle(
                         color: _currentViewMode == 'surah' ? AppColors.primary : Theme.of(context).textTheme.bodyLarge?.color,
                         fontWeight: _currentViewMode == 'surah' ? FontWeight.w600 : FontWeight.normal,
@@ -85,7 +155,7 @@ class _QuranReaderPageState extends State<QuranReaderPage> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Mushaf View',
+                      'Mushaf',
                       style: TextStyle(
                         color: _currentViewMode == 'mushaf' ? AppColors.primary : Theme.of(context).textTheme.bodyLarge?.color,
                         fontWeight: _currentViewMode == 'mushaf' ? FontWeight.w600 : FontWeight.normal,

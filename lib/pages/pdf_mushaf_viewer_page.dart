@@ -284,11 +284,13 @@ class _PDFMushafViewerPageState extends State<PDFMushafViewerPage> {
                     children: [
                       Icon(Icons.pageview),
                       SizedBox(width: 8),
-                      Text('Jump to Page'),
+                      Text('Tukar Mushaf'),
                     ],
                   ),
                   onTap: () {
-                    Future.delayed(Duration.zero, () => _showJumpToPageDialog());
+                    Future.delayed(Duration.zero, () {
+                      Navigator.of(context).pushNamed('/mushaf_pdf_selection');
+                    });
                   },
                 ),
               ],

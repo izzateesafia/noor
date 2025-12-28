@@ -68,7 +68,7 @@ class _MushafReaderPageState extends State<MushafReaderPage> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Surah View',
+                      'Surah-surah',
                       style: TextStyle(
                         color: _currentViewMode == 'surah' ? AppColors.primary : Theme.of(context).textTheme.bodyLarge?.color,
                         fontWeight: _currentViewMode == 'surah' ? FontWeight.w600 : FontWeight.normal,
@@ -95,7 +95,7 @@ class _MushafReaderPageState extends State<MushafReaderPage> {
                     ),
                     const SizedBox(width: 8),
                     Text(
-                      'Mushaf View',
+                      'Mushaf',
                       style: TextStyle(
                         color: _currentViewMode == 'mushaf' ? AppColors.primary : Theme.of(context).textTheme.bodyLarge?.color,
                         fontWeight: _currentViewMode == 'mushaf' ? FontWeight.w600 : FontWeight.normal,

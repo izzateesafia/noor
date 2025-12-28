@@ -157,7 +157,7 @@ class _MushafSelectionPageState extends State<_MushafSelectionPageContent> {
                 TextField(
                   controller: _searchController,
                   decoration: InputDecoration(
-                    hintText: 'Search mushafs...',
+                    hintText: 'Cari Mushaf',
                     prefixIcon: const Icon(Icons.search),
                     suffixIcon: _searchController.text.isNotEmpty
                         ? IconButton(
@@ -178,21 +178,7 @@ class _MushafSelectionPageState extends State<_MushafSelectionPageContent> {
                     _filterMushafs(state.mushafs);
                   },
                 ),
-                const SizedBox(height: 12),
-                // Riwayah Filter
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Row(
-                    children: [
-                      _buildRiwayahChip(context, 'All'),
-                      const SizedBox(width: 8),
-                      ...state.riwayahs.map((riwayah) => Padding(
-                            padding: const EdgeInsets.only(right: 8),
-                            child: _buildRiwayahChip(context, riwayah),
-                          )),
-                    ],
-                  ),
-                ),
+
               ],
             ),
           ),
@@ -228,8 +214,14 @@ class _MushafSelectionPageState extends State<_MushafSelectionPageContent> {
                       ],
                     ),
                   )
-                : ListView.builder(
+                : GridView.builder(
                     padding: const EdgeInsets.all(16),
+                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                      crossAxisCount: 2,
+                      crossAxisSpacing: 12,
+                      mainAxisSpacing: 12,
+                      childAspectRatio: 0.75,
+                    ),
                     itemCount: _filteredMushafs.length,
                     itemBuilder: (context, index) {
                       final mushaf = _filteredMushafs[index];
@@ -263,10 +255,8 @@ class _MushafSelectionPageState extends State<_MushafSelectionPageContent> {
   }
 
   Widget _buildMushafCard(MushafModel mushaf) {
-    final isCached = _cachedStatus[mushaf.id] ?? false;
-
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: EdgeInsets.zero,
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: InkWell(
@@ -279,104 +269,17 @@ class _MushafSelectionPageState extends State<_MushafSelectionPageContent> {
           );
         },
         borderRadius: BorderRadius.circular(12),
-        child: Padding(
-          padding: const EdgeInsets.all(16),
-          child: Row(
-            children: [
-              // Icon/Thumbnail
-              Container(
-                width: 60,
-                height: 80,
-                decoration: BoxDecoration(
-                  color: AppColors.primary.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(
-                  Icons.book,
-                  color: AppColors.primary,
-                  size: 32,
-                ),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(16),
+            child: Text(
+              mushaf.name,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
               ),
-              const SizedBox(width: 16),
-              // Details
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      mushaf.name,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      mushaf.nameArabic,
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      mushaf.description,
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Chip(
-                          label: Text(
-                            mushaf.riwayah,
-                            style: const TextStyle(fontSize: 11),
-                          ),
-                          padding: EdgeInsets.zero,
-                          backgroundColor: AppColors.primary.withOpacity(0.1),
-                          labelStyle: TextStyle(color: AppColors.primary),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '${mushaf.totalPages} pages',
-                          style: TextStyle(
-                            fontSize: 12,
-                            color: Colors.grey[600],
-                          ),
-                        ),
-                        if (isCached) ...[
-                          const SizedBox(width: 8),
-                          Icon(
-                            Icons.check_circle,
-                            size: 16,
-                            color: Colors.green,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            'Cached',
-                            style: TextStyle(
-                              fontSize: 12,
-                              color: Colors.green,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              // Arrow Icon
-              Icon(
-                Icons.arrow_forward_ios,
-                size: 16,
-                color: Colors.grey[400],
-              ),
-            ],
+              textAlign: TextAlign.center,
+            ),
           ),
         ),
       ),
