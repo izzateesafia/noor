@@ -1,8 +1,11 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:syncfusion_flutter_pdfviewer/pdfviewer.dart';
 import '../models/mushaf_model.dart';
 import '../services/mushaf_download_service.dart';
+import '../services/mushaf_bookmark_service.dart';
+import '../cubit/user_cubit.dart';
 import '../theme_constants.dart';
 
 class PDFMushafViewerPage extends StatefulWidget {
@@ -17,6 +20,7 @@ class PDFMushafViewerPage extends StatefulWidget {
 class _PDFMushafViewerPageState extends State<PDFMushafViewerPage> {
   final PdfViewerController _pdfViewerController = PdfViewerController();
   final MushafDownloadService _downloadService = MushafDownloadService();
+  final MushafBookmarkService _bookmarkService = MushafBookmarkService();
   
   int _currentPage = 1;
   int _totalPages = 0;
@@ -26,10 +30,53 @@ class _PDFMushafViewerPageState extends State<PDFMushafViewerPage> {
   String? _errorMessage;
   String? _pdfPath;
   bool _isPdfCached = false;
+  bool _isBookmarked = false;
+  int? _savedBookmarkPage;
+  
+  // Gesture detection for horizontal swipe
+  double _dragStartX = 0.0;
+  double _dragStartY = 0.0;
 
   @override
   void initState() {
     super.initState();
+    _checkCacheFirst();
+    _loadBookmark();
+  }
+
+  /// Load saved bookmark for this mushaf
+  Future<void> _loadBookmark() async {
+    try {
+      final savedPage = await _bookmarkService.getBookmark(widget.mushaf.id);
+      if (savedPage != null) {
+        setState(() {
+          _savedBookmarkPage = savedPage;
+          _isBookmarked = true;
+        });
+      }
+    } catch (e) {
+      print('Error loading bookmark: $e');
+    }
+  }
+
+  /// Check cache status immediately before showing loading state
+  Future<void> _checkCacheFirst() async {
+    _isPdfCached = await _downloadService.isPdfCached(widget.mushaf.id);
+    if (_isPdfCached) {
+      _pdfPath = await _downloadService.getLocalPdfPath(widget.mushaf.id);
+      // Verify file exists and is readable
+      final file = File(_pdfPath!);
+      if (await file.exists()) {
+        setState(() {
+          _isLoading = false;
+        });
+        return; // Skip download, load immediately
+      } else {
+        // Cache file doesn't exist, mark as not cached
+        _isPdfCached = false;
+      }
+    }
+    // If not cached or invalid, proceed with download
     _loadPdf();
   }
 
@@ -40,12 +87,13 @@ class _PDFMushafViewerPageState extends State<PDFMushafViewerPage> {
         _errorMessage = null;
       });
 
-      // Check if PDF is cached
-      _isPdfCached = await _downloadService.isPdfCached(widget.mushaf.id);
+      // Check if PDF is cached (double check)
+      if (!_isPdfCached) {
+        _isPdfCached = await _downloadService.isPdfCached(widget.mushaf.id);
+      }
       
-      if (_isPdfCached) {
+      if (_isPdfCached && _pdfPath != null) {
         // Load from cache
-        _pdfPath = await _downloadService.getLocalPdfPath(widget.mushaf.id);
         setState(() {
           _isLoading = false;
         });
@@ -98,6 +146,67 @@ class _PDFMushafViewerPageState extends State<PDFMushafViewerPage> {
 
   Future<void> _retryDownload() async {
     await _loadPdf();
+  }
+
+  /// Save current page as bookmark
+  /// If bookmark already exists, it updates to current page
+  Future<void> _saveBookmark() async {
+    try {
+      await _bookmarkService.saveBookmark(widget.mushaf.id, _currentPage);
+      setState(() {
+        _isBookmarked = true;
+        _savedBookmarkPage = _currentPage;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Bookmark saved at page $_currentPage'),
+            duration: const Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save bookmark: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
+  }
+
+  /// Remove bookmark for this mushaf
+  Future<void> _removeBookmark() async {
+    try {
+      await _bookmarkService.deleteBookmark(widget.mushaf.id);
+      setState(() {
+        _isBookmarked = false;
+        _savedBookmarkPage = null;
+      });
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Bookmark removed'),
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to remove bookmark: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    }
   }
 
   void _showJumpToPageDialog() {
@@ -163,14 +272,9 @@ class _PDFMushafViewerPageState extends State<PDFMushafViewerPage> {
             ),
           if (_pdfPath != null)
             IconButton(
-              icon: const Icon(Icons.bookmark_border),
-              onPressed: () {
-                // TODO: Implement bookmark functionality
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Bookmark feature coming soon')),
-                );
-              },
-              tooltip: 'Bookmark',
+              icon: Icon(_isBookmarked ? Icons.bookmark : Icons.bookmark_border),
+              onPressed: _isBookmarked ? _removeBookmark : _saveBookmark,
+              tooltip: _isBookmarked ? 'Remove Bookmark' : 'Save Bookmark',
             ),
           if (_pdfPath != null)
             PopupMenuButton(
@@ -283,19 +387,68 @@ class _PDFMushafViewerPageState extends State<PDFMushafViewerPage> {
       );
     }
 
-    return SfPdfViewer.file(
-      file,
-      controller: _pdfViewerController,
-      onDocumentLoaded: (PdfDocumentLoadedDetails details) {
-        setState(() {
-          _totalPages = details.document.pages.count;
-        });
+    // Wrap PDF viewer with GestureDetector for horizontal swipe navigation
+    return GestureDetector(
+      onHorizontalDragStart: (details) {
+        _dragStartX = details.globalPosition.dx;
+        _dragStartY = details.globalPosition.dy;
       },
-      onPageChanged: (PdfPageChangedDetails details) {
-        setState(() {
-          _currentPage = details.newPageNumber;
-        });
+      onHorizontalDragUpdate: (details) {
+        // Track drag for swipe detection
       },
+      onHorizontalDragEnd: (details) {
+        final dragEndX = details.globalPosition.dx;
+        final dragEndY = details.globalPosition.dy;
+        final deltaX = dragEndX - _dragStartX;
+        final deltaY = dragEndY - _dragStartY;
+        
+        // Only trigger swipe if horizontal movement is greater than vertical
+        // and exceeds threshold (50 pixels)
+        if (deltaX.abs() > deltaY.abs() && deltaX.abs() > 50) {
+          if (deltaX > 0) {
+            // Swipe right - go to previous page
+            if (_currentPage > 1) {
+              _pdfViewerController.previousPage();
+            }
+          } else {
+            // Swipe left - go to next page
+            if (_currentPage < _totalPages) {
+              _pdfViewerController.nextPage();
+            }
+          }
+        }
+      },
+      child: SfPdfViewer.file(
+        file,
+        controller: _pdfViewerController,
+        // enableDoubleTapZoom: false,
+        canShowScrollHead: false,
+        canShowScrollStatus: false,
+        scrollDirection: PdfScrollDirection.horizontal,
+        pageLayoutMode: PdfPageLayoutMode.single,
+        onDocumentLoaded: (PdfDocumentLoadedDetails details) {
+          setState(() {
+            _totalPages = details.document.pages.count;
+          });
+          // Jump to saved bookmark page if available
+          if (_savedBookmarkPage != null && _savedBookmarkPage! >= 1 && _savedBookmarkPage! <= _totalPages) {
+            Future.delayed(const Duration(milliseconds: 300), () {
+              _pdfViewerController.jumpToPage(_savedBookmarkPage!);
+              setState(() {
+                _currentPage = _savedBookmarkPage!;
+              });
+            });
+          }
+        },
+        onPageChanged: (PdfPageChangedDetails details) {
+          setState(() {
+            _currentPage = details.newPageNumber;
+            // Bookmark status is based on whether a bookmark exists for this mushaf,
+            // not whether we're on the bookmarked page
+            // _isBookmarked remains true if _savedBookmarkPage is not null
+          });
+        },
+      ),
     );
   }
 

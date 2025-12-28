@@ -22,10 +22,31 @@ service firebase.storage {
                     && fileName.matches(request.auth.uid + '\\..*');
     }
     
+    // Mushaf PDFs: Allow read for all authenticated users
+    match /mushafs/{fileName} {
+      // Allow read for authenticated users
+      allow read: if request.auth != null;
+      
+      // Allow write for authenticated users
+      // Note: For admin-only uploads, handle this in your app code or Cloud Functions
+      allow write: if request.auth != null;
+    }
+    
+    // Mushaf PDFs: Allow read for all authenticated users
+    match /mushafs/{fileName} {
+      // Allow read for authenticated users
+      allow read: if request.auth != null;
+      
+      // Allow write for authenticated users (you can restrict to admins if needed)
+      // Note: Storage rules don't have direct access to Firestore user data
+      // For admin-only writes, handle this in your backend/Cloud Functions
+      allow write: if request.auth != null;
+    }
+    
     // Deny all other paths by default
     match /{allPaths=**} {
       allow read, write: if false;
     }
-  }
+}
 }
 

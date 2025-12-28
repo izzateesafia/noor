@@ -18,6 +18,7 @@ class UserModel {
   final double? latitude; // user's current location latitude
   final double? longitude; // user's current location longitude
   final String? locationName; // formatted location name (e.g., "Kuala Lumpur, Malaysia")
+  final Map<String, int>? mushafBookmarks; // {mushafId: pageNumber} - bookmarks for PDF mushafs
 
   /// Computed getter: Returns the primary role (first role in roles array)
   /// Falls back to student if roles is empty
@@ -41,6 +42,7 @@ class UserModel {
     this.latitude,
     this.longitude,
     this.locationName,
+    this.mushafBookmarks,
   });
 
   UserModel copyWith({
@@ -61,6 +63,7 @@ class UserModel {
     double? latitude,
     double? longitude,
     String? locationName,
+    Map<String, int>? mushafBookmarks,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -80,6 +83,7 @@ class UserModel {
       latitude: latitude ?? this.latitude,
       longitude: longitude ?? this.longitude,
       locationName: locationName ?? this.locationName,
+      mushafBookmarks: mushafBookmarks ?? this.mushafBookmarks,
     );
   }
 
@@ -130,6 +134,13 @@ class UserModel {
       latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : null,
       longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
       locationName: json['locationName'] as String?,
+      mushafBookmarks: json['mushafBookmarks'] != null
+          ? Map<String, int>.from(
+              (json['mushafBookmarks'] as Map).map(
+                (key, value) => MapEntry(key as String, value as int),
+              ),
+            )
+          : null,
     );
   }
 
@@ -154,6 +165,7 @@ class UserModel {
       'latitude': latitude,
       'longitude': longitude,
       'locationName': locationName,
+      'mushafBookmarks': mushafBookmarks,
     };
   }
 

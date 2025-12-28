@@ -1,21 +1,38 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import '../models/mushaf_model.dart';
 import '../repository/mushaf_repository.dart';
+import '../cubit/mushaf_cubit.dart';
+import '../cubit/mushaf_states.dart';
 import '../services/mushaf_download_service.dart';
 import '../theme_constants.dart';
 import 'pdf_mushaf_viewer_page.dart';
 
-class MushafSelectionPage extends StatefulWidget {
+class MushafSelectionPage extends StatelessWidget {
   const MushafSelectionPage({super.key});
 
   @override
-  State<MushafSelectionPage> createState() => _MushafSelectionPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) {
+        final cubit = MushafCubit(MushafRepository());
+        cubit.fetchMushafs();
+        return cubit;
+      },
+      child: const _MushafSelectionPageContent(),
+    );
+  }
 }
 
-class _MushafSelectionPageState extends State<MushafSelectionPage> {
-  final MushafRepository _repository = MushafRepository();
+class _MushafSelectionPageContent extends StatefulWidget {
+  const _MushafSelectionPageContent();
+
+  @override
+  State<_MushafSelectionPageContent> createState() => _MushafSelectionPageState();
+}
+
+class _MushafSelectionPageState extends State<_MushafSelectionPageContent> {
   final MushafDownloadService _downloadService = MushafDownloadService();
-  List<MushafModel> _mushafs = [];
   List<MushafModel> _filteredMushafs = [];
   String _selectedRiwayah = 'All';
   final TextEditingController _searchController = TextEditingController();
@@ -24,8 +41,6 @@ class _MushafSelectionPageState extends State<MushafSelectionPage> {
   @override
   void initState() {
     super.initState();
-    _loadMushafs();
-    _checkCachedStatus();
   }
 
   @override
@@ -34,26 +49,21 @@ class _MushafSelectionPageState extends State<MushafSelectionPage> {
     super.dispose();
   }
 
-  void _loadMushafs() {
-    setState(() {
-      _mushafs = _repository.getAllMushafs();
-      _filteredMushafs = _mushafs;
-    });
-  }
-
-  Future<void> _checkCachedStatus() async {
+  Future<void> _checkCachedStatus(List<MushafModel> mushafs) async {
     final Map<String, bool> status = {};
-    for (var mushaf in _mushafs) {
+    for (var mushaf in mushafs) {
       status[mushaf.id] = await _downloadService.isPdfCached(mushaf.id);
     }
-    setState(() {
-      _cachedStatus.addAll(status);
-    });
+    if (mounted) {
+      setState(() {
+        _cachedStatus.addAll(status);
+      });
+    }
   }
 
-  void _filterMushafs() {
+  void _filterMushafs(List<MushafModel> mushafs) {
     setState(() {
-      _filteredMushafs = _mushafs.where((mushaf) {
+      _filteredMushafs = mushafs.where((mushaf) {
         final matchesRiwayah = _selectedRiwayah == 'All' || mushaf.riwayah == _selectedRiwayah;
         final matchesSearch = _searchController.text.isEmpty ||
             mushaf.name.toLowerCase().contains(_searchController.text.toLowerCase()) ||
@@ -66,6 +76,68 @@ class _MushafSelectionPageState extends State<MushafSelectionPage> {
 
   @override
   Widget build(BuildContext context) {
+    return BlocBuilder<MushafCubit, MushafState>(
+      builder: (context, state) {
+        // Update filtered list when state changes
+        if (state.mushafs.isNotEmpty) {
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            _filterMushafs(state.mushafs);
+            _checkCachedStatus(state.mushafs);
+          });
+        } else if (state.status == MushafStatus.loaded && state.mushafs.isEmpty) {
+          // Explicitly handle empty state
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            setState(() {
+              _filteredMushafs = [];
+            });
+          });
+        }
+
+        if (state.status == MushafStatus.loading) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Select Mushaf'),
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            body: const Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (state.status == MushafStatus.error) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Select Mushaf'),
+              backgroundColor: AppColors.primary,
+              foregroundColor: Colors.white,
+            ),
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+                  const SizedBox(height: 16),
+                  Text(
+                    'Error loading mushafs',
+                    style: TextStyle(color: Colors.red[300]),
+                  ),
+                  const SizedBox(height: 8),
+                  TextButton(
+                    onPressed: () => context.read<MushafCubit>().fetchMushafs(),
+                    child: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        return _buildContent(context, state);
+      },
+    );
+  }
+
+  Widget _buildContent(BuildContext context, MushafState state) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Select Mushaf'),
@@ -92,7 +164,8 @@ class _MushafSelectionPageState extends State<MushafSelectionPage> {
                             icon: const Icon(Icons.clear),
                             onPressed: () {
                               _searchController.clear();
-                              _filterMushafs();
+                              final state = context.read<MushafCubit>().state;
+                              _filterMushafs(state.mushafs);
                             },
                           )
                         : null,
@@ -100,7 +173,10 @@ class _MushafSelectionPageState extends State<MushafSelectionPage> {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  onChanged: (_) => _filterMushafs(),
+                  onChanged: (_) {
+                    final state = context.read<MushafCubit>().state;
+                    _filterMushafs(state.mushafs);
+                  },
                 ),
                 const SizedBox(height: 12),
                 // Riwayah Filter
@@ -108,11 +184,11 @@ class _MushafSelectionPageState extends State<MushafSelectionPage> {
                   scrollDirection: Axis.horizontal,
                   child: Row(
                     children: [
-                      _buildRiwayahChip('All'),
+                      _buildRiwayahChip(context, 'All'),
                       const SizedBox(width: 8),
-                      ..._repository.getAllRiwayahs().map((riwayah) => Padding(
+                      ...state.riwayahs.map((riwayah) => Padding(
                             padding: const EdgeInsets.only(right: 8),
-                            child: _buildRiwayahChip(riwayah),
+                            child: _buildRiwayahChip(context, riwayah),
                           )),
                     ],
                   ),
@@ -127,12 +203,28 @@ class _MushafSelectionPageState extends State<MushafSelectionPage> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.search_off, size: 64, color: Colors.grey[400]),
+                        Icon(
+                          state.mushafs.isEmpty 
+                              ? Icons.video_library_outlined 
+                              : Icons.search_off, 
+                          size: 64, 
+                          color: Colors.grey[400],
+                        ),
                         const SizedBox(height: 16),
                         Text(
-                          'No mushafs found',
+                          state.mushafs.isEmpty
+                              ? 'No mushafs available\nCheck Firestore connection'
+                              : 'No mushafs found\nTry adjusting your search',
+                          textAlign: TextAlign.center,
                           style: TextStyle(color: Colors.grey[600]),
                         ),
+                        if (state.mushafs.isEmpty) ...[
+                          const SizedBox(height: 16),
+                          TextButton(
+                            onPressed: () => context.read<MushafCubit>().fetchMushafs(),
+                            child: const Text('Retry'),
+                          ),
+                        ],
                       ],
                     ),
                   )
@@ -150,7 +242,7 @@ class _MushafSelectionPageState extends State<MushafSelectionPage> {
     );
   }
 
-  Widget _buildRiwayahChip(String riwayah) {
+  Widget _buildRiwayahChip(BuildContext context, String riwayah) {
     final isSelected = _selectedRiwayah == riwayah;
     return FilterChip(
       label: Text(riwayah),
@@ -158,8 +250,12 @@ class _MushafSelectionPageState extends State<MushafSelectionPage> {
       onSelected: (selected) {
         setState(() {
           _selectedRiwayah = riwayah;
-          _filterMushafs();
         });
+        if (riwayah == 'All') {
+          context.read<MushafCubit>().clearFilter();
+        } else {
+          context.read<MushafCubit>().fetchMushafsByRiwayah(riwayah);
+        }
       },
       selectedColor: AppColors.primary.withOpacity(0.2),
       checkmarkColor: AppColors.primary,

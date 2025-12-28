@@ -1,0 +1,88 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is admin
+    function isAdmin() {
+      return request.auth != null && 
+             exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles != null &&
+             'admin' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles;
+    }
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Mushafs collection - readable by all, writable by admins only
+    match /mushafs/{mushafId} {
+      // Anyone can read mushafs (public access)
+      allow read: if true;
+      
+      // Only admins can write (create, update, delete)
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Users can read their own data, or if they're admin
+      allow read: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      
+      // Users can create their own document, admins can create any
+      allow create: if isAuthenticated() && (request.auth.uid == userId || isAdmin());
+      
+      // Users can update their own data (except roles), admins can update any
+      allow update: if isAuthenticated() && (
+        (request.auth.uid == userId && !('roles' in request.resource.data.diff(resource.data).affectedKeys())) ||
+        isAdmin()
+      );
+      
+      // Only admins can delete users
+      allow delete: if isAdmin();
+    }
+    
+    // Videos collection
+    match /videos/{videoId} {
+      // Authenticated users can read videos
+      allow read: if isAuthenticated();
+      
+      // Only admins can write videos
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Classes collection
+    match /classes/{classId} {
+      // Authenticated users can read classes
+      allow read: if isAuthenticated();
+      
+      // Only admins can write classes
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // News collection
+    match /news/{newsId} {
+      // Anyone can read active news
+      allow read: if true;
+      
+      // Only admins can write news
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // App settings collection
+    match /app_settings/{settingId} {
+      // Anyone can read app settings
+      allow read: if true;
+      
+      // Only admins can write app settings
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Default: Deny all other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
+
