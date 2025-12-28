@@ -12,9 +12,42 @@ class ManageUsersPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get the existing UserCubit for admin check
+    final existingUserCubit = context.read<UserCubit>();
+    
     return BlocProvider(
       create: (_) => UserCubit(UserRepository())..fetchUsers(),
-      child: const _ManageUsersView(),
+      child: BlocBuilder<UserCubit, UserState>(
+        bloc: existingUserCubit,
+        builder: (context, state) {
+          // Check if current user is admin using the existing UserCubit
+          final currentUser = state.currentUser;
+          final isAdmin = currentUser?.roles.contains(UserType.admin) ?? false;
+          
+          if (!isAdmin) {
+            // Non-admin users should not access this page
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Akses ditolak: Hanya admin boleh mengakses halaman ini.'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            });
+            return Scaffold(
+              appBar: AppBar(
+                title: const Text('Urus Pengguna'),
+              ),
+              body: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+          
+          return const _ManageUsersView();
+        },
+      ),
     );
   }
 }
@@ -76,26 +109,258 @@ class _ManageUsersViewState extends State<_ManageUsersView> {
     );
   }
 
+  void _assignAsJurulatih(UserModel user) async {
+    // Check if user already has trainer role
+    if (user.roles.contains(UserType.trainer)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${user.name} sudah mempunyai peranan Jurulatih.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Tugaskan sebagai Jurulatih'),
+        content: Text('Adakah anda pasti mahu menugaskan ${user.name} sebagai Jurulatih?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+            ),
+            child: const Text('Tugaskan'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    // Add trainer role as primary (first in array)
+    final updatedRoles = [
+      UserType.trainer,
+      ...user.roles.where((r) => r != UserType.trainer),
+    ];
+
+    final updatedUser = user.copyWith(roles: updatedRoles);
+
+    try {
+      await context.read<UserCubit>().updateUser(updatedUser);
+      // Refresh users list
+      await context.read<UserCubit>().fetchUsers();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${user.name} telah ditugaskan sebagai Jurulatih.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menugaskan peranan: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  void _assignAsMasterTrainer(UserModel user) async {
+    // Check if user already has masterTrainer role
+    if (user.roles.contains(UserType.masterTrainer)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('${user.name} sudah mempunyai peranan Master Trainer.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    // Show confirmation dialog
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Tugaskan sebagai Master Trainer'),
+        content: Text('Adakah anda pasti mahu menugaskan ${user.name} sebagai Master Trainer?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+            ),
+            child: const Text('Tugaskan'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+
+    // Add masterTrainer role as primary (first in array)
+    final updatedRoles = [
+      UserType.masterTrainer,
+      ...user.roles.where((r) => r != UserType.masterTrainer),
+    ];
+
+    final updatedUser = user.copyWith(roles: updatedRoles);
+
+    try {
+      await context.read<UserCubit>().updateUser(updatedUser);
+      // Refresh users list
+      await context.read<UserCubit>().fetchUsers();
+      
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('${user.name} telah ditugaskan sebagai Master Trainer.'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Gagal menugaskan peranan: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
+  /// Get role badges for display
+  List<Widget> _getRoleBadges(UserModel user) {
+    final badges = <Widget>[];
+    
+    if (user.roles.contains(UserType.admin)) {
+      badges.add(
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.red.shade100,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.red.shade300),
+          ),
+          child: Text(
+            'Admin',
+            style: TextStyle(
+              color: Colors.red.shade700,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      );
+    }
+    
+    if (user.roles.contains(UserType.masterTrainer)) {
+      badges.add(
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.purple.shade100,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.purple.shade300),
+          ),
+          child: Text(
+            'Master Trainer',
+            style: TextStyle(
+              color: Colors.purple.shade700,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      );
+    }
+    
+    if (user.roles.contains(UserType.trainer)) {
+      badges.add(
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.blue.shade100,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.blue.shade300),
+          ),
+          child: Text(
+            'Jurulatih',
+            style: TextStyle(
+              color: Colors.blue.shade700,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      );
+    }
+    
+    return badges;
+  }
+
   List<UserModel> _filterUsers(List<UserModel> users) {
     if (_searchQuery.isEmpty) return users;
     return users.where((user) {
       final query = _searchQuery.toLowerCase();
+      // Search in address map values
+      bool addressMatches = false;
+      if (user.address != null) {
+        final addressStr = user.address!.values
+            .where((v) => v.isNotEmpty)
+            .join(' ')
+            .toLowerCase();
+        addressMatches = addressStr.contains(query);
+      }
       return user.name.toLowerCase().contains(query) ||
           user.email.toLowerCase().contains(query) ||
           user.phone.toLowerCase().contains(query) ||
-          (user.address?.toLowerCase().contains(query) ?? false);
+          addressMatches;
     }).toList();
+  }
+
+  /// Format address map as a readable string for display
+  String _formatAddressForDisplay(Map<String, String>? address) {
+    if (address == null) return '';
+    final parts = <String>[];
+    if (address['line1']?.isNotEmpty ?? false) parts.add(address['line1']!);
+    if (address['street']?.isNotEmpty ?? false) parts.add(address['street']!);
+    if (address['postcode']?.isNotEmpty ?? false) parts.add(address['postcode']!);
+    if (address['city']?.isNotEmpty ?? false) parts.add(address['city']!);
+    if (address['state']?.isNotEmpty ?? false) parts.add(address['state']!);
+    if (address['country']?.isNotEmpty ?? false) parts.add(address['country']!);
+    return parts.join(', ');
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Urus Pengguna'),
-        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
-        foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
-      ),
-      body: Column(
+    return BlocBuilder<UserCubit, UserState>(
+      builder: (context, state) {
+        return Scaffold(
+          appBar: AppBar(
+            title: const Text('Urus Pengguna'),
+            backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+            foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
+          ),
+          body: Column(
         children: [
           // Search bar
           Padding(
@@ -195,13 +460,38 @@ class _ManageUsersViewState extends State<_ManageUsersView> {
                       child: Slidable(
                         endActionPane: ActionPane(
                           motion: const ScrollMotion(),
+                          extentRatio: 0.75,
                           children: [
+                            // Assign as Jurulatih
+                            SlidableAction(
+                              onPressed: (_) => _assignAsJurulatih(user),
+                              backgroundColor: Colors.blue,
+                              foregroundColor: Colors.white,
+                              icon: Icons.person_add,
+                              label: user.roles.contains(UserType.trainer) 
+                                  ? 'Already Jurulatih' 
+                                  : 'Assign Jurulatih',
+                              flex: 2,
+                            ),
+                            // Assign as Master Trainer
+                            SlidableAction(
+                              onPressed: (_) => _assignAsMasterTrainer(user),
+                              backgroundColor: Colors.purple,
+                              foregroundColor: Colors.white,
+                              icon: Icons.star,
+                              label: user.roles.contains(UserType.masterTrainer)
+                                  ? 'Already Master'
+                                  : 'Assign Master',
+                              flex: 2,
+                            ),
+                            // Delete user
                             SlidableAction(
                               onPressed: (_) => _deleteUser(user),
                               backgroundColor: Colors.red,
                               foregroundColor: Colors.white,
                               icon: Icons.delete,
                               label: 'Delete',
+                              flex: 1,
                             ),
                           ],
                         ),
@@ -263,6 +553,13 @@ class _ManageUsersViewState extends State<_ManageUsersView> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 const SizedBox(height: 4),
+                                // Role badges
+                                Wrap(
+                                  spacing: 6,
+                                  runSpacing: 4,
+                                  children: _getRoleBadges(user),
+                                ),
+                                const SizedBox(height: 6),
                                 Row(
                                   children: [
                                     const Icon(Icons.email, size: 16),
@@ -290,7 +587,7 @@ class _ManageUsersViewState extends State<_ManageUsersView> {
                                     ),
                                   ],
                                 ),
-                                if (user.address != null && user.address!.isNotEmpty) ...[
+                                if (user.address != null) ...[
                                   const SizedBox(height: 2),
                                   Row(
                                     children: [
@@ -298,7 +595,7 @@ class _ManageUsersViewState extends State<_ManageUsersView> {
                                       const SizedBox(width: 4),
                                       Expanded(
                                         child: Text(
-                                          user.address!,
+                                          _formatAddressForDisplay(user.address),
                                           style: TextStyle(
                                             color: Colors.grey[600],
                                           ),
@@ -341,6 +638,8 @@ class _ManageUsersViewState extends State<_ManageUsersView> {
           ),
         ],
       ),
+        );
+      },
     );
   }
 } 

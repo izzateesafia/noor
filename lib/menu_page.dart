@@ -23,6 +23,12 @@ class MenuPage extends StatelessWidget {
             onTap: () => Navigator.of(context).pushNamed('/mushaf'),
           ),
           MenuItem(
+            icon: Icons.picture_as_pdf,
+            label: 'Mushaf PDF',
+            description: 'Pilih mushaf dengan berbagai riwayah',
+            onTap: () => Navigator.of(context).pushNamed('/mushaf_pdf_selection'),
+          ),
+          MenuItem(
             icon: Icons.search,
             label: 'Cari Ayat',
             description: 'Cari ayat dalam Al-Quran',
@@ -61,6 +67,12 @@ class MenuPage extends StatelessWidget {
             label: 'Hadis',
             description: 'Koleksi hadis-hadis sahih',
             onTap: () => Navigator.of(context).pushNamed('/hadiths'),
+          ),
+          MenuItem(
+            icon: Icons.video_library,
+            label: 'Videos',
+            description: 'Tonton video pembelajaran',
+            onTap: () => Navigator.of(context).pushNamed('/videos'),
           ),
         ],
       ),

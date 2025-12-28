@@ -327,9 +327,9 @@ class ZonePrayerTimes {
 
   String _getHijriMonthName(String monthNumber) {
     const months = [
-      'Muharram', 'Safar', 'Rabi al-Awwal', 'Rabi al-Thani',
-      'Jumada al-Awwal', 'Jumada al-Thani', 'Rajab', 'Sha\'ban',
-      'Ramadan', 'Shawwal', 'Dhu al-Qadah', 'Dhu al-Hijjah'
+      'Muharram', 'Safar', 'Rabiulawal', 'Rabiulakhir',
+      'Jamadilawal', 'Jamadilakhir', 'Rejab', 'Syaaban',
+      'Ramadan', 'Syawal', 'Zulkaedah', 'Zulhijjah'
     ];
     
     final monthIndex = int.tryParse(monthNumber) ?? 1;

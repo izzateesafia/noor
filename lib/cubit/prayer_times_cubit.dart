@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../repository/prayer_times_repository.dart';
 import 'prayer_times_states.dart';
+import '../services/widget_data_service.dart';
 
 class PrayerTimesCubit extends Cubit<PrayerTimesState> {
   final PrayerTimesRepository _repository;
@@ -117,6 +118,14 @@ class PrayerTimesCubit extends Cubit<PrayerTimesState> {
         selectedDistrict: districtName,
         error: null, // Clear any previous errors
       ));
+
+      // Update lock screen widgets
+      final nextPrayer = WidgetDataService.getNextPrayer(prayerTimesData.prayerTimes);
+      await WidgetDataService.updatePrayerTimes(
+        prayerTimes: prayerTimesData.prayerTimes,
+        nextPrayer: nextPrayer,
+        location: prayerTimesData.location.fullLocation,
+      );
     } catch (e) {
       // This should never happen now, but just in case
       emit(state.copyWith(
@@ -143,6 +152,14 @@ class PrayerTimesCubit extends Cubit<PrayerTimesState> {
         selectedDistrict: prayerTimesData.location.district,
         error: null, // Clear any previous errors
       ));
+
+      // Update lock screen widgets
+      final nextPrayer = WidgetDataService.getNextPrayer(prayerTimesData.prayerTimes);
+      await WidgetDataService.updatePrayerTimes(
+        prayerTimes: prayerTimesData.prayerTimes,
+        nextPrayer: nextPrayer,
+        location: prayerTimesData.location.fullLocation,
+      );
     } catch (e) {
       emit(state.copyWith(
         status: PrayerTimesStatus.error,

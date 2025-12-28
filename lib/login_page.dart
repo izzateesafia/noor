@@ -8,6 +8,8 @@ import 'cubit/user_cubit.dart';
 import 'cubit/user_states.dart';
 import 'repository/user_repository.dart';
 import 'services/google_auth_service.dart';
+import 'services/location_service.dart';
+import 'repository/app_settings_repository.dart';
 import 'utils/toast_util.dart';
 
 class LoginPage extends StatefulWidget {
@@ -19,11 +21,13 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   bool _loginAttempted = false;
+  String? _lastErrorCode;
+  String? _lastEmail;
 
   String _getUserFriendlyError(String errorCode) {
     switch (errorCode) {
       case 'user-not-found':
-        return 'Pengguna tidak dijumpai. Sila pastikan emel anda betul.';
+        return 'Pengguna tidak dijumpai. Tiada akaun? Daftar di sini.';
       case 'wrong-password':
         return 'Kata laluan salah. Sila cuba lagi.';
       case 'invalid-email':
@@ -70,11 +74,61 @@ class _LoginPageState extends State<LoginPage> {
         password: password,
       );
       await saveUserToken();
-      Navigator.pushReplacementNamed(context, '/role');
+
+      // Fetch user from Firestore to verify they exist
+      final userRepo = UserRepository();
+      final user = await userRepo.getCurrentUser();
+
+      if (user == null) {
+        // User authenticated but doesn't exist in Firestore
+        await firebase_auth.FirebaseAuth.instance.signOut();
+        setState(() {
+          _lastErrorCode = 'user-not-found';
+          _lastEmail = email.trim();
+        });
+        ToastUtil.showError(
+          context,
+          'Akaun tidak dijumpai dalam sistem. Sila daftar terlebih dahulu.',
+        );
+        return;
+      }
+
+      // Show success message
+      if (mounted) {
+        ToastUtil.showSuccess(
+          context,
+          'Log masuk berjaya! Selamat datang kembali.',
+        );
+      }
+
+      // Request location permission and get location
+      if (mounted && user.hasCompletedBiodata) {
+        await _requestLocationAndUpdateUser(context, user);
+      }
+
+      // User exists, navigate to welcome screen first
+      if (mounted) {
+        Navigator.pushReplacementNamed(
+          context,
+          '/welcome',
+          arguments: {
+            'userId': user.id,
+            'hasCompletedBiodata': user.hasCompletedBiodata,
+          },
+        );
+      }
     } on firebase_auth.FirebaseAuthException catch (e) {
+      setState(() {
+        _lastErrorCode = e.code;
+        _lastEmail = email.trim();
+      });
       final errorMessage = _getUserFriendlyError(e.code);
       ToastUtil.showError(context, errorMessage);
     } catch (e) {
+      setState(() {
+        _lastErrorCode = null;
+        _lastEmail = null;
+      });
       ToastUtil.showError(context, 'Log masuk gagal. Sila cuba lagi.');
     }
   }
@@ -126,6 +180,41 @@ class _LoginPageState extends State<LoginPage> {
         permission == LocationPermission.whileInUse;
   }
 
+  Future<void> _requestLocationAndUpdateUser(BuildContext context, user) async {
+    try {
+      final locationService = LocationService();
+
+      // Request location permission
+      final hasPermission = await _checkAndRequestLocationPermission(context);
+      if (!hasPermission) return;
+
+      // Get current location
+      final position = await locationService.getCurrentLocation();
+      if (position == null) return;
+
+      // Get location name
+      final locationName = await locationService.getLocationName(
+        position.latitude,
+        position.longitude,
+      );
+
+      // Update user with location
+      final userCubit = context.read<UserCubit>();
+      final updatedUser = user.copyWith(
+        latitude: position.latitude,
+        longitude: position.longitude,
+        locationName:
+            locationName ??
+            '${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}',
+      );
+
+      await userCubit.updateUser(updatedUser);
+    } catch (e) {
+      print('Error requesting location: $e');
+      // Don't block login if location fails
+    }
+  }
+
   Future<void> _showPasswordResetDialog(BuildContext context) async {
     final emailController = TextEditingController();
     final result = await showDialog<String>(
@@ -161,7 +250,8 @@ class _LoginPageState extends State<LoginPage> {
         String errorMessage;
         switch (e.code) {
           case 'user-not-found':
-            errorMessage = 'Emel tidak dijumpai. Sila pastikan emel anda betul.';
+            errorMessage =
+                'Emel tidak dijumpai. Sila pastikan emel anda betul.';
             break;
           case 'invalid-email':
             errorMessage = 'Format emel tidak sah.';
@@ -202,36 +292,50 @@ class _LoginPageState extends State<LoginPage> {
         return cubit;
       },
       child: BlocConsumer<UserCubit, UserState>(
-        listener: (context, state) {
+        listener: (context, state) async {
           if (state.status == UserStatus.loaded && state.currentUser != null) {
             final user = state.currentUser!;
 
-            // Hide any existing snackbars before navigation
-            ScaffoldMessenger.of(context).hideCurrentSnackBar();
-            ScaffoldMessenger.of(context).clearSnackBars();
+            // Show success message for Google Sign-In
+            ToastUtil.showSuccess(
+              context,
+              'Log masuk berjaya! Selamat datang kembali.',
+            );
 
-            // Check if user needs to complete biodata
-            if (!user.hasCompletedBiodata) {
-              // Navigate to biodata page for first-time users
-              Navigator.pushReplacementNamed(
-                context,
-                '/biodata',
-                arguments: user,
-              );
-            } else {
-              // User has completed biodata, navigate to role selection or main
-              Navigator.pushReplacementNamed(context, '/role');
+            // Request location permission and get location (only if biodata completed)
+            if (user.hasCompletedBiodata) {
+              await _requestLocationAndUpdateUser(context, user);
             }
-          } else if (_loginAttempted && state.status == UserStatus.error && state.error != null) {
+
+            // // Show welcome message dialog
+            // await _showWelcomeMessage(context);
+
+            // Navigate to welcome screen first
+            Navigator.pushReplacementNamed(
+              context,
+              '/welcome',
+              arguments: {
+                'userId': user.id,
+                'hasCompletedBiodata': user.hasCompletedBiodata,
+              },
+            );
+          } else if (_loginAttempted &&
+              state.status == UserStatus.error &&
+              state.error != null) {
             // Show toast for sign-in errors only if an attempt was made
             String errorMessage = state.error!;
             if (errorMessage.contains('cancelled')) {
               // User cancelled, don't show error
               return;
-            } else if (errorMessage.contains('network') || errorMessage.contains('Network')) {
-              errorMessage = 'Masalah sambungan internet. Sila semak sambungan anda.';
-            } else if (errorMessage.contains('timeout') || errorMessage.contains('Timeout') || errorMessage.contains('Masa tamat')) {
-              errorMessage = 'Masa tamat. Sila pastikan sambungan internet anda stabil dan cuba lagi.';
+            } else if (errorMessage.contains('network') ||
+                errorMessage.contains('Network')) {
+              errorMessage =
+                  'Masalah sambungan internet. Sila semak sambungan anda.';
+            } else if (errorMessage.contains('timeout') ||
+                errorMessage.contains('Timeout') ||
+                errorMessage.contains('Masa tamat')) {
+              errorMessage =
+                  'Masa tamat. Sila pastikan sambungan internet anda stabil dan cuba lagi.';
             } else if (errorMessage.contains('sign_in_failed')) {
               errorMessage = 'Log masuk Google gagal. Sila cuba lagi.';
             } else {
@@ -245,17 +349,16 @@ class _LoginPageState extends State<LoginPage> {
             resizeToAvoidBottomInset: true,
             body: state.status == UserStatus.loading
                 ? const Center(
-                    child: CircularProgressIndicator(
-                      color: AppColors.primary,
-                    ),
+                    child: CircularProgressIndicator(color: AppColors.primary),
                   )
                 : SafeArea(
                     child: SingleChildScrollView(
                       padding: const EdgeInsets.symmetric(horizontal: 10.0),
                       child: ConstrainedBox(
                         constraints: BoxConstraints(
-                          minHeight: MediaQuery.of(context).size.height - 
-                              MediaQuery.of(context).padding.top - 
+                          minHeight:
+                              MediaQuery.of(context).size.height -
+                              MediaQuery.of(context).padding.top -
                               MediaQuery.of(context).padding.bottom,
                         ),
                         child: IntrinsicHeight(
@@ -283,6 +386,14 @@ class _LoginPageState extends State<LoginPage> {
                                   border: OutlineInputBorder(),
                                 ),
                                 keyboardType: TextInputType.emailAddress,
+                                onChanged: (value) {
+                                  // Clear error state when user starts typing
+                                  if (_lastErrorCode != null) {
+                                    setState(() {
+                                      _lastErrorCode = null;
+                                    });
+                                  }
+                                },
                               ),
                               const SizedBox(height: 16),
                               TextField(
@@ -296,6 +407,8 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               const SizedBox(height: 24),
 
+                              const SizedBox(height: 16),
+
                               // Loading indicator
                               SizedBox(
                                 width: double.infinity,
@@ -304,13 +417,14 @@ class _LoginPageState extends State<LoginPage> {
                                     backgroundColor: Colors.red.shade900,
                                     foregroundColor: Colors.white,
                                   ),
-                  onPressed: state.status == UserStatus.loading
-                      ? null
-                      : () => _handleLogin(
-                          context,
-                          emailController.text.trim(),
-                          passwordController.text.trim(),
-                        ),
+                                  onPressed:
+                                      (state.status == UserStatus.loading)
+                                      ? null
+                                      : () => _handleLogin(
+                                          context,
+                                          emailController.text.trim(),
+                                          passwordController.text.trim(),
+                                        ),
                                   child: const Text('Log Masuk'),
                                 ),
                               ),
@@ -320,16 +434,23 @@ class _LoginPageState extends State<LoginPage> {
                                 width: double.infinity,
                                 child: OutlinedButton.icon(
                                   style: OutlinedButton.styleFrom(
-                                    side: BorderSide(color: Colors.grey.shade400),
-                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    side: BorderSide(
+                                      color: Colors.grey.shade400,
+                                    ),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 12,
+                                    ),
                                   ),
-                                  onPressed: state.status == UserStatus.loading
+                                  onPressed:
+                                      (state.status == UserStatus.loading)
                                       ? null
                                       : () {
                                           setState(() {
                                             _loginAttempted = true;
                                           });
-                                          context.read<UserCubit>().signInWithGoogle();
+                                          context
+                                              .read<UserCubit>()
+                                              .signInWithGoogle();
                                         },
                                   icon: Icon(
                                     Icons.g_mobiledata,
@@ -347,15 +468,56 @@ class _LoginPageState extends State<LoginPage> {
                               ),
                               const SizedBox(height: 16),
                               TextButton(
-                                onPressed: () => _showPasswordResetDialog(context),
+                                onPressed: () =>
+                                    _showPasswordResetDialog(context),
                                 child: const Text('Lupa Kata Laluan?'),
                               ),
                               TextButton(
                                 onPressed: () {
-                                  Navigator.pushNamed(context, '/signup');
+                                  Navigator.pushNamed(
+                                    context,
+                                    '/signup',
+                                    arguments:
+                                        emailController.text.trim().isNotEmpty
+                                        ? emailController.text.trim()
+                                        : null,
+                                  );
                                 },
                                 child: const Text('Tiada akaun? Daftar'),
                               ),
+                              // Show prominent signup button if user-not-found error occurred
+                              if (_lastErrorCode == 'user-not-found') ...[
+                                const SizedBox(height: 8),
+                                SizedBox(
+                                  width: double.infinity,
+                                  child: ElevatedButton.icon(
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green.shade700,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(
+                                        vertical: 12,
+                                      ),
+                                    ),
+                                    onPressed: () {
+                                      Navigator.pushNamed(
+                                        context,
+                                        '/signup',
+                                        arguments:
+                                            _lastEmail ??
+                                            emailController.text.trim(),
+                                      );
+                                    },
+                                    icon: const Icon(Icons.person_add),
+                                    label: const Text(
+                                      'Daftar Akaun Baru',
+                                      style: TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                               const SizedBox(height: 16),
                               // Debug buttons
                               if (state.status == UserStatus.loading)
@@ -365,7 +527,9 @@ class _LoginPageState extends State<LoginPage> {
                                   },
                                   child: const Text('Reset (Debug)'),
                                 ),
-                              const SizedBox(height: 40), // Bottom padding for keyboard
+                              const SizedBox(
+                                height: 40,
+                              ), // Bottom padding for keyboard
                             ],
                           ),
                         ),

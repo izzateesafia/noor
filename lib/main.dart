@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
 import 'blocs/payment/payment_bloc.dart';
 import 'splash_screen.dart';
@@ -14,7 +15,6 @@ import 'menu_page.dart';
 import 'theme_constants.dart';
 import 'theme.dart';
 import 'duas_page.dart';
-import 'hifdh_checker_page.dart';
 import 'admin_page.dart';
 import 'classes_page.dart';
 import 'hadiths_page.dart';
@@ -23,14 +23,22 @@ import 'premium_page.dart';
 import 'class_enrollment_page.dart';
 import 'user_profile_page.dart';
 import 'biodata_page.dart';
+import 'card_info_page.dart';
+import 'policy_page.dart';
+import 'welcome_message_screen.dart';
 import 'deep_link_handler.dart';
 import 'deep_link_test_page.dart';
 import 'quran_reader_page.dart';
 import 'quran_search_page.dart';
+import 'videos_page.dart';
 import 'mushaf_reader_page.dart';
+import 'pages/mushaf_selection_page.dart';
+import 'pages/pdf_mushaf_viewer_page.dart';
+import 'models/mushaf_model.dart';
 import 'prayer_alarm_settings_page.dart';
 import 'services/scheduled_alarm_service.dart';
 import 'services/alarm_service.dart';
+import 'services/lock_screen_notification_service.dart';
 import 'test_prayer_alarm.dart';
 // import 'adhan_tester_page.dart';
 import 'qibla_compass.dart';
@@ -73,6 +81,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // Load environment variables
+  await dotenv.load(fileName: ".env");
+  
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
@@ -86,9 +98,12 @@ void main() async {
   // Initialize alarm service
   await AlarmService().initialize();
   
-  // Initialize Stripe
-  Stripe.publishableKey = 'pk_test_51NdTSTJGqj1qKGtVVMGDGpqQhBJ7dlrNrn0cy1ieMTbIhr1dzunjD00ctRYxYeOpoEjD0RDY5lKvtkrPE2EMdz8X00TGZ55T2Y';
-  Stripe.merchantIdentifier = 'merchant.com.hexahelix.dq';
+  // Initialize lock screen notification service
+  await LockScreenNotificationService().initialize();
+  
+  // Initialize Stripe from environment variables
+  Stripe.publishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'] ?? '';
+  Stripe.merchantIdentifier = dotenv.env['STRIPE_MERCHANT_IDENTIFIER'] ?? 'merchant.com.hexahelix.dq';
   
   runApp(const MyApp());
 }
@@ -278,12 +293,16 @@ class MyApp extends StatelessWidget {
               routes: {
                 '/': (context) => const SplashScreen(),
                 '/login': (context) => const LoginPage(),
-                '/signup': (context) => const SignupPage(),
+                '/signup': (context) {
+                  final args = ModalRoute.of(context)?.settings.arguments;
+                  return SignupPage(
+                    preFilledEmail: args is String ? args : null,
+                  );
+                },
                 '/role': (context) => const RoleSelectionPage(),
                 '/dashboard': (context) => const MainNavigationPage(),
                 '/main': (context) => const MainNavigationPage(),
                 '/duas': (context) => const DuasPage(),
-                '/hifdh_checker': (context) => const HifdhCheckerPage(),
                 '/admin': (context) => const AdminPage(),
                 '/classes': (context) => const ClassesPage(),
                 '/hadiths': (context) => const HadithsPage(),
@@ -298,10 +317,31 @@ class MyApp extends StatelessWidget {
                 '/enroll_class': (context) => const ClassEnrollmentPage(),
                 '/profile': (context) => const UserProfilePage(),
                 '/biodata': (context) => const BiodataPage(),
+                '/card-info': (context) => const CardInfoPage(),
+                '/policy': (context) => const PolicyPage(),
+                '/welcome': (context) {
+                  final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
+                  return WelcomeMessageScreen(
+                    userId: args?['userId'] as String?,
+                    hasCompletedBiodata: args?['hasCompletedBiodata'] as bool? ?? false,
+                  );
+                },
                 '/deep_link_test': (context) => const DeepLinkTestPage(),
                 '/quran': (context) => const QuranReaderPage(),
                 '/quran_search': (context) => const QuranSearchPage(),
+                '/videos': (context) => const VideosPage(),
                 '/mushaf': (context) => const MushafReaderPage(),
+                '/mushaf_pdf_selection': (context) => const MushafSelectionPage(),
+                '/mushaf_pdf_viewer': (context) {
+                  final args = ModalRoute.of(context)?.settings.arguments;
+                  if (args != null && args is MushafModel) {
+                    return PDFMushafViewerPage(mushaf: args);
+                  }
+                  // Fallback - should not happen if navigation is correct
+                  return const Scaffold(
+                    body: Center(child: Text('Mushaf not provided')),
+                  );
+                },
                 '/qiblah': (context) => Scaffold(
                   appBar: AppBar(
                     title: const Text('Kompas Qibla'),

@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:async';
 import '../cubit/prayer_times_cubit.dart';
 import '../cubit/prayer_times_states.dart';
+import '../cubit/user_cubit.dart';
 import '../models/prayer_times.dart';
 import '../theme_constants.dart';
 
@@ -37,7 +38,15 @@ class _PrayerTimesCardState extends State<PrayerTimesCard> {
     // Refresh prayer times every 30 minutes
     _autoRefreshTimer = Timer.periodic(const Duration(minutes: 30), (timer) {
       if (mounted) {
-        context.read<PrayerTimesCubit>().fetchCurrentPrayerTimes('Kuala Lumpur', 'Kuala Lumpur');
+        final userCubit = context.read<UserCubit>();
+        final user = userCubit.state.currentUser;
+        final prayerTimesCubit = context.read<PrayerTimesCubit>();
+        
+        if (user?.latitude != null && user?.longitude != null) {
+          prayerTimesCubit.fetchPrayerTimesByCoordinates(user!.latitude!, user.longitude!);
+        } else {
+          prayerTimesCubit.fetchCurrentPrayerTimes('Kuala Lumpur', 'Kuala Lumpur');
+        }
       }
     });
   }
@@ -141,144 +150,132 @@ class _PrayerTimesCardState extends State<PrayerTimesCard> {
 
         // Note: Adhan is now handled by PrayerAlarmService automatically
 
-        return RefreshIndicator(
-          onRefresh: () async {
-            // Refresh prayer times when user pulls to refresh
-            context.read<PrayerTimesCubit>().fetchCurrentPrayerTimes('Kuala Lumpur', 'Kuala Lumpur');
-            await Future.delayed(const Duration(milliseconds: 500)); // Small delay for better UX
-          },
-          child: SingleChildScrollView(
-            physics: const AlwaysScrollableScrollPhysics(),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-              child: Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                color: Theme.of(context).cardColor,
-                child: Column(
-                  children: [
-                    // Header with Hijri date and next prayer
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.1),
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(20),
-                          topRight: Radius.circular(20),
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+          child: Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+            color: Theme.of(context).cardColor,
+            child: Column(
+              children: [
+                // Header with Hijri date and next prayer
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.circular(20),
+                      topRight: Radius.circular(20),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(Icons.calendar_today, color: AppColors.primary, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              '${DateTime.now().day} ${_getMonthName(DateTime.now().month)} ${DateTime.now().year}',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: AppColors.primary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            Text(
+                              'Next: $nextPrayer',
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                color: AppColors.primary.withOpacity(0.8),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
-                      child: Row(
-                        children: [
-                          Icon(Icons.calendar_today, color: AppColors.primary, size: 20),
-                          const SizedBox(width: 8),
-                                                     Expanded(
-                             child: Column(
-                               crossAxisAlignment: CrossAxisAlignment.start,
-                               children: [
-                                 Text(
-                                   '${DateTime.now().day} ${_getMonthName(DateTime.now().month)} ${DateTime.now().year}',
-                                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                     color: AppColors.primary,
-                                     fontWeight: FontWeight.bold,
-                                   ),
-                                 ),
-                                 Text(
-                                   'Next: $nextPrayer',
-                                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                     color: AppColors.primary.withOpacity(0.8),
-                                   ),
-                                 ),
-                               ],
-                             ),
-                           ),
-                           // Prayer alarm settings button
-                           IconButton(
-                             onPressed: () {
-                               Navigator.pushNamed(context, '/prayer_alarm_settings');
-                             },
-                             icon: Icon(
-                               Icons.settings,
-                               color: AppColors.primary,
-                               size: 20,
-                             ),
-                             tooltip: 'Prayer Alarm Settings',
-                           ),
-                        ],
+                      // Prayer alarm settings button
+                      IconButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/prayer_alarm_settings');
+                        },
+                        icon: Icon(
+                          Icons.settings,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
+                        tooltip: 'Prayer Alarm Settings',
                       ),
-                    ),
-                    
-                    // Prayer times in rows
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        children: [
-                          // Main prayers row (Fajr, Dhuhr, Asr, Maghrib, Isha)
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: prayers.where((p) => p['name'] != 'Sunrise').map((prayer) {
-                              final bool isNext = prayer['displayName'] == nextPrayer;
-                              return Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    prayer['displayName']!,
-                                    style: isNext
-                                        ? Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                            color: AppColors.primary,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 13,
-                                          )
-                                        : Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                            color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.8),
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: 13,
-                                          ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    prayer['time']!,
-                                    style: isNext
-                                        ? Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                            color: AppColors.primary,
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 13,
-                                          )
-                                        : Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                            color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.7),
-                                            fontWeight: FontWeight.normal,
-                                            fontSize: 13,
-                                          ),
-                                  ),
-                                ],
-                              );
-                            }).toList(),
-                          ),
-                          
-                          const SizedBox(height: 16),
-                          
-                          // Sunrise row
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
+                    ],
+                  ),
+                ),
+                
+                // Prayer times in rows
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    children: [
+                      // Main prayers row (Fajr, Dhuhr, Asr, Maghrib, Isha)
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: prayers.where((p) => p['name'] != 'Sunrise').map((prayer) {
+                          final bool isNext = prayer['displayName'] == nextPrayer;
+                          return Column(
+                            mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.wb_sunny_outlined, color: Colors.orange, size: 16),
-                              const SizedBox(width: 8),
                               Text(
-                                'Sunrise: ${prayers.firstWhere((p) => p['name'] == 'Sunrise')['time']}',
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                  color: Colors.orange,
-                                  fontWeight: FontWeight.w500,
-                                ),
+                                prayer['displayName']!,
+                                style: isNext
+                                    ? Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      )
+                                    : Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                        color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.8),
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: 13,
+                                      ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                prayer['time']!,
+                                style: isNext
+                                    ? Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                        color: AppColors.primary,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      )
+                                    : Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                        color: Theme.of(context).textTheme.bodyLarge?.color?.withOpacity(0.7),
+                                        fontWeight: FontWeight.normal,
+                                        fontSize: 13,
+                                      ),
                               ),
                             ],
+                          );
+                        }).toList(),
+                      ),
+                      
+                      const SizedBox(height: 16),
+                      
+                      // Sunrise row
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.wb_sunny_outlined, color: Colors.orange, size: 16),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Sunrise: ${prayers.firstWhere((p) => p['name'] == 'Sunrise')['time']}',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.orange,
+                              fontWeight: FontWeight.w500,
+                            ),
                           ),
                         ],
                       ),
-                    ),
-                    
-
-                  ],
+                    ],
+                  ),
                 ),
-              ),
+              ],
             ),
           ),
         );

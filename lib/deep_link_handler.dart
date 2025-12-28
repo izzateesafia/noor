@@ -107,12 +107,6 @@ class DeepLinkHandler {
         Navigator.of(_context!).pushNamed('/qiblah');
         break;
         
-      case '/hifdh':
-      case '/memorization':
-        print('Navigating to hifdh checker page');
-        Navigator.of(_context!).pushNamed('/hifdh_checker');
-        break;
-        
       case '/rukun':
       case '/prayer-steps':
         print('Navigating to rukun solat page');
@@ -161,7 +155,6 @@ class DeepLinkHandler {
   static String getDuasLink() => generateDeepLink('/duas');
   static String getHadithsLink() => generateDeepLink('/hadiths');
   static String getQiblahLink() => generateDeepLink('/qiblah');
-  static String getHifdhLink() => generateDeepLink('/hifdh');
   static String getRukunLink() => generateDeepLink('/rukun');
   static String getDashboardLink() => generateDeepLink('/dashboard');
 
@@ -181,7 +174,6 @@ class DeepLinkRoutes {
   static const String duas = 'noor://app/duas';
   static const String hadiths = 'noor://app/hadiths';
   static const String qiblah = 'noor://app/qiblah';
-  static const String hifdh = 'noor://app/hifdh';
   static const String rukun = 'noor://app/rukun';
   static const String dashboard = 'noor://app/dashboard';
   static const String admin = 'noor://app/admin';

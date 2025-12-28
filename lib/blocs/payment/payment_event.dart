@@ -12,16 +12,18 @@ class InitPayment extends PaymentEvent {
   final OrderRequest orderRequest;
   final String? totalAmount;
   final String planId;
+  final String? savedPaymentMethodId; // Optional: use saved payment method
 
   const InitPayment({
     this.cardDetails,
     this.totalAmount,
     required this.planId,
     required this.orderRequest,
+    this.savedPaymentMethodId,
   });
 
   @override
-  List<Object?> get props => [cardDetails, orderRequest, totalAmount, planId];
+  List<Object?> get props => [cardDetails, orderRequest, totalAmount, planId, savedPaymentMethodId];
 }
 
 class LoadPayment extends PaymentEvent {

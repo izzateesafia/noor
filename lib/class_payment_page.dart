@@ -136,7 +136,7 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
           _buildPaymentMethodSelection(),
           const SizedBox(height: 24),
           
-          // Card Payment Form (if selected)
+          // Card Payment Form (if selected and not using saved card)
           if (_selectedIndex == 1) _buildCardPaymentForm(),
           
           const SizedBox(height: 24),
@@ -219,6 +219,10 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
   }
 
   Widget _buildPaymentMethodSelection() {
+    final userState = context.read<UserCubit>().state;
+    final savedPaymentMethodId = userState.currentUser?.stripePaymentMethodId;
+    final hasSavedCard = savedPaymentMethodId != null && savedPaymentMethodId.isNotEmpty;
+    
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -231,6 +235,13 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
           ),
         ),
         const SizedBox(height: 16),
+        
+        // Show saved card option if available
+        if (hasSavedCard) ...[
+          _buildSavedCardOption(),
+          const SizedBox(height: 12),
+        ],
+        
         Container(
           decoration: BoxDecoration(
             color: Theme.of(context).cardColor,
@@ -245,6 +256,67 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildSavedCardOption() {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedIndex = 2; // Use saved card
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _selectedIndex == 2 
+              ? AppColors.primary.withOpacity(0.1)
+              : Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: _selectedIndex == 2 
+                ? AppColors.primary
+                : Theme.of(context).dividerColor.withValues(alpha: 0.3),
+            width: _selectedIndex == 2 ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.credit_card,
+              color: _selectedIndex == 2 ? AppColors.primary : AppColors.text,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Use Saved Card',
+                    style: TextStyle(
+                      color: _selectedIndex == 2 ? AppColors.primary : AppColors.text,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  Text(
+                    'Pay with your previously saved card',
+                    style: TextStyle(
+                      color: AppColors.secondary,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (_selectedIndex == 2)
+              Icon(
+                Icons.check_circle,
+                color: AppColors.primary,
+              ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -418,9 +490,20 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
       paymentMethod: _selectedIndex == 0 ? 'apple_pay' : 'card',
     );
 
-    // Create card details if using card payment
+    // Check if using saved payment method
+    // final userState = context.read<UserCubit>().state;
+    final savedPaymentMethodId = userState.currentUser?.stripePaymentMethodId;
+    final useSavedCard = _selectedIndex == 2 && savedPaymentMethodId != null && savedPaymentMethodId.isNotEmpty;
+
+    // Create card details if using new card payment
     stripe.CardDetails? cardDetails;
-    if (_selectedIndex == 1) {
+    String? paymentMethodId;
+    
+    if (useSavedCard) {
+      // Use saved payment method
+      paymentMethodId = savedPaymentMethodId;
+    } else if (_selectedIndex == 1) {
+      // Use new card details
       final expiryParts = _expiryDate.split('/');
       if (expiryParts.length == 2) {
         cardDetails = stripe.CardDetails(
@@ -436,6 +519,7 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
     context.read<PaymentBloc>().add(
       InitPayment(
         cardDetails: cardDetails,
+        savedPaymentMethodId: paymentMethodId,
         orderRequest: orderRequest,
         totalAmount: widget.classModel.price.toStringAsFixed(2),
         planId: 'class_${widget.classModel.id}',
@@ -472,10 +556,21 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
       return false;
     }
 
+    // Skip card validation if using saved card
     if (_selectedIndex == 1) {
       if (_cardNumber.isEmpty || _expiryDate.isEmpty || _cardHolderName.isEmpty || _cvvCode.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please enter complete card details')),
+        );
+        return false;
+      }
+    } else if (_selectedIndex == 2) {
+      // Validate that saved payment method exists
+      final userState = context.read<UserCubit>().state;
+      final savedPaymentMethodId = userState.currentUser?.stripePaymentMethodId;
+      if (savedPaymentMethodId == null || savedPaymentMethodId.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No saved card found. Please add a card first.')),
         );
         return false;
       }

@@ -1,0 +1,31 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Profile pictures: Users can read, write, and delete their own profile pictures
+    // Files are stored as: profile_pictures/{userId}.{extension}
+    match /profile_pictures/{fileName} {
+      // Allow read if the user is authenticated
+      allow read: if request.auth != null;
+      
+      // Allow write (create/update) only if:
+      // 1. User is authenticated
+      // 2. The filename starts with the authenticated user's UID followed by a dot
+      // 3. File size is less than 5MB
+      // 4. Content type is an image
+      allow write: if request.auth != null 
+                   && fileName.matches(request.auth.uid + '\\..*')
+                   && request.resource.size < 5 * 1024 * 1024  // 5MB limit
+                   && request.resource.contentType.matches('image/.*');
+      
+      // Allow delete only if the user owns the file
+      allow delete: if request.auth != null 
+                    && fileName.matches(request.auth.uid + '\\..*');
+    }
+    
+    // Deny all other paths by default
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}
+

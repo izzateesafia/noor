@@ -14,6 +14,7 @@ class PaymentRepository {
     required double amount,
     required String currency,
     String? description,
+    String? paymentMethodId, // Optional: use saved payment method
   }) async {
     try {
       // Create payment intent with Stripe
@@ -22,6 +23,7 @@ class PaymentRepository {
         currency: currency,
         userId: userId,
         description: description ?? 'Premium subscription',
+        paymentMethodId: paymentMethodId, // Pass saved payment method if available
         metadata: {
           'plan_id': planId,
           'type': planId.startsWith('class_') ? 'class_enrollment' : 'subscription',
@@ -316,6 +318,15 @@ class PaymentRepository {
       );
     } catch (e) {
       throw Exception('Error creating payment method: $e');
+    }
+  }
+
+  // Get payment intent status
+  Future<Map<String, dynamic>> getPaymentIntentStatus(String paymentIntentId) async {
+    try {
+      return await _paymentService.getPaymentIntent(paymentIntentId);
+    } catch (e) {
+      throw Exception('Error getting payment intent status: $e');
     }
   }
 }

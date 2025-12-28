@@ -56,6 +56,13 @@ class QuickAccessGrid extends StatelessWidget {
           Navigator.of(context).pushNamed('/rukun_solat');
         },
       ),
+      _QuickAccessItem(
+        icon: Icons.video_library,
+        label: 'Videos',
+        onTap: () {
+          Navigator.of(context).pushNamed('/videos');
+        },
+      ),
     ];
 
     return Padding(

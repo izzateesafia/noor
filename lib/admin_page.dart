@@ -6,9 +6,11 @@ import 'admin/manage_classes_page.dart';
 import 'admin/manage_users_page.dart';
 import 'admin/manage_live_streams_page.dart';
 import 'admin/manage_news_page.dart';
+import 'admin/manage_videos_page.dart';
 import 'deep_link_test_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'repository/app_settings_repository.dart';
 
 class AdminPage extends StatelessWidget {
   const AdminPage({super.key});
@@ -51,6 +53,119 @@ class AdminPage extends StatelessWidget {
           ),
           const SizedBox(height: 18),
         ],
+      ),
+    );
+  }
+
+  void _showWelcomeMessageDialog(BuildContext context) async {
+    final appSettingsRepo = AppSettingsRepository();
+    final TextEditingController messageController = TextEditingController();
+    bool isLoading = true;
+    String? errorMessage;
+
+    // Load current message
+    try {
+      final currentMessage = await appSettingsRepo.getWelcomeMessage();
+      messageController.text = currentMessage;
+    } catch (e) {
+      errorMessage = 'Failed to load current message: $e';
+    } finally {
+      isLoading = false;
+    }
+
+    if (!context.mounted) return;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Manage Welcome Message'),
+          content: isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    if (errorMessage != null)
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 16),
+                        child: Text(
+                          errorMessage!,
+                          style: TextStyle(color: Colors.red[700]),
+                        ),
+                      ),
+                    TextField(
+                      controller: messageController,
+                      decoration: const InputDecoration(
+                        labelText: 'Welcome Message',
+                        hintText: 'Enter the welcome message to display',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 3,
+                      maxLength: 200,
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'This message will be displayed on the dashboard for all users.',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                    ),
+                  ],
+                ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: isLoading
+                  ? null
+                  : () async {
+                      if (messageController.text.trim().isEmpty) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Please enter a welcome message'),
+                          ),
+                        );
+                        return;
+                      }
+
+                      setState(() {
+                        isLoading = true;
+                        errorMessage = null;
+                      });
+
+                      try {
+                        await appSettingsRepo.updateWelcomeMessage(
+                          messageController.text.trim(),
+                        );
+                        if (context.mounted) {
+                          Navigator.of(ctx).pop();
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(
+                              content: Text('Welcome message updated successfully!'),
+                              backgroundColor: Colors.green,
+                            ),
+                          );
+                        }
+                      } catch (e) {
+                        setState(() {
+                          isLoading = false;
+                          errorMessage = 'Failed to update message: $e';
+                        });
+                      }
+                    },
+              child: isLoading
+                  ? const SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Text('Save'),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -258,6 +373,22 @@ class AdminPage extends StatelessWidget {
                       MaterialPageRoute(builder: (context) => const ManageNewsPage()),
                     );
                   },
+                ),
+                const SizedBox(height: 18),
+                _AdminActionButton(
+                  icon: Icons.video_library,
+                  label: 'Manage Videos',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(builder: (context) => const ManageVideosPage()),
+                    );
+                  },
+                ),
+                const SizedBox(height: 18),
+                _AdminActionButton(
+                  icon: Icons.message,
+                  label: 'Manage Welcome Message',
+                  onTap: () => _showWelcomeMessageDialog(context),
                 ),
                 const SizedBox(height: 18),
                 _AdminActionButton(

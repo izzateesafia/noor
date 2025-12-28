@@ -48,6 +48,7 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
         amount: orderRequest.amount!,
         currency: orderRequest.currency ?? 'MYR',
         description: orderRequest.description,
+        paymentMethodId: event.savedPaymentMethodId, // Pass saved payment method if available
       );
 
       // Ensure we have all components
@@ -59,20 +60,55 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
       final totalAmount = event.totalAmount!;
       debugPrint("Total Amount for Payment: \$$totalAmount");
 
-      if (event.cardDetails != null) {
-        await Stripe.instance.dangerouslyUpdateCardDetails(event.cardDetails!);
-      }
-
       try {
-        final billingDetails = BillingDetails(
-          email: orderRequest.email,
-          phone: orderRequest.phoneNumber,
-          name: orderRequest.fullName,
-        );
-
-        if (event.cardDetails != null) {
-          // Card payment
-          print('pay via card');
+        // Check if using saved payment method
+        if (event.savedPaymentMethodId != null) {
+          // Use saved payment method - payment intent was created with the payment method attached
+          print('pay via saved payment method: ${event.savedPaymentMethodId}');
+          
+          // The payment intent was created with the payment method and confirm=true
+          // Check the status to see if it requires action (3D Secure) or succeeded
+          try {
+            // Get payment intent ID from secret key (extract from client_secret format: pi_xxx_secret_xxx)
+            final secretParts = order.secretKey!.split('_secret_');
+            if (secretParts.isNotEmpty) {
+              final paymentIntentId = secretParts[0].replaceFirst('pi_', '');
+              final paymentIntentStatus = await repository.getPaymentIntentStatus('pi_$paymentIntentId');
+              final status = paymentIntentStatus['status'] as String?;
+              
+              if (status == 'requires_action') {
+                // Handle 3D Secure authentication
+                await Stripe.instance.handleNextAction(order.secretKey!);
+              } else if (status == 'succeeded') {
+                // Payment already succeeded
+                print('Payment succeeded with saved payment method');
+              } else if (status == 'requires_payment_method') {
+                // Payment method was declined, need to retry
+                throw Exception('Payment method was declined. Please try a different card.');
+              }
+            }
+          } catch (e) {
+            print('Error checking payment intent status: $e');
+            // If we can't check status, try to handle next action anyway
+            // This will work if 3D Secure is required
+            try {
+              await Stripe.instance.handleNextAction(order.secretKey!);
+            } catch (handleError) {
+              // If no action needed, payment might have already succeeded
+              print('No action needed or payment already processed: $handleError');
+            }
+          }
+        } else if (event.cardDetails != null) {
+          // New card payment
+          await Stripe.instance.dangerouslyUpdateCardDetails(event.cardDetails!);
+          
+          final billingDetails = BillingDetails(
+            email: orderRequest.email,
+            phone: orderRequest.phoneNumber,
+            name: orderRequest.fullName,
+          );
+          
+          print('pay via new card');
           final paymentMethodParams = PaymentMethodParams.card(
             paymentMethodData: PaymentMethodData(
               billingDetails: billingDetails,

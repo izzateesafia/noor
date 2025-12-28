@@ -1,6 +1,9 @@
 import 'package:daily_quran/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'models/class_model.dart';
 import 'cubit/user_cubit.dart';
 import 'cubit/user_states.dart';
@@ -8,6 +11,8 @@ import 'cubit/class_cubit.dart';
 import 'cubit/class_states.dart';
 import 'repository/user_repository.dart';
 import 'repository/class_repository.dart';
+import 'services/image_upload_service.dart';
+import 'utils/toast_util.dart';
 
 class UserProfilePage extends StatelessWidget {
   const UserProfilePage({super.key});
@@ -37,6 +42,10 @@ class _UserProfileView extends StatefulWidget {
 }
 
 class _UserProfileViewState extends State<_UserProfileView> {
+  final ImageUploadService _imageUploadService = ImageUploadService();
+  final ImagePicker _imagePicker = ImagePicker();
+  bool _isUploadingImage = false;
+
   @override
   void initState() {
     super.initState();
@@ -44,6 +53,19 @@ class _UserProfileViewState extends State<_UserProfileView> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ClassCubit>().fetchClasses();
     });
+  }
+
+  /// Format address map as a readable string for display
+  String _formatAddressForDisplay(Map<String, String>? address) {
+    if (address == null) return '';
+    final parts = <String>[];
+    if (address['line1']?.isNotEmpty ?? false) parts.add(address['line1']!);
+    if (address['street']?.isNotEmpty ?? false) parts.add(address['street']!);
+    if (address['postcode']?.isNotEmpty ?? false) parts.add(address['postcode']!);
+    if (address['city']?.isNotEmpty ?? false) parts.add(address['city']!);
+    if (address['state']?.isNotEmpty ?? false) parts.add(address['state']!);
+    if (address['country']?.isNotEmpty ?? false) parts.add(address['country']!);
+    return parts.join(', ');
   }
 
   @override
@@ -141,20 +163,63 @@ class _UserProfileViewState extends State<_UserProfileView> {
     return Center(
       child: Column(
         children: [
-          CircleAvatar(
-            radius: 40,
-            backgroundImage: user.profileImage != null
-                ? NetworkImage(user.profileImage!)
-                : null,
-            child: user.profileImage == null
-                ? const Icon(Icons.person, size: 40)
-                : null,
+          Stack(
+            children: [
+              CircleAvatar(
+                radius: 50,
+                backgroundImage: user.profileImage != null
+                    ? NetworkImage(user.profileImage!)
+                    : null,
+                child: user.profileImage == null
+                    ? const Icon(Icons.person, size: 50)
+                    : null,
+              ),
+              Positioned(
+                bottom: 0,
+                right: 0,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primary,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white, width: 2),
+                  ),
+                  child: IconButton(
+                    icon: _isUploadingImage
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            ),
+                          )
+                        : const Icon(Icons.camera_alt, size: 20, color: Colors.white),
+                    onPressed: _isUploadingImage ? null : () => _showImagePickerDialog(user),
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
           Text(
             user.name, 
             style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)
           ),
+          if (user.locationName != null) ...[
+            const SizedBox(height: 4),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                const SizedBox(width: 4),
+                Text(
+                  user.locationName!,
+                  style: TextStyle(color: Colors.grey[700], fontSize: 14),
+                ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 8),
           Text(
             user.email, 
             style: TextStyle(color: Colors.grey[700])
@@ -164,14 +229,100 @@ class _UserProfileViewState extends State<_UserProfileView> {
               user.phone, 
               style: TextStyle(color: Colors.grey[700])
             ),
-          if (user.address != null && user.address!.isNotEmpty)
+          if (user.address != null)
             Text(
-              user.address!, 
+              _formatAddressForDisplay(user.address), 
               style: TextStyle(color: Colors.grey[700])
             ),
         ],
       ),
     );
+  }
+
+  Future<void> _showImagePickerDialog(UserModel user) async {
+    final source = await showDialog<ImageSource>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Pilih Sumber'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Galeri'),
+              onTap: () => Navigator.of(ctx).pop(ImageSource.gallery),
+            ),
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Kamera'),
+              onTap: () => Navigator.of(ctx).pop(ImageSource.camera),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source != null) {
+      await _pickAndUploadImage(source, user);
+    }
+  }
+
+  Future<void> _pickAndUploadImage(ImageSource source, UserModel user) async {
+    try {
+      // Check permission
+      if (source == ImageSource.camera) {
+        final status = await Permission.camera.request();
+        if (!status.isGranted) {
+          ToastUtil.showError(context, 'Kebenaran kamera diperlukan untuk mengambil gambar');
+          return;
+        }
+      } else {
+        final status = await Permission.photos.request();
+        if (!status.isGranted) {
+          ToastUtil.showError(context, 'Kebenaran galeri diperlukan untuk memilih gambar');
+          return;
+        }
+      }
+
+      final pickedFile = await _imagePicker.pickImage(
+        source: source,
+        imageQuality: 80,
+      );
+
+      if (pickedFile == null) return;
+
+      setState(() => _isUploadingImage = true);
+
+      // Upload to Firebase Storage
+      final imageUrl = await _imageUploadService.uploadProfilePicture(
+        File(pickedFile.path),
+      );
+
+      // Delete old profile picture if exists
+      if (user.profileImage != null) {
+        try {
+          await _imageUploadService.deleteProfilePicture(user.profileImage!);
+        } catch (e) {
+          print('Error deleting old profile picture: $e');
+        }
+      }
+
+      // Update user in Firestore
+      final updatedUser = user.copyWith(profileImage: imageUrl);
+      await context.read<UserCubit>().updateUser(updatedUser);
+
+      if (mounted) {
+        ToastUtil.showSuccess(context, 'Gambar profil berjaya dikemas kini');
+      }
+    } catch (e) {
+      if (mounted) {
+        ToastUtil.showError(context, 'Gagal memuat naik gambar: $e');
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isUploadingImage = false);
+      }
+    }
   }
 
   Widget _buildEnrolledClasses(UserModel user) {

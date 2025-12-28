@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import '../cubit/user_cubit.dart';
+import '../cubit/user_states.dart';
 import '../cubit/class_cubit.dart';
 import '../cubit/class_states.dart';
 import '../repository/user_repository.dart';
@@ -15,12 +16,44 @@ class UserDetailPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get the existing UserCubit for admin check (should be available from app context)
+    final existingUserCubit = context.read<UserCubit>();
+    
     return MultiBlocProvider(
       providers: [
+        // Create a new UserCubit for editing the user
         BlocProvider(create: (_) => UserCubit(UserRepository())),
         BlocProvider(create: (_) => ClassCubit(ClassRepository())),
       ],
-      child: _UserDetailView(user: user),
+      child: BlocBuilder<UserCubit, UserState>(
+        bloc: existingUserCubit,
+        builder: (context, state) {
+          // Check if current user is admin using the existing UserCubit
+          final currentUser = state.currentUser;
+          final isAdmin = currentUser?.roles.contains(UserType.admin) ?? false;
+          
+          if (!isAdmin) {
+            // Non-admin users should not access this page
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Akses ditolak: Hanya admin boleh mengakses halaman ini.'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            });
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+          
+          // Admin check passed, show the user detail view
+          return _UserDetailView(user: user);
+        },
+      ),
     );
   }
 }
@@ -35,96 +68,117 @@ class _UserDetailView extends StatefulWidget {
 }
 
 class _UserDetailViewState extends State<_UserDetailView> {
-  bool _isEditing = false;
-  late TextEditingController _nameController;
-  late TextEditingController _emailController;
-  late TextEditingController _phoneController;
-  late TextEditingController _addressController;
-  late UserType _selectedUserType;
-  late bool _isPremium;
-  DateTime? _selectedBirthDate;
-  String? _birthDateText;
-
   @override
   void initState() {
     super.initState();
-    _initializeControllers();
     // Fetch classes to show enrolled classes
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ClassCubit>().fetchClasses();
     });
   }
 
-  void _initializeControllers() {
-    _nameController = TextEditingController(text: widget.user.name);
-    _emailController = TextEditingController(text: widget.user.email);
-    _phoneController = TextEditingController(text: widget.user.phone);
-    _addressController = TextEditingController(text: widget.user.address ?? '');
-    _selectedUserType = widget.user.userType;
-    _isPremium = widget.user.isPremium;
-    _selectedBirthDate = widget.user.birthDate;
-    _birthDateText = widget.user.birthDate != null
-        ? DateFormat('yyyy-MM-dd').format(widget.user.birthDate!)
-        : null;
+  /// Format address map as a readable string for display
+  String _formatAddressForDisplay(Map<String, String>? address) {
+    if (address == null) return '';
+    final parts = <String>[];
+    if (address['line1']?.isNotEmpty ?? false) parts.add(address['line1']!);
+    if (address['street']?.isNotEmpty ?? false) parts.add(address['street']!);
+    if (address['postcode']?.isNotEmpty ?? false) parts.add(address['postcode']!);
+    if (address['city']?.isNotEmpty ?? false) parts.add(address['city']!);
+    if (address['state']?.isNotEmpty ?? false) parts.add(address['state']!);
+    if (address['country']?.isNotEmpty ?? false) parts.add(address['country']!);
+    return parts.join(', ');
   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _emailController.dispose();
-    _phoneController.dispose();
-    _addressController.dispose();
-    super.dispose();
-  }
-
-  Future<void> _pickBirthDate() async {
-    final now = DateTime.now();
-    final picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedBirthDate ?? now.subtract(const Duration(days: 365 * 18)),
-      firstDate: DateTime(1900),
-      lastDate: now,
-    );
-    if (picked != null) {
-      setState(() {
-        _selectedBirthDate = picked;
-        _birthDateText = DateFormat('yyyy-MM-dd').format(picked);
-      });
-    }
-  }
-
-  void _saveChanges() {
-    // Update roles: set selected type as primary (first in array)
-    final updatedRoles = [
-      _selectedUserType,
-      ...widget.user.roles.where((r) => r != _selectedUserType),
-    ];
+  /// Get role badges for display
+  List<Widget> _getRoleBadges() {
+    final badges = <Widget>[];
     
-    final updatedUser = widget.user.copyWith(
-      name: _nameController.text.trim(),
-      email: _emailController.text.trim(),
-      phone: _phoneController.text.trim(),
-      address: _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
-      roles: updatedRoles,
-      isPremium: _isPremium,
-      birthDate: _selectedBirthDate,
-    );
-
-    context.read<UserCubit>().updateUser(updatedUser);
-    setState(() {
-      _isEditing = false;
-    });
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Pengguna berjaya dikemas kini')),
-    );
-  }
-
-  void _cancelEdit() {
-    _initializeControllers();
-    setState(() {
-      _isEditing = false;
-    });
+    if (widget.user.roles.contains(UserType.admin)) {
+      badges.add(
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.red.shade100,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.red.shade300),
+          ),
+          child: Text(
+            'Admin',
+            style: TextStyle(
+              color: Colors.red.shade700,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      );
+    }
+    
+    if (widget.user.roles.contains(UserType.masterTrainer)) {
+      badges.add(
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.purple.shade100,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.purple.shade300),
+          ),
+          child: Text(
+            'Master Trainer',
+            style: TextStyle(
+              color: Colors.purple.shade700,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      );
+    }
+    
+    if (widget.user.roles.contains(UserType.trainer)) {
+      badges.add(
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.blue.shade100,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.blue.shade300),
+          ),
+          child: Text(
+            'Jurulatih',
+            style: TextStyle(
+              color: Colors.blue.shade700,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      );
+    }
+    
+    if (widget.user.roles.contains(UserType.student)) {
+      badges.add(
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: Colors.grey.shade300),
+          ),
+          child: Text(
+            'Pelajar',
+            style: TextStyle(
+              color: Colors.grey.shade700,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      );
+    }
+    
+    return badges;
   }
 
   Widget _buildInfoCard({
@@ -196,26 +250,10 @@ class _UserDetailViewState extends State<_UserDetailView> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isEditing ? 'Edit User' : 'User Details'),
+        title: const Text('User Details'),
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
-        actions: [
-          if (!_isEditing)
-            IconButton(
-              icon: const Icon(Icons.edit),
-              onPressed: () => setState(() => _isEditing = true),
-            ),
-          if (_isEditing) ...[
-            IconButton(
-              icon: const Icon(Icons.save),
-              onPressed: _saveChanges,
-            ),
-            IconButton(
-              icon: const Icon(Icons.cancel),
-              onPressed: _cancelEdit,
-            ),
-          ],
-        ],
+        // No edit button - this page is read-only
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
@@ -243,106 +281,46 @@ class _UserDetailViewState extends State<_UserDetailView> {
                     ),
                   ),
                   const SizedBox(height: 16),
-                  if (_isEditing) ...[
-                    TextField(
-                      controller: _nameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Name',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _emailController,
-                      decoration: const InputDecoration(
-                        labelText: 'Email',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _phoneController,
-                      decoration: const InputDecoration(
-                        labelText: 'Phone',
-                        border: OutlineInputBorder(),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: _addressController,
-                      decoration: const InputDecoration(
-                        labelText: 'Address',
-                        border: OutlineInputBorder(),
-                      ),
-                      maxLines: 2,
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: DropdownButtonFormField<UserType>(
-                            value: _selectedUserType,
-                            decoration: const InputDecoration(
-                              labelText: 'User Type',
-                              border: OutlineInputBorder(),
-                            ),
-                            items: UserType.values.map((type) {
-                              return DropdownMenuItem(
-                                value: type,
-                                child: Text(type == UserType.admin ? 'Admin' : 'User'),
-                              );
-                            }).toList(),
-                            onChanged: (value) {
-                              if (value != null) {
-                                setState(() => _selectedUserType = value);
-                              }
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: SwitchListTile(
-                            title: const Text('Premium'),
-                            value: _isPremium,
-                            onChanged: (value) => setState(() => _isPremium = value),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    InkWell(
-                      onTap: _pickBirthDate,
-                      child: InputDecorator(
-                        decoration: const InputDecoration(
-                          labelText: 'Birth Date',
-                          border: OutlineInputBorder(),
-                        ),
-                        child: Text(_birthDateText ?? 'Select birth date'),
-                      ),
-                    ),
-                  ] else ...[
+                  // All fields are read-only - no editing allowed
                     _buildInfoRow('Name', widget.user.name, icon: Icons.person),
                     _buildInfoRow('Email', widget.user.email, icon: Icons.email),
                     _buildInfoRow('Phone', widget.user.phone, icon: Icons.phone),
-                    if (widget.user.address != null && widget.user.address!.isNotEmpty)
-                      _buildInfoRow('Address', widget.user.address!, icon: Icons.location_on),
+                    if (widget.user.address != null)
+                      _buildInfoRow('Address', _formatAddressForDisplay(widget.user.address), icon: Icons.location_on),
                     if (widget.user.birthDate != null)
                       _buildInfoRow(
                         'Birth Date',
                         DateFormat('MMMM dd, yyyy').format(widget.user.birthDate!),
                         icon: Icons.cake,
                       ),
-                    _buildInfoRow(
-                      'User Type',
-                      widget.user.roles.contains(UserType.admin) ? 'Admin' : 'User',
-                      icon: Icons.admin_panel_settings,
+                  const SizedBox(height: 8),
+                  // Display roles as badges
+                  Row(
+                    children: [
+                      Icon(Icons.admin_panel_settings, size: 16, color: Colors.grey[600]),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Roles:',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Colors.grey[600],
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Wrap(
+                        spacing: 6,
+                        runSpacing: 4,
+                        children: _getRoleBadges(),
                     ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
                     _buildInfoRow(
                       'Premium Status',
                       widget.user.isPremium ? 'Premium' : 'Free',
                       icon: Icons.star,
                     ),
-                  ],
                 ],
               ),
             ),

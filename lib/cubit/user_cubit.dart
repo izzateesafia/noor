@@ -32,6 +32,13 @@ class UserCubit extends Cubit<UserState> {
   Future<void> updateUser(UserModel user) async {
     try {
       await repository.updateUser(user);
+      // Update currentUser in state if this is the current user
+      if (state.currentUser?.id == user.id) {
+        emit(state.copyWith(
+          currentUser: user,
+          status: UserStatus.loaded,
+        ));
+      }
       fetchUsers();
     } catch (e) {
       emit(state.copyWith(status: UserStatus.error, error: e.toString()));

@@ -46,8 +46,8 @@ class _SplashScreenState extends State<SplashScreen> {
             if (!user.hasCompletedBiodata) {
               Navigator.pushReplacementNamed(context, '/biodata', arguments: user);
             } else {
-              // User is fully set up, go to role selection
-              Navigator.pushReplacementNamed(context, '/role');
+              // User is fully set up, go to main navigation
+              Navigator.pushReplacementNamed(context, '/main');
             }
           } else {
             // User data not found, go to login

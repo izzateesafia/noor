@@ -109,13 +109,6 @@ class _DeepLinkTestPageState extends State<DeepLinkTestPage> {
             ),
             _buildNavigationButton(
               context,
-              'Hifdh Checker',
-              '/hifdh_checker',
-              Icons.psychology,
-              Colors.teal,
-            ),
-            _buildNavigationButton(
-              context,
               'Prayer Steps',
               '/rukun_solat',
               Icons.directions_walk,
@@ -164,7 +157,6 @@ class _DeepLinkTestPageState extends State<DeepLinkTestPage> {
                     _buildShareableLink('Duas: ${DeepLinkRoutes.duas}'),
                     _buildShareableLink('Hadiths: ${DeepLinkRoutes.hadiths}'),
                     _buildShareableLink('Qiblah: ${DeepLinkRoutes.qiblah}'),
-                    _buildShareableLink('Hifdh: ${DeepLinkRoutes.hifdh}'),
                     _buildShareableLink('Prayer Steps: ${DeepLinkRoutes.rukun}'),
                     _buildShareableLink('Dashboard: ${DeepLinkRoutes.dashboard}'),
                     _buildShareableLink('Admin: ${DeepLinkRoutes.admin}'),

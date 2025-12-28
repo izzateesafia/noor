@@ -18,7 +18,7 @@ class PremiumPage extends StatefulWidget {
 }
 
 class _PremiumPageState extends State<PremiumPage> {
-  int _selectedIndex = 0; // 0 for Apple Pay, 1 for Card
+  int _selectedIndex = 0; // 0 for Apple Pay, 1 for Card, 2 for Saved Card
   bool _isApplePayAvailable = false;
   
   // Form controllers
@@ -223,27 +223,45 @@ class _PremiumPageState extends State<PremiumPage> {
           ),
           const SizedBox(height: 16),
           
-          // Payment Method Toggle
-          Container(
-            decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
-              borderRadius: BorderRadius.circular(32),
-              border: Border.all(
-                color: Theme.of(context).dividerColor.withOpacity(0.3),
-              ),
-            ),
-            child: Row(
-              children: [
-                _buildToggleButton("Apple Pay", 0),
-                _buildToggleButton("Card", 1),
-              ],
-            ),
+          // Show saved card option if available
+          BlocBuilder<UserCubit, UserState>(
+            builder: (context, userState) {
+              final savedPaymentMethodId = userState.currentUser?.stripePaymentMethodId;
+              final hasSavedCard = savedPaymentMethodId != null && savedPaymentMethodId.isNotEmpty;
+              
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (hasSavedCard) ...[
+                    _buildSavedCardOption(),
+                    const SizedBox(height: 12),
+                  ],
+                  
+                  // Payment Method Toggle
+                  Container(
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor,
+                      borderRadius: BorderRadius.circular(32),
+                      border: Border.all(
+                        color: Theme.of(context).dividerColor.withOpacity(0.3),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        _buildToggleButton("Apple Pay", 0),
+                        _buildToggleButton("Card", 1),
+                      ],
+                    ),
+                  ),
+                  
+                  const SizedBox(height: 24),
+                  
+                  // Payment Form (only show if not using saved card)
+                  if (_selectedIndex == 1) _buildCardPaymentForm(),
+                ],
+              );
+            },
           ),
-          
-          const SizedBox(height: 24),
-          
-          // Payment Form
-          if (_selectedIndex == 1) _buildCardPaymentForm(),
           
           const SizedBox(height: 24),
           
@@ -359,6 +377,67 @@ class _PremiumPageState extends State<PremiumPage> {
               )),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSavedCardOption() {
+    return GestureDetector(
+      onTap: () {
+        setState(() {
+          _selectedIndex = 2; // Use saved card
+        });
+      },
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: _selectedIndex == 2 
+              ? AppColors.primary.withOpacity(0.1)
+              : Theme.of(context).cardColor,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: _selectedIndex == 2 
+                ? AppColors.primary
+                : Theme.of(context).dividerColor.withOpacity(0.3),
+            width: _selectedIndex == 2 ? 2 : 1,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(
+              Icons.credit_card,
+              color: _selectedIndex == 2 ? AppColors.primary : Theme.of(context).textTheme.bodyLarge?.color,
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Use Saved Card',
+                    style: TextStyle(
+                      color: _selectedIndex == 2 ? AppColors.primary : Theme.of(context).textTheme.bodyLarge?.color,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 16,
+                    ),
+                  ),
+                  Text(
+                    'Pay with your previously saved card',
+                    style: TextStyle(
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            if (_selectedIndex == 2)
+              Icon(
+                Icons.check_circle,
+                color: AppColors.primary,
+              ),
+          ],
         ),
       ),
     );
@@ -573,6 +652,11 @@ class _PremiumPageState extends State<PremiumPage> {
       return;
     }
 
+    // Check if using saved payment method
+    // final userState = context.read<UserCubit>().state;
+    final savedPaymentMethodId = userState.currentUser?.stripePaymentMethodId;
+    final useSavedCard = _selectedIndex == 2 && savedPaymentMethodId != null && savedPaymentMethodId.isNotEmpty;
+
     // Create order request
     final orderRequest = OrderRequest(
       userId: userId,
@@ -583,12 +667,18 @@ class _PremiumPageState extends State<PremiumPage> {
       email: _formData['email'],
       fullName: '${_formData['first_name']} ${_formData['last_name']}',
       phoneNumber: _formData['phone_number'],
-      paymentMethod: _selectedIndex == 0 ? 'apple_pay' : 'card',
+      paymentMethod: _selectedIndex == 0 ? 'apple_pay' : (_selectedIndex == 2 ? 'saved_card' : 'card'),
     );
 
-    // Create card details if using card payment
+    // Create card details if using new card payment
     CardDetails? cardDetails;
-    if (_selectedIndex == 1) {
+    String? paymentMethodId;
+    
+    if (useSavedCard) {
+      // Use saved payment method
+      paymentMethodId = savedPaymentMethodId;
+    } else if (_selectedIndex == 1) {
+      // Use new card details
       final expiryParts = _expiryDate.split('/');
       if (expiryParts.length == 2) {
         cardDetails = CardDetails(
@@ -604,6 +694,7 @@ class _PremiumPageState extends State<PremiumPage> {
     context.read<PaymentBloc>().add(
       InitPayment(
         cardDetails: cardDetails,
+        savedPaymentMethodId: paymentMethodId,
         orderRequest: orderRequest,
         totalAmount: selectedPlan.price.toStringAsFixed(2),
         planId: selectedPlan.id,
@@ -640,10 +731,21 @@ class _PremiumPageState extends State<PremiumPage> {
       return false;
     }
 
+    // Skip card validation if using saved card
     if (_selectedIndex == 1) {
       if (_cardNumber.isEmpty || _expiryDate.isEmpty || _cardHolderName.isEmpty || _cvvCode.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Please enter complete card details')),
+        );
+        return false;
+      }
+    } else if (_selectedIndex == 2) {
+      // Validate that saved payment method exists
+      final userState = context.read<UserCubit>().state;
+      final savedPaymentMethodId = userState.currentUser?.stripePaymentMethodId;
+      if (savedPaymentMethodId == null || savedPaymentMethodId.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('No saved card found. Please add a card first.')),
         );
         return false;
       }

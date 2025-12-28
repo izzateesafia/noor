@@ -158,6 +158,60 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
     }
   }
 
+  List<Widget> _buildAvailableRoleCards() {
+    if (_currentUser == null) return [];
+    
+    final userRoles = _currentUser!.roles;
+    final roleCards = <Widget>[];
+    
+    // Always show Student role if user has it (most users will only have this)
+    if (userRoles.contains(UserType.student)) {
+      roleCards.add(
+        _buildRoleCard(
+          icon: Icons.person,
+          label: 'Pelajar',
+          selected: _selectedRole == 'Student',
+          onTap: () => _selectRole('Student'),
+          color: AppColors.primary,
+        ),
+      );
+    }
+    
+    // Show Trainer role only if user has it
+    if (userRoles.contains(UserType.trainer)) {
+      if (roleCards.isNotEmpty) {
+        roleCards.add(const SizedBox(height: 24));
+      }
+      roleCards.add(
+        _buildRoleCard(
+          icon: Icons.school,
+          label: 'Jurulatih',
+          selected: _selectedRole == 'Trainer',
+          onTap: () => _selectRole('Trainer'),
+          color: AppColors.primary,
+        ),
+      );
+    }
+    
+    // Show Master Trainer role only if user has it
+    if (userRoles.contains(UserType.masterTrainer)) {
+      if (roleCards.isNotEmpty) {
+        roleCards.add(const SizedBox(height: 24));
+      }
+      roleCards.add(
+        _buildRoleCard(
+          icon: Icons.star,
+          label: 'Master Trainer',
+          selected: _selectedRole == 'Master Trainer',
+          onTap: () => _selectRole('Master Trainer'),
+          color: AppColors.primary,
+        ),
+      );
+    }
+    
+    return roleCards;
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocListener<UserCubit, UserState>(
@@ -215,29 +269,8 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 32),
-                _buildRoleCard(
-                  icon: Icons.school,
-                  label: 'Jurulatih',
-                  selected: _selectedRole == 'Trainer',
-                  onTap: () => _selectRole('Trainer'),
-                  color: AppColors.primary,
-                ),
-                const SizedBox(height: 24),
-                _buildRoleCard(
-                  icon: Icons.star,
-                  label: 'Master Trainer',
-                  selected: _selectedRole == 'Master Trainer',
-                  onTap: () => _selectRole('Master Trainer'),
-                  color: AppColors.primary,
-                ),
-                const SizedBox(height: 24),
-                _buildRoleCard(
-                  icon: Icons.person,
-                  label: 'Student',
-                  selected: _selectedRole == 'Student',
-                  onTap: () => _selectRole('Student'),
-                  color: AppColors.primary
-                ),
+                // Only show role cards for roles the user already has
+                ..._buildAvailableRoleCards(),
                 const SizedBox(height: 32),
                 ElevatedButton(
                   style: ElevatedButton.styleFrom(

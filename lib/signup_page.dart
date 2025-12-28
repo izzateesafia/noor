@@ -10,7 +10,9 @@ import 'utils/toast_util.dart';
 import 'services/google_auth_service.dart';
 
 class SignupPage extends StatefulWidget {
-  const SignupPage({super.key});
+  final String? preFilledEmail;
+  
+  const SignupPage({super.key, this.preFilledEmail});
 
   @override
   State<SignupPage> createState() => _SignupPageState();
@@ -30,6 +32,15 @@ class _SignupPageState extends State<SignupPage> {
   // Validation patterns
   static final RegExp _emailRegex = RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$');
   static final RegExp _phoneRegex = RegExp(r'^\+?[\d\s\-\(\)]{10,}$');
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-fill email if provided
+    if (widget.preFilledEmail != null && widget.preFilledEmail!.isNotEmpty) {
+      _emailController.text = widget.preFilledEmail!;
+    }
+  }
 
   Future<void> _pickBirthDate() async {
     final now = DateTime.now();
@@ -215,7 +226,16 @@ class _SignupPageState extends State<SignupPage> {
         password: _passwordController.text,
         phone: _phoneController.text.trim(),
         birthDate: _selectedBirthDate,
-        address: _addressController.text.trim().isEmpty ? null : _addressController.text.trim(),
+        address: _addressController.text.trim().isEmpty 
+            ? null 
+            : {
+                'line1': _addressController.text.trim(),
+                'street': '',
+                'postcode': '',
+                'city': '',
+                'state': '',
+                'country': '',
+              },
         roles: const [UserType.student],
         isPremium: false,
       );
@@ -225,49 +245,25 @@ class _SignupPageState extends State<SignupPage> {
         password: _passwordController.text
       );
       await saveUserToken();
-      await cred.user?.sendEmailVerification();
+      
+      // Send email verification in background (don't block user flow)
+      cred.user?.sendEmailVerification().then((_) {
+        print('Email verification sent');
+      }).catchError((e) {
+        print('Error sending email verification: $e');
+      });
       
       if (mounted) {
-        await showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (ctx) => AlertDialog(
-            title: const Text('Sahkan Emel Anda'),
-            content: const Text('Emel pengesahan telah dihantar. Sila periksa peti masuk anda dan sahkan emel anda sebelum meneruskan.'),
-            actions: [
-              TextButton(
-                onPressed: () async {
-                  await cred.user?.sendEmailVerification();
-                  ToastUtil.showSuccess(context, 'Emel pengesahan dihantar semula.');
-                },
-                child: const Text('Hantar Semula Emel'),
-              ),
-              TextButton(
-                onPressed: () async {
-                  await cred.user?.reload();
-                  final refreshedUser = firebase_auth.FirebaseAuth.instance.currentUser;
-                  if (refreshedUser != null && refreshedUser.emailVerified) {
-                    Navigator.of(ctx).pop();
-                    // Hide any existing snackbars
-                    ScaffoldMessenger.of(context).hideCurrentSnackBar();
-                    ScaffoldMessenger.of(context).clearSnackBars();
-                    // After email verification, check if user needs to complete biodata
-                    final userRepo = UserRepository();
-                    final user = await userRepo.getCurrentUser();
-                    if (user != null && !user.hasCompletedBiodata) {
-                      Navigator.pushReplacementNamed(context, '/biodata', arguments: user);
-                    } else {
-                      Navigator.pushReplacementNamed(context, '/role');
-                    }
-                  } else {
-                    ToastUtil.showError(context, 'Emel belum disahkan lagi.');
-                  }
-                },
-                child: const Text('Saya telah sahkan'),
-              ),
-            ],
+        // Show info about email verification (non-blocking)
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Emel pengesahan telah dihantar. Sila periksa peti masuk anda.'),
+            duration: Duration(seconds: 3),
           ),
         );
+        
+        // Always navigate to biodata page after signup
+        Navigator.pushReplacementNamed(context, '/biodata', arguments: user);
       }
     } on firebase_auth.FirebaseAuthException catch (e) {
       if (mounted) {

@@ -12,8 +12,12 @@ class UserModel {
   final List<String> enrolledClassIds;
   final List<UserType> roles; // multiple roles supported - single source of truth
   final DateTime? birthDate; // new optional field
-  final String? address; // new optional field
+  final Map<String, String>? address; // structured address: {line1, street, postcode, city, state, country}
   final bool hasCompletedBiodata; // tracks if user has filled complete profile
+  final String? stripePaymentMethodId; // Stripe payment method ID for saved cards
+  final double? latitude; // user's current location latitude
+  final double? longitude; // user's current location longitude
+  final String? locationName; // formatted location name (e.g., "Kuala Lumpur, Malaysia")
 
   /// Computed getter: Returns the primary role (first role in roles array)
   /// Falls back to student if roles is empty
@@ -33,6 +37,10 @@ class UserModel {
     this.birthDate,
     this.address,
     this.hasCompletedBiodata = false, // default to false for new users
+    this.stripePaymentMethodId,
+    this.latitude,
+    this.longitude,
+    this.locationName,
   });
 
   UserModel copyWith({
@@ -47,8 +55,12 @@ class UserModel {
     List<String>? enrolledClassIds,
     List<UserType>? roles,
     DateTime? birthDate,
-    String? address,
+    Map<String, String>? address,
     bool? hasCompletedBiodata,
+    String? stripePaymentMethodId,
+    double? latitude,
+    double? longitude,
+    String? locationName,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -64,6 +76,10 @@ class UserModel {
       birthDate: birthDate ?? this.birthDate,
       address: address ?? this.address,
       hasCompletedBiodata: hasCompletedBiodata ?? this.hasCompletedBiodata,
+      stripePaymentMethodId: stripePaymentMethodId ?? this.stripePaymentMethodId,
+      latitude: latitude ?? this.latitude,
+      longitude: longitude ?? this.longitude,
+      locationName: locationName ?? this.locationName,
     );
   }
 
@@ -75,14 +91,16 @@ class UserModel {
 
   /// Check if user has completed their biodata profile
   bool get isBiodataComplete {
-    return hasCompletedBiodata && 
-           name.isNotEmpty && 
-           email.isNotEmpty && 
-           phone.isNotEmpty &&
-           phone != 'N/A' &&
-           birthDate != null &&
-           address != null &&
-           address!.isNotEmpty;
+    if (!hasCompletedBiodata) return false;
+    if (name.isEmpty || email.isEmpty) return false;
+    if (phone.isEmpty || phone == 'N/A') return false;
+    if (birthDate == null) return false;
+    if (address == null) return false;
+    // Check that all required address fields are present and not empty
+    final requiredFields = ['line1', 'street', 'postcode', 'city', 'state', 'country'];
+    return requiredFields.every((field) => 
+      address![field] != null && address![field]!.trim().isNotEmpty
+    );
   }
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -106,8 +124,12 @@ class UserModel {
       enrolledClassIds: (json['enrolledClassIds'] as List<dynamic>?)?.map((e) => e as String).toList() ?? [],
       roles: finalRoles,
       birthDate: json['birthDate'] != null ? DateTime.parse(json['birthDate']) : null,
-      address: json['address'] as String?,
+      address: _parseAddress(json['address']),
       hasCompletedBiodata: json['hasCompletedBiodata'] as bool? ?? false,
+      stripePaymentMethodId: json['stripePaymentMethodId'] as String?,
+      latitude: json['latitude'] != null ? (json['latitude'] as num).toDouble() : null,
+      longitude: json['longitude'] != null ? (json['longitude'] as num).toDouble() : null,
+      locationName: json['locationName'] as String?,
     );
   }
 
@@ -117,8 +139,8 @@ class UserModel {
       'name': name,
       'email': email,
       'phone': phone,
-      // Keep userType for backward compatibility (computed from roles)
-      'userType': _userTypeToString(userType),
+      // userType removed - roles array is the single source of truth
+      // userType is kept as computed getter for backward compatibility in code only
       'isPremium': isPremium,
       'profileImage': profileImage,
       'premiumStartDate': premiumStartDate?.toIso8601String(),
@@ -126,9 +148,51 @@ class UserModel {
       'enrolledClassIds': enrolledClassIds,
       'roles': roles.map(_userTypeToString).toList(),
       'birthDate': birthDate?.toIso8601String(),
-      'address': address,
+      'address': address, // Firestore will store this as a Map
       'hasCompletedBiodata': hasCompletedBiodata,
+      'stripePaymentMethodId': stripePaymentMethodId,
+      'latitude': latitude,
+      'longitude': longitude,
+      'locationName': locationName,
     };
+  }
+
+  /// Parse address from JSON - handles both old string format and new map format
+  static Map<String, String>? _parseAddress(dynamic addressJson) {
+    if (addressJson == null) return null;
+    
+    // New format: Map
+    if (addressJson is Map) {
+      return Map<String, String>.from(addressJson as Map);
+    }
+    
+    // Old format: Pipe-separated string (backward compatibility)
+    if (addressJson is String) {
+      final parts = addressJson.split('|');
+      if (parts.length >= 6) {
+        return {
+          'line1': parts[0],
+          'street': parts[1],
+          'postcode': parts[2],
+          'city': parts[3],
+          'state': parts[4],
+          'country': parts[5],
+        };
+      }
+      // If old format but not pipe-separated, put everything in line1
+      if (addressJson.isNotEmpty) {
+        return {
+          'line1': addressJson,
+          'street': '',
+          'postcode': '',
+          'city': '',
+          'state': '',
+          'country': '',
+        };
+      }
+    }
+    
+    return null;
   }
 
   static UserType _parseUserType(String? userTypeStr) {

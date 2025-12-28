@@ -9,6 +9,7 @@ import 'dashboard/jurulatih_dashboard_page.dart';
 import 'dashboard/master_trainer_dashboard_page.dart';
 import 'menu_page.dart';
 import 'user_profile_page.dart';
+import 'pages_list_page.dart';
 
 class MainNavigationPage extends StatefulWidget {
   const MainNavigationPage({super.key});
@@ -32,6 +33,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
         dashboardPage,
         const MenuPage(),
         const UserProfilePage(),
+        const PagesListPage(),
       ];
     }
     
@@ -69,6 +71,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
       dashboardPage,
       const MenuPage(),
       const UserProfilePage(),
+      const PagesListPage(),
     ];
   }
 
@@ -149,6 +152,11 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
                     icon: Icon(Icons.person_outline),
                     activeIcon: Icon(Icons.person),
                     label: 'Profile',
+                  ),
+                  BottomNavigationBarItem(
+                    icon: Icon(Icons.list_outlined),
+                    activeIcon: Icon(Icons.list),
+                    label: 'Pages',
                   ),
                 ],
               ),

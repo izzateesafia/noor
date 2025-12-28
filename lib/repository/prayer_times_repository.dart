@@ -242,8 +242,16 @@ class PrayerTimesRepository {
 
   Future<HijriDate> getHijriDate() async {
     try {
+      // Get Hijri date from prayer times API (it's included in the response)
+      // Use default zone (WLY01 - Kuala Lumpur) to get today's date
+      final now = DateTime.now();
+      final today = now.day;
+      final year = now.year;
+      final month = now.month;
+      
+      // Use default zone for getting Hijri date
       final response = await http.get(
-        Uri.parse('$baseUrl/v1/hijri'),
+        Uri.parse('$baseUrl/solat/WLY01/$today?year=$year&month=$month'),
         headers: {
           'Content-Type': 'application/json',
         },
@@ -251,11 +259,38 @@ class PrayerTimesRepository {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        return HijriDate.fromJson(data);
-      } else {
-        // Return fallback Hijri date
-        return _getFallbackHijriDate();
+        final prayerTime = data['prayerTime'] ?? {};
+        final hijriString = prayerTime['hijri'] ?? '';
+        final gregorianDate = prayerTime['date'] ?? '';
+        
+        if (hijriString.isNotEmpty) {
+          // Parse Hijri date from format "YYYY-MM-DD"
+          final hijriParts = hijriString.split('-');
+          final day = hijriParts.length > 2 ? hijriParts[2] : '';
+          final monthNum = hijriParts.length > 1 ? hijriParts[1] : '';
+          final year = hijriParts.isNotEmpty ? hijriParts[0] : '';
+          
+          // Convert month number to month name
+          final monthNames = [
+            'Muharram', 'Safar', 'Rabi\' Al-Awwal', 'Rabi\' Al-Thani',
+            'Muharram', 'Safar', 'Rabiulawal', 'Rabiulakhir',
+            'Jamadilawal', 'Jamadilakhir', 'Rejab', 'Syaaban',
+            'Ramadan', 'Syawal', 'Zulkaedah', 'Zulhijjah'
+          ];
+          final monthIndex = int.tryParse(monthNum) ?? 1;
+          final monthName = monthNames[monthIndex - 1];
+          
+          return HijriDate(
+            hijriDate: day,
+            hijriMonth: monthName,
+            hijriYear: year,
+            gregorianDate: gregorianDate,
+          );
+        }
       }
+      
+      // Return fallback Hijri date if API fails
+      return _getFallbackHijriDate();
     } catch (e) {
       // Return fallback Hijri date if any error
       return _getFallbackHijriDate();

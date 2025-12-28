@@ -8,6 +8,7 @@ import '../repository/user_repository.dart';
 import '../cubit/live_stream_cubit.dart';
 import '../cubit/live_stream_states.dart';
 import '../models/live_stream.dart';
+import '../theme_constants.dart';
 import 'header_section.dart';
 import 'prayer_times_card.dart';
 import 'daily_tracker.dart';
@@ -27,11 +28,14 @@ import '../cubit/whats_new_cubit.dart';
 import '../repository/ad_repository.dart';
 import '../repository/whats_new_repository.dart';
 import '../cubit/prayer_times_cubit.dart';
+import '../cubit/prayer_times_states.dart';
 import '../cubit/news_cubit.dart';
 import '../cubit/news_states.dart';
 import '../repository/news_repository.dart';
 import '../widgets/daily_verse_widget.dart';
 import 'terkini_news_feed.dart';
+import '../services/location_service.dart';
+import 'package:geolocator/geolocator.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -40,10 +44,11 @@ class DashboardPage extends StatefulWidget {
   State<DashboardPage> createState() => _DashboardPageState();
 }
 
-class _DashboardPageState extends State<DashboardPage> {
+class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<ClassCubit>().fetchClasses();
       context.read<LiveStreamCubit>().getCurrentLiveStream();
@@ -51,10 +56,217 @@ class _DashboardPageState extends State<DashboardPage> {
       context.read<HadithCubit>().fetchHadiths();
       context.read<NewsCubit>().fetchNews();
       
-      // Automatically fetch prayer times for default location (Kuala Lumpur)
-      context.read<PrayerTimesCubit>().fetchHijriDate();
-      context.read<PrayerTimesCubit>().fetchCurrentPrayerTimes('Kuala Lumpur', 'Kuala Lumpur');
+      // Fetch prayer times using user's location if available
+      final user = context.read<UserCubit>().state.currentUser;
+      final prayerTimesCubit = context.read<PrayerTimesCubit>();
+      prayerTimesCubit.fetchHijriDate();
+      
+      if (user?.latitude != null && user?.longitude != null) {
+        // Use user's location coordinates
+        prayerTimesCubit.fetchPrayerTimesByCoordinates(user!.latitude!, user.longitude!);
+      } else {
+        // Fallback to default location (Kuala Lumpur)
+        prayerTimesCubit.fetchCurrentPrayerTimes('Kuala Lumpur', 'Kuala Lumpur');
+      }
+      
+      // Request location permission and update user location if not available
+      _requestAndUpdateLocation();
     });
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    print('Dashboard: App lifecycle state changed: $state');
+    if (state == AppLifecycleState.resumed) {
+      print('Dashboard: App resumed, checking location in 1 second...');
+      // Add a delay to ensure settings have been saved and app is fully resumed
+      Future.delayed(const Duration(seconds: 1), () async {
+        if (!mounted) {
+          print('Dashboard: Widget not mounted, skipping location check');
+          return;
+        }
+        print('Dashboard: Triggering location fetch after resume...');
+        // When app resumes, check if location permission was granted
+        // and location is still missing, then re-fetch
+        await _requestAndUpdateLocation(forceRefresh: true);
+      });
+    }
+  }
+
+  /// Request location permission and update user location
+  /// [forceRefresh] - If true, will fetch location even if user already has location data
+  Future<void> _requestAndUpdateLocation({bool forceRefresh = false}) async {
+    try {
+      print('_requestAndUpdateLocation called, forceRefresh: $forceRefresh');
+      final userCubit = context.read<UserCubit>();
+      final user = userCubit.state.currentUser;
+      
+      // Skip if user already has location data (unless force refresh)
+      if (!forceRefresh && user?.latitude != null && user?.longitude != null && user?.locationName != null) {
+        print('Location already exists, skipping');
+        return;
+      }
+      
+      // Check if location services are enabled
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      print('Location services enabled: $serviceEnabled');
+      if (!serviceEnabled) {
+        print('Location services are disabled');
+        return;
+      }
+      
+      // Check permission
+      LocationPermission permission = await Geolocator.checkPermission();
+      print('Current location permission: $permission');
+      
+      if (permission == LocationPermission.denied) {
+        // Request permission - this will show the iOS permission dialog if needed
+        print('Requesting location permission...');
+        permission = await Geolocator.requestPermission();
+        print('Permission request result: $permission');
+        if (permission == LocationPermission.denied) {
+          print('Location permission denied');
+          return;
+        }
+      }
+      
+      if (permission == LocationPermission.deniedForever) {
+        print('Location permission permanently denied');
+        return;
+      }
+      
+      // Only proceed if permission is granted
+      if (permission != LocationPermission.always && permission != LocationPermission.whileInUse) {
+        print('Location permission not granted: $permission');
+        return;
+      }
+      
+      print('Permission granted, fetching location...');
+      
+      // Get current location directly (bypass LocationService to avoid double permission check)
+      Position position;
+      try {
+        position = await Geolocator.getCurrentPosition(
+          desiredAccuracy: LocationAccuracy.high,
+          timeLimit: const Duration(seconds: 10),
+        );
+        print('Location fetched: ${position.latitude}, ${position.longitude}');
+      } catch (e) {
+        print('Error getting position: $e');
+        return;
+      }
+      
+      // Get location name
+      final locationService = LocationService();
+      final locationName = await locationService.getLocationName(
+        position.latitude,
+        position.longitude,
+      );
+      print('Location name: $locationName');
+      
+      // Update user with location
+      // IMPORTANT: Fetch latest user from Firestore first to ensure we have current roles
+      // This prevents overwriting manually set roles when updating location
+      print('Fetching latest user from Firestore to preserve roles...');
+      await userCubit.fetchCurrentUser();
+      final latestUser = userCubit.state.currentUser;
+      
+      if (latestUser != null && mounted) {
+        print('Latest user roles from Firestore: ${latestUser.roles.map((r) => r.toString()).join(', ')}');
+        
+        // Use latestUser (with current roles from Firestore) instead of stale user from state
+        final updatedUser = latestUser.copyWith(
+          latitude: position.latitude,
+          longitude: position.longitude,
+          locationName: locationName ??
+              '${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}',
+        );
+        
+        print('Updating user with location (preserving roles: ${updatedUser.roles.map((r) => r.toString()).join(', ')})...');
+        await userCubit.updateUser(updatedUser);
+        print('User updated successfully');
+        
+        // Update prayer times with new location
+        final prayerTimesCubit = context.read<PrayerTimesCubit>();
+        prayerTimesCubit.fetchPrayerTimesByCoordinates(
+          position.latitude,
+          position.longitude,
+        );
+      } else {
+        print('User is null or widget not mounted');
+      }
+    } catch (e, stackTrace) {
+      print('Error requesting and updating location: $e');
+      print('Stack trace: $stackTrace');
+      // Don't block dashboard if location fails
+    }
+  }
+
+  Widget _buildHijriDateDisplay() {
+    return BlocBuilder<PrayerTimesCubit, PrayerTimesState>(
+      builder: (context, state) {
+        final hijriDate = state.hijriDate;
+        
+        if (hijriDate == null) {
+          return const SizedBox.shrink();
+        }
+
+        return Container(
+          margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: AppColors.primary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: AppColors.primary.withOpacity(0.3),
+              width: 1,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.calendar_today,
+                color: AppColors.primary,
+                size: 20,
+              ),
+              const SizedBox(width: 12),
+              Text(
+                '${hijriDate.hijriDate} ${hijriDate.hijriMonth} ${hijriDate.hijriYear}',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: AppColors.primary,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Text(
+                  'JAKIM',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -275,6 +487,25 @@ class _DashboardPageState extends State<DashboardPage> {
                           context.read<LiveStreamCubit>().getCurrentLiveStream();
                           context.read<ClassCubit>().fetchClasses();
                           context.read<NewsCubit>().fetchNews();
+                          
+                          // Refresh location
+                          await _requestAndUpdateLocation(forceRefresh: true);
+                          
+                          // Refresh prayer times
+                          final userCubit = context.read<UserCubit>();
+                          final user = userCubit.state.currentUser;
+                          final prayerTimesCubit = context.read<PrayerTimesCubit>();
+                          
+                          if (user?.latitude != null && user?.longitude != null) {
+                            prayerTimesCubit.fetchPrayerTimesByCoordinates(user!.latitude!, user.longitude!);
+                          } else {
+                            prayerTimesCubit.fetchCurrentPrayerTimes('Kuala Lumpur', 'Kuala Lumpur');
+                          }
+                          
+                          // Also refresh Hijri date
+                          prayerTimesCubit.fetchHijriDate();
+                          
+                          await Future.delayed(const Duration(milliseconds: 500)); // Small delay for better UX
                         },
                         child: SingleChildScrollView(
                           child: Column(
@@ -382,6 +613,7 @@ class _DashboardPageState extends State<DashboardPage> {
                               value: context.read<UserCubit>(),
                               child: HeaderSection(user: user),
                             ),
+                            _buildHijriDateDisplay(),
                             PrayerTimesCard(),
                             const DailyVerseWidget(),
                             BlocBuilder<NewsCubit, NewsState>(

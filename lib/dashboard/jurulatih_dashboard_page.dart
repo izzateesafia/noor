@@ -54,9 +54,18 @@ class _JurulatihDashboardPageState extends State<JurulatihDashboardPage> {
       context.read<HadithCubit>().fetchHadiths();
       context.read<NewsCubit>().fetchNews();
       
-      // Automatically fetch prayer times for default location (Kuala Lumpur)
-      context.read<PrayerTimesCubit>().fetchHijriDate();
-      context.read<PrayerTimesCubit>().fetchCurrentPrayerTimes('Kuala Lumpur', 'Kuala Lumpur');
+      // Fetch prayer times using user's location if available
+      final user = context.read<UserCubit>().state.currentUser;
+      final prayerTimesCubit = context.read<PrayerTimesCubit>();
+      prayerTimesCubit.fetchHijriDate();
+      
+      if (user?.latitude != null && user?.longitude != null) {
+        // Use user's location coordinates
+        prayerTimesCubit.fetchPrayerTimesByCoordinates(user!.latitude!, user.longitude!);
+      } else {
+        // Fallback to default location (Kuala Lumpur)
+        prayerTimesCubit.fetchCurrentPrayerTimes('Kuala Lumpur', 'Kuala Lumpur');
+      }
     });
   }
 

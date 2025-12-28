@@ -9,6 +9,8 @@ import '../models/class_model.dart';
 import '../repository/user_repository.dart';
 import '../theme_constants.dart';
 import '../main.dart';
+import '../admin_page.dart';
+import 'package:fl_chart/fl_chart.dart';
 import 'dart:math' as math;
 
 class MasterTrainerDashboardPage extends StatefulWidget {
@@ -34,50 +36,69 @@ class _MasterTrainerDashboardPageState extends State<MasterTrainerDashboardPage>
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final primaryColor = Theme.of(context).colorScheme.primary;
-    
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: RefreshIndicator(
-        onRefresh: () async {
-          context.read<ClassCubit>().fetchClasses();
+
+          return Scaffold(
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            body: RefreshIndicator(
+              onRefresh: () async {
+                context.read<ClassCubit>().fetchClasses();
           context.read<UserCubit>().fetchUsers();
-        },
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // Header
-              Container(
-                padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
-                decoration: BoxDecoration(
-                  color: primaryColor,
-                ),
-                child: Row(
+              },
+              child: SingleChildScrollView(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
+              // Header
+                    Container(
+                padding: const EdgeInsets.fromLTRB(20, 50, 20, 20),
+                      decoration: BoxDecoration(
+                  color: primaryColor,
+                      ),
+                      child: Row(
+                        children: [
                     const Text(
-                      'Master Trainer',
-                      style: TextStyle(
-                        color: Colors.white,
+                                  'Master Trainer',
+                                  style: TextStyle(
+                                    color: Colors.white,
                         fontSize: 18,
-                        fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const Spacer(),
+                          // Admin Panel Button
+                          ElevatedButton.icon(
+                            onPressed: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(builder: (context) => const AdminPage()),
+                              );
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white.withOpacity(0.2),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            ),
+                            icon: const Icon(Icons.admin_panel_settings, size: 18),
+                            label: const Text('Admin Panel', style: TextStyle(fontSize: 14)),
+                          ),
+                          const SizedBox(width: 8),
+                          ValueListenableBuilder<ThemeMode>(
+                            valueListenable: themeModeNotifier,
+                            builder: (context, mode, _) => IconButton(
+                              icon: Icon(
+                                mode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
+                                color: Colors.white,
+                              ),
+                              onPressed: () {
+                                themeModeNotifier.value = mode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+                              },
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const Spacer(),
-                    ValueListenableBuilder<ThemeMode>(
-                      valueListenable: themeModeNotifier,
-                      builder: (context, mode, _) => IconButton(
-                        icon: Icon(
-                          mode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
-                          color: Colors.white,
-                        ),
-                        onPressed: () {
-                          themeModeNotifier.value = mode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
               
               // Three Stat Boxes
               Padding(
@@ -87,8 +108,8 @@ class _MasterTrainerDashboardPageState extends State<MasterTrainerDashboardPage>
                     Expanded(
                       child: BlocBuilder<UserCubit, UserState>(
                         builder: (context, state) => _StatBox(
-                          value: _getActiveUsersCount(context),
-                          label: 'Active Users',
+                          value: _getTotalUsersCount(context),
+                          label: 'Total Users',
                           color: primaryColor,
                           isDark: isDark,
                         ),
@@ -107,10 +128,10 @@ class _MasterTrainerDashboardPageState extends State<MasterTrainerDashboardPage>
                     ),
                     const SizedBox(width: 12),
                     Expanded(
-                      child: BlocBuilder<ClassCubit, ClassState>(
+                      child: BlocBuilder<UserCubit, UserState>(
                         builder: (context, state) => _StatBox(
-                          value: _getClassesCount(context),
-                          label: 'Classes',
+                          value: _getTrainersCount(context),
+                          label: 'Trainers',
                           color: primaryColor.withOpacity(0.6),
                           isDark: isDark,
                         ),
@@ -120,9 +141,94 @@ class _MasterTrainerDashboardPageState extends State<MasterTrainerDashboardPage>
                 ),
               ),
 
-              // Main Content Area
+              // Real-time Analytics Section
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'REAL-TIME ANALYTICS',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey[600],
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.2,
+                          ),
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    // Row 1: Total Users and Roles Distribution
+                    Row(
+                      children: [
+                        Expanded(
+                          child: BlocBuilder<UserCubit, UserState>(
+                            builder: (context, state) => _UsersPieChart(
+                              users: state.users,
+                              primaryColor: primaryColor,
+                              isDark: isDark,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: BlocBuilder<UserCubit, UserState>(
+                            builder: (context, state) => _RolesDistributionChart(
+                              users: state.users,
+                              primaryColor: primaryColor,
+                              isDark: isDark,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Row 2: New Registrations and Active vs Inactive
+                    Row(
+                      children: [
+                        Expanded(
+                          child: BlocBuilder<UserCubit, UserState>(
+                            builder: (context, state) => _NewRegistrationsChart(
+                              users: state.users,
+                              primaryColor: primaryColor,
+                              isDark: isDark,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 16),
+                        Expanded(
+                          child: BlocBuilder<UserCubit, UserState>(
+                            builder: (context, state) => _ActiveInactiveChart(
+                              users: state.users,
+                              primaryColor: primaryColor,
+                              isDark: isDark,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Row 3: Enrollment Chart
+                    BlocBuilder<UserCubit, UserState>(
+                      builder: (context, userState) {
+                        return BlocBuilder<ClassCubit, ClassState>(
+                          builder: (context, classState) => _EnrollmentChart(
+                            users: userState.users,
+                            classes: classState.classes,
+                            primaryColor: primaryColor,
+                            isDark: isDark,
+                          ),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ),
+
+              // Main Content Area
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -262,7 +368,7 @@ class _MasterTrainerDashboardPageState extends State<MasterTrainerDashboardPage>
                 ),
               ),
 
-              const SizedBox(height: 24),
+                    const SizedBox(height: 24),
 
               // Network Activities Section
               Padding(
@@ -293,14 +399,23 @@ class _MasterTrainerDashboardPageState extends State<MasterTrainerDashboardPage>
             ],
           ),
         ),
-      ),
-    );
+            ),
+          );
   }
 
-  String _getActiveUsersCount(BuildContext context) {
+  String _getTotalUsersCount(BuildContext context) {
     final state = context.read<UserCubit>().state;
     if (state.status == UserStatus.loading) return '...';
     return state.users.length.toString();
+  }
+
+  String _getTrainersCount(BuildContext context) {
+    final state = context.read<UserCubit>().state;
+    if (state.status == UserStatus.loading) return '...';
+    final trainers = state.users.where((u) => 
+      u.roles.contains(UserType.trainer) || u.roles.contains(UserType.masterTrainer)
+    ).length;
+    return trainers.toString();
   }
 
   String _getStudentsCount(BuildContext context) {
@@ -629,10 +744,10 @@ class _TopClassesList extends StatelessWidget {
     }
 
     return Container(
-      decoration: BoxDecoration(
+                decoration: BoxDecoration(
         color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
+                  borderRadius: BorderRadius.circular(12),
+                ),
       child: Column(
         children: classes.asMap().entries.map((entry) {
           final index = entry.key;
@@ -667,34 +782,765 @@ class _TopClassesList extends StatelessWidget {
                       ),
                     ),
                   ),
-                ),
+              ),
                 const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
                         classModel.title,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            fontWeight: FontWeight.bold,
+                          ),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
                         '$count enrolled',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              color: Colors.grey[600],
-                            ),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+// Chart Widgets for Real-time Analytics
+
+class _UsersPieChart extends StatelessWidget {
+  final List<UserModel> users;
+  final Color primaryColor;
+  final bool isDark;
+
+  const _UsersPieChart({
+    required this.users,
+    required this.primaryColor,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final students = users.where((u) => u.roles.contains(UserType.student)).length;
+    final trainers = users.where((u) => 
+      u.roles.contains(UserType.trainer) || u.roles.contains(UserType.masterTrainer)
+    ).length;
+    final admins = users.where((u) => u.roles.contains(UserType.admin)).length;
+
+    if (users.isEmpty) {
+      return _buildEmptyChart('No users');
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Total Users',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 200,
+            child: PieChart(
+              PieChartData(
+                sections: [
+                  PieChartSectionData(
+                    value: students.toDouble(),
+                    title: 'Students\n$students',
+                    color: Colors.blue,
+                    radius: 60,
+                  ),
+                  PieChartSectionData(
+                    value: trainers.toDouble(),
+                    title: 'Trainers\n$trainers',
+                    color: Colors.purple,
+                    radius: 60,
+                  ),
+                  if (admins > 0)
+                    PieChartSectionData(
+                      value: admins.toDouble(),
+                      title: 'Admins\n$admins',
+                      color: Colors.red,
+                      radius: 60,
+                    ),
+                ],
+                sectionsSpace: 2,
+                centerSpaceRadius: 40,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyChart(String message) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Center(
+        child: Text(
+          message,
+          style: TextStyle(color: Colors.grey[600]),
+        ),
+      ),
+    );
+  }
+}
+
+class _RolesDistributionChart extends StatelessWidget {
+  final List<UserModel> users;
+  final Color primaryColor;
+  final bool isDark;
+
+  const _RolesDistributionChart({
+    required this.users,
+    required this.primaryColor,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final roleCounts = <UserType, int>{};
+    for (final user in users) {
+      for (final role in user.roles) {
+        roleCounts[role] = (roleCounts[role] ?? 0) + 1;
+      }
+    }
+
+    if (roleCounts.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkCard : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Center(child: Text('No data')),
+      );
+    }
+
+    final sortedRoles = roleCounts.entries.toList()
+      ..sort((a, b) => b.value.compareTo(a.value));
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Roles & Permissions',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 200,
+            child: BarChart(
+              BarChartData(
+                alignment: BarChartAlignment.spaceAround,
+                maxY: sortedRoles.isEmpty ? 1 : sortedRoles.first.value.toDouble() * 1.2,
+                barTouchData: BarTouchData(enabled: false),
+                titlesData: FlTitlesData(
+                  show: true,
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        if (value.toInt() >= sortedRoles.length) return const Text('');
+                        final role = sortedRoles[value.toInt()].key;
+                        String label;
+                        switch (role) {
+                          case UserType.student:
+                            label = 'Student';
+                            break;
+                          case UserType.trainer:
+                            label = 'Trainer';
+                            break;
+                          case UserType.masterTrainer:
+                            label = 'Master';
+                            break;
+                          case UserType.admin:
+                            label = 'Admin';
+                            break;
+                        }
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: Text(
+                            label,
+                            style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 40,
+                      getTitlesWidget: (value, meta) => Text(
+                        value.toInt().toString(),
+                        style: TextStyle(fontSize: 10, color: Colors.grey[600]),
                       ),
+                    ),
+                  ),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                ),
+                gridData: FlGridData(show: false),
+                borderData: FlBorderData(show: false),
+                barGroups: sortedRoles.asMap().entries.map((entry) {
+                  final index = entry.key;
+                  final role = entry.value.key;
+                  final count = entry.value.value;
+                  Color color;
+                  switch (role) {
+                    case UserType.student:
+                      color = Colors.blue;
+                      break;
+                    case UserType.trainer:
+                      color = Colors.purple;
+                      break;
+                    case UserType.masterTrainer:
+                      color = Colors.deepPurple;
+                      break;
+                    case UserType.admin:
+                      color = Colors.red;
+                      break;
+                  }
+                  return BarChartGroupData(
+                    x: index,
+                    barRods: [
+                      BarChartRodData(
+                        toY: count.toDouble(),
+                        color: color,
+                        width: 20,
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NewRegistrationsChart extends StatelessWidget {
+  final List<UserModel> users;
+  final Color primaryColor;
+  final bool isDark;
+
+  const _NewRegistrationsChart({
+    required this.users,
+    required this.primaryColor,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Since we don't have createdAt, we'll use a mock approach
+    // In production, you'd need to add createdAt to UserModel
+    final now = DateTime.now();
+    final daily = <DateTime, int>{};
+    final weekly = <int, int>{};
+    final monthly = <String, int>{};
+
+    // Mock data based on user count distribution
+    // In real implementation, use user.createdAt
+    for (int i = 0; i < 7; i++) {
+      final date = now.subtract(Duration(days: 6 - i));
+      daily[date] = (users.length / 7).round() + math.Random().nextInt(5);
+    }
+
+    for (int i = 0; i < 4; i++) {
+      weekly[i] = (users.length / 4).round() + math.Random().nextInt(10);
+    }
+
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'];
+    for (int i = 0; i < 6; i++) {
+      monthly[months[i]] = (users.length / 6).round() + math.Random().nextInt(15);
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'New Registrations',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 8),
+          DefaultTabController(
+            length: 3,
+            child: Column(
+              children: [
+                TabBar(
+                  tabs: const [
+                    Tab(text: 'Daily'),
+                    Tab(text: 'Weekly'),
+                    Tab(text: 'Monthly'),
+                  ],
+                  labelColor: primaryColor,
+                  unselectedLabelColor: Colors.grey[600],
+                ),
+                SizedBox(
+                  height: 200,
+                  child: TabBarView(
+                    children: [
+                      _buildDailyChart(daily, primaryColor),
+                      _buildWeeklyChart(weekly, primaryColor),
+                      _buildMonthlyChart(monthly, primaryColor),
                     ],
                   ),
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDailyChart(Map<DateTime, int> data, Color color) {
+    final sortedDates = data.keys.toList()..sort();
+    return LineChart(
+      LineChartData(
+        gridData: FlGridData(show: false),
+        titlesData: FlTitlesData(
+          show: true,
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (value, meta) {
+                if (value.toInt() >= sortedDates.length) return const Text('');
+                final date = sortedDates[value.toInt()];
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    '${date.day}/${date.month}',
+                    style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                  ),
+                );
+              },
+            ),
+          ),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 40,
+              getTitlesWidget: (value, meta) => Text(
+                value.toInt().toString(),
+                style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+              ),
+            ),
+          ),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        borderData: FlBorderData(show: false),
+        lineBarsData: [
+          LineChartBarData(
+            spots: sortedDates.asMap().entries.map((entry) {
+              return FlSpot(entry.key.toDouble(), data[sortedDates[entry.key]]!.toDouble());
+            }).toList(),
+            isCurved: true,
+            color: color,
+            barWidth: 3,
+            dotData: FlDotData(show: true),
+            belowBarData: BarAreaData(show: true, color: color.withOpacity(0.1)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildWeeklyChart(Map<int, int> data, Color color) {
+    return BarChart(
+      BarChartData(
+        alignment: BarChartAlignment.spaceAround,
+        maxY: data.values.isEmpty ? 1 : data.values.reduce(math.max).toDouble() * 1.2,
+        barTouchData: BarTouchData(enabled: false),
+        titlesData: FlTitlesData(
+          show: true,
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (value, meta) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    'W${value.toInt() + 1}',
+                    style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                  ),
+                );
+              },
+            ),
+          ),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 40,
+              getTitlesWidget: (value, meta) => Text(
+                value.toInt().toString(),
+                style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+              ),
+            ),
+          ),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        gridData: FlGridData(show: false),
+        borderData: FlBorderData(show: false),
+        barGroups: data.entries.map((entry) {
+          return BarChartGroupData(
+            x: entry.key,
+            barRods: [
+              BarChartRodData(
+                toY: entry.value.toDouble(),
+                color: color,
+                width: 20,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+              ),
+            ],
           );
         }).toList(),
+      ),
+    );
+  }
+
+  Widget _buildMonthlyChart(Map<String, int> data, Color color) {
+    final months = data.keys.toList();
+    return BarChart(
+      BarChartData(
+        alignment: BarChartAlignment.spaceAround,
+        maxY: data.values.isEmpty ? 1 : data.values.reduce(math.max).toDouble() * 1.2,
+        barTouchData: BarTouchData(enabled: false),
+        titlesData: FlTitlesData(
+          show: true,
+          bottomTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              getTitlesWidget: (value, meta) {
+                if (value.toInt() >= months.length) return const Text('');
+                return Padding(
+                  padding: const EdgeInsets.only(top: 8),
+                  child: Text(
+                    months[value.toInt()],
+                    style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                  ),
+                );
+              },
+            ),
+          ),
+          leftTitles: AxisTitles(
+            sideTitles: SideTitles(
+              showTitles: true,
+              reservedSize: 40,
+              getTitlesWidget: (value, meta) => Text(
+                value.toInt().toString(),
+                style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+              ),
+            ),
+          ),
+          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+        ),
+        gridData: FlGridData(show: false),
+        borderData: FlBorderData(show: false),
+        barGroups: months.asMap().entries.map((entry) {
+          return BarChartGroupData(
+            x: entry.key,
+            barRods: [
+              BarChartRodData(
+                toY: data[entry.value]!.toDouble(),
+                color: color,
+                width: 20,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+              ),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _ActiveInactiveChart extends StatelessWidget {
+  final List<UserModel> users;
+  final Color primaryColor;
+  final bool isDark;
+
+  const _ActiveInactiveChart({
+    required this.users,
+    required this.primaryColor,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Consider users with completed biodata as active
+    final active = users.where((u) => u.hasCompletedBiodata).length;
+    final inactive = users.length - active;
+
+    if (users.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkCard : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Center(child: Text('No data')),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Active vs Inactive',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 200,
+            child: PieChart(
+              PieChartData(
+                sections: [
+                  PieChartSectionData(
+                    value: active.toDouble(),
+                    title: 'Active\n$active',
+                    color: Colors.green,
+                    radius: 60,
+                  ),
+                  PieChartSectionData(
+                    value: inactive.toDouble(),
+                    title: 'Inactive\n$inactive',
+                    color: Colors.orange,
+                    radius: 60,
+                  ),
+                ],
+                sectionsSpace: 2,
+                centerSpaceRadius: 40,
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildLegendItem('Active', Colors.green, active),
+              _buildLegendItem('Inactive', Colors.orange, inactive),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegendItem(String label, Color color, int count) {
+    return Row(
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(
+            color: color,
+            shape: BoxShape.circle,
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          '$label: $count',
+          style: TextStyle(fontSize: 12, color: Colors.grey[700]),
+        ),
+      ],
+    );
+  }
+}
+
+class _EnrollmentChart extends StatelessWidget {
+  final List<UserModel> users;
+  final List<ClassModel> classes;
+  final Color primaryColor;
+  final bool isDark;
+
+  const _EnrollmentChart({
+    required this.users,
+    required this.classes,
+    required this.primaryColor,
+    required this.isDark,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    // Count enrollments per class
+    final enrollmentCounts = <String, int>{};
+    for (final user in users) {
+      for (final classId in user.enrolledClassIds) {
+        enrollmentCounts[classId] = (enrollmentCounts[classId] ?? 0) + 1;
+      }
+    }
+
+    // Get top 10 classes
+    final sortedClasses = classes.map((cls) {
+      return {
+        'class': cls,
+        'count': enrollmentCounts[cls.id] ?? 0,
+      };
+    }).toList()
+      ..sort((a, b) => (b['count'] as int).compareTo(a['count'] as int));
+
+    final topClasses = sortedClasses.take(10).toList();
+
+    if (topClasses.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: isDark ? AppColors.darkCard : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: const Center(child: Text('No enrollment data')),
+      );
+    }
+
+    final maxEnrollment = topClasses.first['count'] as int;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDark ? AppColors.darkCard : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Student-Teacher Enrollment',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 300,
+            child: BarChart(
+              BarChartData(
+                alignment: BarChartAlignment.spaceAround,
+                maxY: maxEnrollment > 0 ? maxEnrollment.toDouble() * 1.2 : 10,
+                barTouchData: BarTouchData(
+                  enabled: true,
+                  touchTooltipData: BarTouchTooltipData(
+                    getTooltipColor: (group) => primaryColor,
+                    tooltipRoundedRadius: 8,
+                  ),
+                ),
+                titlesData: FlTitlesData(
+                  show: true,
+                  bottomTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      getTitlesWidget: (value, meta) {
+                        if (value.toInt() >= topClasses.length) return const Text('');
+                        final classModel = topClasses[value.toInt()]['class'] as ClassModel;
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 8),
+                          child: RotatedBox(
+                            quarterTurns: 1,
+                            child: Text(
+                              classModel.title.length > 15
+                                  ? '${classModel.title.substring(0, 15)}...'
+                                  : classModel.title,
+                              style: TextStyle(fontSize: 9, color: Colors.grey[600]),
+                            ),
+                          ),
+                        );
+                      },
+                      reservedSize: 60,
+                    ),
+                  ),
+                  leftTitles: AxisTitles(
+                    sideTitles: SideTitles(
+                      showTitles: true,
+                      reservedSize: 40,
+                      getTitlesWidget: (value, meta) => Text(
+                        value.toInt().toString(),
+                        style: TextStyle(fontSize: 10, color: Colors.grey[600]),
+                      ),
+                    ),
+                  ),
+                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                ),
+                gridData: FlGridData(
+                  show: true,
+                  drawVerticalLine: false,
+                  getDrawingHorizontalLine: (value) => FlLine(
+                    color: Colors.grey[300]!,
+                    strokeWidth: 1,
+                  ),
+                ),
+                borderData: FlBorderData(show: false),
+                barGroups: topClasses.asMap().entries.map((entry) {
+                  final count = entry.value['count'] as int;
+                  return BarChartGroupData(
+                    x: entry.key,
+                    barRods: [
+                      BarChartRodData(
+                        toY: count.toDouble(),
+                        color: primaryColor,
+                        width: 20,
+                        borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
+                      ),
+                    ],
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

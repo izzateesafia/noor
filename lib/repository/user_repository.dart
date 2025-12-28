@@ -45,6 +45,10 @@ class UserRepository {
         'birthDate': data['birthDate'],
         'address': data['address'],
         'hasCompletedBiodata': data['hasCompletedBiodata'] ?? false,
+        'stripePaymentMethodId': data['stripePaymentMethodId'],
+        'latitude': data['latitude'],
+        'longitude': data['longitude'],
+        'locationName': data['locationName'],
       };
       
       print('UserRepository: Safe data prepared, creating UserModel...');
@@ -93,7 +97,7 @@ class UserRepository {
     List<UserType> roles = const [UserType.student],
     bool isPremium = false,
     DateTime? birthDate,
-    String? address,
+    Map<String, String>? address,
   }) async {
     final credential = await _auth.createUserWithEmailAndPassword(email: email, password: password);
     final uid = credential.user!.uid;
