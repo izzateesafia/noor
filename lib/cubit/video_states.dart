@@ -35,7 +35,7 @@ class VideoState extends Equatable {
       videos: videos ?? this.videos,
       categories: categories ?? this.categories,
       selectedCategory: selectedCategory ?? this.selectedCategory,
-      error: error ?? this.error,
+      error: error,
     );
   }
 

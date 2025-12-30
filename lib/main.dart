@@ -31,6 +31,7 @@ import 'deep_link_test_page.dart';
 import 'quran_reader_page.dart';
 import 'quran_search_page.dart';
 import 'videos_page.dart';
+import 'all_videos_page.dart';
 import 'mushaf_reader_page.dart';
 import 'pages/mushaf_selection_page.dart';
 import 'pages/pdf_mushaf_viewer_page.dart';
@@ -330,6 +331,7 @@ class MyApp extends StatelessWidget {
                 '/quran': (context) => const QuranReaderPage(),
                 '/quran_search': (context) => const QuranSearchPage(),
                 '/videos': (context) => const VideosPage(),
+                '/all_videos': (context) => const AllVideosPage(),
                 '/mushaf': (context) => const MushafReaderPage(),
                 '/mushaf_pdf_selection': (context) => const MushafSelectionPage(),
                 '/mushaf_pdf_viewer': (context) {

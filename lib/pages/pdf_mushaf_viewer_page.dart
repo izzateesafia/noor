@@ -235,6 +235,14 @@ class _PDFMushafViewerPageState extends State<PDFMushafViewerPage> {
               final page = int.tryParse(controller.text);
               if (page != null && page >= 1 && page <= _totalPages) {
                 _pdfViewerController.jumpToPage(page);
+                // Maintain zoom and scroll after explicit page jump
+                Future.delayed(const Duration(milliseconds: 300), () {
+                  _pdfViewerController.zoomLevel = 1.5;
+                  // Only use jumpTo when explicitly jumping to a page, not on natural page changes
+                  Future.delayed(const Duration(milliseconds: 100), () {
+                    _pdfViewerController.jumpTo(xOffset: 50.0, yOffset: 200.0);
+                  });
+                });
                 Navigator.pop(context);
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
@@ -411,11 +419,19 @@ class _PDFMushafViewerPageState extends State<PDFMushafViewerPage> {
             // Swipe right - go to previous page
             if (_currentPage > 1) {
               _pdfViewerController.previousPage();
+              // Maintain zoom after page change (don't use jumpTo as it may reset page)
+              Future.delayed(const Duration(milliseconds: 200), () {
+                _pdfViewerController.zoomLevel = 1.1;
+              });
             }
           } else {
             // Swipe left - go to next page
             if (_currentPage < _totalPages) {
               _pdfViewerController.nextPage();
+              // Maintain zoom after page change (don't use jumpTo as it may reset page)
+              Future.delayed(const Duration(milliseconds: 200), () {
+                _pdfViewerController.zoomLevel = 1.1;
+              });
             }
           }
         }
@@ -432,10 +448,23 @@ class _PDFMushafViewerPageState extends State<PDFMushafViewerPage> {
           setState(() {
             _totalPages = details.document.pages.count;
           });
+          
+          // Set zoom level and scroll to verse area after document loads
+          Future.delayed(const Duration(milliseconds: 500), () {
+            _pdfViewerController.zoomLevel = 1.1; // Zoom in to focus on verse area
+            // Scroll to verse area (yellow part) - centered on the text block
+            _pdfViewerController.jumpTo(xOffset: 50.0, yOffset: 200.0);
+          });
+          
           // Jump to saved bookmark page if available
           if (_savedBookmarkPage != null && _savedBookmarkPage! >= 1 && _savedBookmarkPage! <= _totalPages) {
-            Future.delayed(const Duration(milliseconds: 300), () {
+            Future.delayed(const Duration(milliseconds: 800), () {
               _pdfViewerController.jumpToPage(_savedBookmarkPage!);
+              // Reapply zoom and scroll after page jump
+              Future.delayed(const Duration(milliseconds: 300), () {
+                _pdfViewerController.zoomLevel = 1.1;
+                _pdfViewerController.jumpTo(xOffset: 20.0, yOffset: 200.0);
+              });
               setState(() {
                 _currentPage = _savedBookmarkPage!;
               });
@@ -448,6 +477,11 @@ class _PDFMushafViewerPageState extends State<PDFMushafViewerPage> {
             // Bookmark status is based on whether a bookmark exists for this mushaf,
             // not whether we're on the bookmarked page
             // _isBookmarked remains true if _savedBookmarkPage is not null
+          });
+          
+          // Reapply zoom when page changes (don't use jumpTo as it may reset page)
+          Future.delayed(const Duration(milliseconds: 200), () {
+            _pdfViewerController.zoomLevel = 1.1;
           });
         },
       ),
@@ -479,14 +513,26 @@ class _PDFMushafViewerPageState extends State<PDFMushafViewerPage> {
               IconButton(
                 icon: const Icon(Icons.arrow_back),
                 onPressed: _currentPage > 1
-                    ? () => _pdfViewerController.previousPage()
+                    ? () {
+                        _pdfViewerController.previousPage();
+                        // Maintain zoom after page change (don't use jumpTo as it may reset page)
+                        Future.delayed(const Duration(milliseconds: 200), () {
+                          _pdfViewerController.zoomLevel = 1.5;
+                        });
+                      }
                     : null,
                 tooltip: 'Previous Page',
               ),
               IconButton(
                 icon: const Icon(Icons.arrow_forward),
                 onPressed: _currentPage < _totalPages
-                    ? () => _pdfViewerController.nextPage()
+                    ? () {
+                        _pdfViewerController.nextPage();
+                        // Maintain zoom after page change (don't use jumpTo as it may reset page)
+                        Future.delayed(const Duration(milliseconds: 200), () {
+                          _pdfViewerController.zoomLevel = 1.5;
+                        });
+                      }
                     : null,
                 tooltip: 'Next Page',
               ),

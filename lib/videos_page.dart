@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -8,6 +9,7 @@ import 'models/video.dart';
 import 'theme_constants.dart';
 import 'cubit/user_cubit.dart';
 import 'cubit/user_states.dart';
+import 'all_videos_page.dart';
 
 class VideosPage extends StatelessWidget {
   const VideosPage({super.key});
@@ -26,6 +28,22 @@ class VideosPage extends StatelessWidget {
           title: const Text('Videos'),
           backgroundColor: AppColors.primary,
           foregroundColor: Colors.white,
+          actions: [
+            TextButton.icon(
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (context) => const AllVideosPage(),
+                  ),
+                );
+              },
+              icon: const Icon(Icons.grid_view, color: Colors.white),
+              label: const Text(
+                'All Videos',
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
+          ],
         ),
         body: BlocBuilder<VideoCubit, VideoState>(
           builder: (context, state) {
@@ -42,12 +60,27 @@ class VideosPage extends StatelessWidget {
                     const SizedBox(height: 16),
                     Text(
                       'Error loading videos',
-                      style: TextStyle(color: Colors.red[300]),
+                      style: TextStyle(color: Colors.red[300], fontSize: 18),
                     ),
-                    const SizedBox(height: 8),
-                    TextButton(
-                      onPressed: () => context.read<VideoCubit>().fetchVideos(),
-                      child: const Text('Retry'),
+                    if (state.error != null) ...[
+                      const SizedBox(height: 8),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 32),
+                        child: Text(
+                          state.error!,
+                          style: TextStyle(color: Colors.red[200], fontSize: 12),
+                          textAlign: TextAlign.center,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 16),
+                    ElevatedButton.icon(
+                      onPressed: () {
+                        context.read<VideoCubit>().fetchVideos();
+                        context.read<VideoCubit>().fetchCategories();
+                      },
+                      icon: const Icon(Icons.refresh),
+                      label: const Text('Retry'),
                     ),
                   ],
                 ),
@@ -62,15 +95,13 @@ class VideosPage extends StatelessWidget {
             return ListView(
               padding: const EdgeInsets.symmetric(vertical: 16),
               children: [
-                // Featured Section
-                _buildVideoSection(
+                // Featured Section - Large cards (1 per row)
+                _buildFeaturedSection(
                   context,
-                  title: 'Featured',
-                  icon: Icons.star,
                   videos: featuredVideos,
                   showPlaceholders: true,
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 32),
                 // Popular Section
                 _buildVideoSection(
                   context,
@@ -97,29 +128,84 @@ class VideosPage extends StatelessWidget {
     );
   }
 
-  // Get featured videos (first 5 videos or most recent)
+  // Get featured videos (videos marked as featured, not hidden)
   List<Video> _getFeaturedVideos(List<Video> allVideos) {
-    if (allVideos.isEmpty) return [];
-    return allVideos.take(5).toList();
-  }
-
-  // Get popular videos (sorted by views)
-  List<Video> _getPopularVideos(List<Video> allVideos) {
-    if (allVideos.isEmpty) return [];
-    final sorted = List<Video>.from(allVideos)
-      ..sort((a, b) => (b.views ?? 0).compareTo(a.views ?? 0));
-    return sorted.take(5).toList();
-  }
-
-  // Get "For You" videos (random or remaining videos)
-  List<Video> _getForYouVideos(List<Video> allVideos) {
-    if (allVideos.isEmpty) return [];
-    final featuredIds = _getFeaturedVideos(allVideos).map((v) => v.id).toSet();
-    final popularIds = _getPopularVideos(allVideos).map((v) => v.id).toSet();
-    final forYou = allVideos
-        .where((v) => !featuredIds.contains(v.id) && !popularIds.contains(v.id))
+    return allVideos
+        .where((v) => v.isFeatured && !v.isHidden)
+        .take(5)
         .toList();
-    return forYou.take(5).toList();
+  }
+
+  // Get popular videos (videos marked as popular, not hidden, sorted by views)
+  List<Video> _getPopularVideos(List<Video> allVideos) {
+    final popular = allVideos
+        .where((v) => v.isPopular && !v.isHidden)
+        .toList();
+    popular.sort((a, b) => (b.views ?? 0).compareTo(a.views ?? 0));
+    return popular.take(5).toList();
+  }
+
+  // Get "For You" videos (videos marked as for you, not hidden)
+  List<Video> _getForYouVideos(List<Video> allVideos) {
+    return allVideos
+        .where((v) => v.isForYou && !v.isHidden)
+        .take(5)
+        .toList();
+  }
+
+  Widget _buildFeaturedSection(
+    BuildContext context, {
+    required List<Video> videos,
+    required bool showPlaceholders,
+  }) {
+    final hasVideos = videos.isNotEmpty;
+    final displayVideos = hasVideos 
+        ? videos 
+        : (showPlaceholders ? _getPlaceholderVideos(5) : <Video>[]);
+
+    if (displayVideos.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Section Header
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withOpacity(0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.star, color: AppColors.primary, size: 24),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                'Featured',
+                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 22,
+                    ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 16),
+        // Auto-scrolling banner with PageView
+        SizedBox(
+          height: 280, // Height for the large featured cards
+          child: _AutoScrollFeaturedBanner(
+            videos: displayVideos,
+            hasVideos: hasVideos,
+            showPlaceholders: showPlaceholders,
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildVideoSection(
@@ -168,7 +254,7 @@ class VideosPage extends StatelessWidget {
                   width: 160,
                   child: isPlaceholder
                       ? _PlaceholderVideoCard()
-                      : _VideoCard(video: video, isHorizontal: true),
+                      : VideoCard(video: video, isHorizontal: true),
                 ),
               );
             },
@@ -193,11 +279,125 @@ class VideosPage extends StatelessWidget {
   }
 }
 
-class _VideoCard extends StatelessWidget {
+// Auto-scrolling featured banner
+class _AutoScrollFeaturedBanner extends StatefulWidget {
+  final List<Video> videos;
+  final bool hasVideos;
+  final bool showPlaceholders;
+
+  const _AutoScrollFeaturedBanner({
+    required this.videos,
+    required this.hasVideos,
+    required this.showPlaceholders,
+  });
+
+  @override
+  State<_AutoScrollFeaturedBanner> createState() => _AutoScrollFeaturedBannerState();
+}
+
+class _AutoScrollFeaturedBannerState extends State<_AutoScrollFeaturedBanner> {
+  late PageController _pageController;
+  int _currentPage = 0;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _pageController = PageController(initialPage: 0);
+    _startAutoScroll();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  void _startAutoScroll() {
+    if (widget.videos.isEmpty) return;
+    
+    _timer = Timer.periodic(const Duration(seconds: 3), (timer) {
+      if (_pageController.hasClients) {
+        if (_currentPage < widget.videos.length - 1) {
+          _currentPage++;
+        } else {
+          _currentPage = 0;
+        }
+        _pageController.animateToPage(
+          _currentPage,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (widget.videos.isEmpty) {
+      return const SizedBox.shrink();
+    }
+
+    return Stack(
+      children: [
+        PageView.builder(
+          controller: _pageController,
+          onPageChanged: (index) {
+            setState(() {
+              _currentPage = index;
+            });
+          },
+          itemCount: widget.videos.length,
+          itemBuilder: (context, index) {
+            final video = widget.videos[index];
+            final isPlaceholder = !widget.hasVideos && widget.showPlaceholders;
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: SizedBox(
+                width: MediaQuery.of(context).size.width - 32,
+                child: isPlaceholder
+                    ? _PlaceholderFeaturedCard()
+                    : _FeaturedVideoCard(video: video),
+              ),
+            );
+          },
+        ),
+        // Page indicators
+        if (widget.videos.length > 1)
+          Positioned(
+            bottom: 16,
+            left: 0,
+            right: 0,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: List.generate(
+                widget.videos.length,
+                (index) => Container(
+                  width: 8,
+                  height: 8,
+                  margin: const EdgeInsets.symmetric(horizontal: 4),
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: _currentPage == index
+                        ? Colors.white
+                        : Colors.white.withOpacity(0.4),
+                  ),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+// Make VideoCard accessible from other files
+class VideoCard extends StatelessWidget {
   final Video video;
   final bool isHorizontal;
 
-  const _VideoCard({required this.video, this.isHorizontal = false});
+  const VideoCard({required this.video, this.isHorizontal = false, super.key});
 
   String _formatDuration(Duration? duration) {
     if (duration == null) return '';
@@ -573,6 +773,269 @@ class _VideoCard extends StatelessWidget {
         Icons.video_library,
         color: Colors.grey[600],
         size: 48,
+      ),
+    );
+  }
+}
+
+// Featured video card - large size (1 per row)
+class _FeaturedVideoCard extends StatelessWidget {
+  final Video video;
+
+  const _FeaturedVideoCard({required this.video});
+
+  String _formatDuration(Duration? duration) {
+    if (duration == null) return '';
+    final minutes = duration.inMinutes;
+    final seconds = duration.inSeconds % 60;
+    return '${minutes.toString().padLeft(2, '0')}:${seconds.toString().padLeft(2, '0')}';
+  }
+
+  String _formatViews(int? views) {
+    if (views == null) return '';
+    if (views >= 1000000) {
+      return '${(views / 1000000).toStringAsFixed(1)}M';
+    } else if (views >= 1000) {
+      return '${(views / 1000).toStringAsFixed(1)}K';
+    }
+    return views.toString();
+  }
+
+  Future<void> _playVideo(BuildContext context) async {
+    final userState = context.read<UserCubit>().state;
+    final isPremium = userState.currentUser?.isPremium ?? false;
+
+    if (video.isPremium && !isPremium) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('This video is available for premium users only'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
+
+    if (video.videoUrl.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Video URL not available')),
+      );
+      return;
+    }
+
+    try {
+      final Uri url = Uri.parse(video.videoUrl);
+      if (await canLaunchUrl(url)) {
+        await launchUrl(url, mode: LaunchMode.externalApplication);
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Cannot open video')),
+        );
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error opening video: $e')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => _playVideo(context),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: Stack(
+            children: [
+              // Thumbnail
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: video.thumbnailUrl.isNotEmpty
+                    ? Image.network(
+                        video.thumbnailUrl,
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return _buildPlaceholderThumbnail();
+                        },
+                        loadingBuilder: (context, child, loadingProgress) {
+                          if (loadingProgress == null) return child;
+                          return Center(
+                            child: CircularProgressIndicator(
+                              value: loadingProgress.expectedTotalBytes != null
+                                  ? loadingProgress.cumulativeBytesLoaded /
+                                      loadingProgress.expectedTotalBytes!
+                                  : null,
+                            ),
+                          );
+                        },
+                      )
+                    : _buildPlaceholderThumbnail(),
+              ),
+              // Gradient overlay
+              Positioned.fill(
+                child: Container(
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      begin: Alignment.topCenter,
+                      end: Alignment.bottomCenter,
+                      colors: [
+                        Colors.transparent,
+                        Colors.black.withOpacity(0.7),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              // Play button overlay
+              Center(
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.95),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        blurRadius: 8,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: Icon(
+                    Icons.play_arrow,
+                    color: AppColors.primary,
+                    size: 48,
+                  ),
+                ),
+              ),
+              // Video info overlay
+              Positioned(
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: Container(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // Premium badge
+                      if (video.isPremium)
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.amber,
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: const Text(
+                            'PREMIUM',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      if (video.isPremium) const SizedBox(height: 8),
+                      // Title
+                      Text(
+                        video.title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 8),
+                      // Meta info
+                      Row(
+                        children: [
+                          if (video.duration != null) ...[
+                            Icon(
+                              Icons.access_time,
+                              size: 14,
+                              color: Colors.white.withOpacity(0.9),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _formatDuration(video.duration),
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 13,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                          ],
+                          if (video.views != null) ...[
+                            Icon(
+                              Icons.visibility,
+                              size: 14,
+                              color: Colors.white.withOpacity(0.9),
+                            ),
+                            const SizedBox(width: 4),
+                            Text(
+                              _formatViews(video.views),
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 13,
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPlaceholderThumbnail() {
+    return Container(
+      color: Colors.grey[300],
+      child: Icon(
+        Icons.video_library,
+        color: Colors.grey[600],
+        size: 64,
+      ),
+    );
+  }
+}
+
+// Placeholder for featured card
+class _PlaceholderFeaturedCard extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 200,
+      decoration: BoxDecoration(
+        color: Colors.grey[300],
+        borderRadius: BorderRadius.circular(16),
+      ),
+      child: Center(
+        child: Icon(
+          Icons.video_library_outlined,
+          color: Colors.grey[500],
+          size: 64,
+        ),
       ),
     );
   }

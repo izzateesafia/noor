@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 import '../models/news.dart';
 import '../theme_constants.dart';
 import '../cubit/news_cubit.dart';
@@ -37,6 +36,78 @@ class _ManageNewsPageState extends State<ManageNewsPage> {
     );
     // Refresh news list after returning from form
     context.read<NewsCubit>().fetchNews();
+  }
+
+  void _duplicateNews(News news) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: Theme.of(context).dialogBackgroundColor,
+        title: Text(
+          'Salin Berita',
+          style: TextStyle(color: Theme.of(context).textTheme.titleLarge?.color),
+        ),
+        content: Text(
+          'Adakah anda pasti mahu menyalin "${news.title}"?',
+          style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: Text(
+              'Batal',
+              style: TextStyle(color: Theme.of(context).colorScheme.primary),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+            child: const Text('Salin'),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirm == true) {
+      // Create a duplicate news item with a new ID
+      final duplicatedNews = News(
+        title: '${news.title} (Copy)',
+        description: news.description,
+        image: news.image,
+        link: news.link,
+        isActive: news.isActive,
+        order: news.order,
+      );
+      
+      try {
+        context.read<NewsCubit>().addNews(duplicatedNews);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Berita "${news.title}" telah disalin'),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Ralat menyalin berita: $e'),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
+        }
+      }
+    }
   }
 
   void _deleteNews(News news) async {
@@ -185,32 +256,15 @@ class _ManageNewsPageState extends State<ManageNewsPage> {
       itemCount: state.news.length,
       itemBuilder: (context, index) {
         final news = state.news[index];
-        return Slidable(
+        return Card(
           key: ValueKey(news.id),
-          endActionPane: ActionPane(
-            motion: const DrawerMotion(),
-            children: [
-              SlidableAction(
-                onPressed: (context) => _addOrEditNews(news: news),
-                backgroundColor: Colors.orange,
-                foregroundColor: Colors.white,
-                icon: Icons.edit,
-                label: 'Edit',
-              ),
-              SlidableAction(
-                onPressed: (context) => _deleteNews(news),
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-                icon: Icons.delete,
-                label: 'Padam',
-              ),
-            ],
-          ),
-          child: Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            color: Theme.of(context).cardColor,
-            margin: const EdgeInsets.only(bottom: 18),
+          elevation: 2,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          color: Theme.of(context).cardColor,
+          margin: const EdgeInsets.only(bottom: 18),
+          child: InkWell(
+            onTap: () => _addOrEditNews(news: news),
+            borderRadius: BorderRadius.circular(16),
             child: ListTile(
               contentPadding: const EdgeInsets.all(16),
               leading: news.image != null && news.image!.isNotEmpty
@@ -249,6 +303,57 @@ class _ManageNewsPageState extends State<ManageNewsPage> {
                           ),
                     )
                   : null,
+              trailing: PopupMenuButton<String>(
+                icon: Icon(
+                  Icons.more_vert,
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                ),
+                onSelected: (value) {
+                  switch (value) {
+                    case 'edit':
+                      _addOrEditNews(news: news);
+                      break;
+                    case 'duplicate':
+                      _duplicateNews(news);
+                      break;
+                    case 'delete':
+                      _deleteNews(news);
+                      break;
+                  }
+                },
+                itemBuilder: (context) => [
+                  PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit, color: Colors.orange, size: 20),
+                        const SizedBox(width: 12),
+                        const Text('Edit'),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'duplicate',
+                    child: Row(
+                      children: [
+                        Icon(Icons.copy, color: Colors.blue, size: 20),
+                        const SizedBox(width: 12),
+                        const Text('Duplicate'),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete, color: Colors.red, size: 20),
+                        const SizedBox(width: 12),
+                        const Text('Padam'),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme_constants.dart';
+import 'user_profile_page.dart';
 
 class MenuPage extends StatelessWidget {
   const MenuPage({super.key});
@@ -96,6 +97,21 @@ class MenuPage extends StatelessWidget {
             label: 'Premium',
             description: 'Upgrade ke versi premium',
             onTap: () => Navigator.of(context).pushNamed('/premium'),
+          ),
+        ],
+      ),
+      MenuSection(
+        title: 'Akaun',
+        items: [
+          MenuItem(
+            icon: Icons.person,
+            label: 'Profil',
+            description: 'Lihat dan edit profil anda',
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const UserProfilePage()),
+              );
+            },
           ),
         ],
       ),

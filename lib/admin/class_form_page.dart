@@ -6,6 +6,7 @@ import '../models/class_model.dart';
 import '../theme_constants.dart';
 import '../cubit/class_cubit.dart';
 import '../cubit/class_states.dart';
+import '../services/image_upload_service.dart';
 import 'manage_classes_page.dart';
 
 class ClassFormPage extends StatefulWidget {
@@ -37,6 +38,9 @@ class _ClassFormPageState extends State<ClassFormPage> {
   // Image picker fields
   File? _pickedImage;
   final ImagePicker _picker = ImagePicker();
+  final ImageUploadService _imageUploadService = ImageUploadService();
+  String? _uploadedImageUrl; // Store the Firebase Storage URL
+  bool _isUploadingImage = false;
 
   @override
   void initState() {
@@ -65,6 +69,15 @@ class _ClassFormPageState extends State<ClassFormPage> {
         selectedLevel = c.level;
       } else {
         selectedLevel = levelChoices.first;
+      }
+      // Set uploaded image URL if it's a Firebase Storage URL
+      if (c.image != null && c.image!.isNotEmpty) {
+        if (c.image!.startsWith('http://') || c.image!.startsWith('https://')) {
+          _uploadedImageUrl = c.image;
+        } else {
+          // Old local path, keep it for backward compatibility
+          imageController.text = c.image!;
+        }
       }
     } else {
       selectedLevel = levelChoices.first;
@@ -157,36 +170,99 @@ class _ClassFormPageState extends State<ClassFormPage> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    final pickedFile = await _picker.pickImage(source: source, imageQuality: 80);
-    if (pickedFile != null) {
+    try {
+      final pickedFile = await _picker.pickImage(source: source, imageQuality: 80);
+      if (pickedFile == null) return;
+
       setState(() {
         _pickedImage = File(pickedFile.path);
-        imageController.text = pickedFile.path;
+        _isUploadingImage = true;
       });
+
+      // Upload to Firebase Storage
+      final existingUrl = widget.initialClass?.image;
+      final imageUrl = await _imageUploadService.uploadClassThumbnail(
+        _pickedImage!,
+        existingUrl: existingUrl,
+      );
+
+      setState(() {
+        _uploadedImageUrl = imageUrl;
+        imageController.text = imageUrl; // Store the Firebase Storage URL
+        _isUploadingImage = false;
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Image uploaded successfully'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      setState(() {
+        _isUploadingImage = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to upload image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
   void _save() async {
+    // Validate required fields
+    if (titleController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a class title'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (instructorController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter an instructor name'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
     final timeStr = selectedTime != null ? selectedTime!.format(context) : '';
     final daysStr = selectedDays.join(',');
     final timeField = daysStr.isNotEmpty ? '$daysStr $timeStr' : timeStr;
+    // Use uploaded Firebase Storage URL if available, otherwise use the controller value
+    final imageUrl = _uploadedImageUrl ?? imageController.text.trim();
+    
     final newClass = ClassModel(
       id: widget.initialClass?.id ?? DateTime.now().millisecondsSinceEpoch.toString(),
-      title: titleController.text,
-      instructor: instructorController.text,
+      title: titleController.text.trim(),
+      instructor: instructorController.text.trim(),
       price: double.tryParse(priceController.text) ?? 0.0,
       time: timeField,
       duration: '$durationMinutes min',
       level: selectedLevel ?? levelController.text,
-      description: descriptionController.text,
-      image: imageController.text,
+      description: descriptionController.text.trim(),
+      image: imageUrl.isNotEmpty ? imageUrl : null,
     );
+    
     if (widget.initialClass == null) {
+      // Adding new class
       setState(() { isSubmitting = true; });
       context.read<ClassCubit>().addClass(newClass);
     } else {
-      widget.onSave?.call(newClass);
-      Navigator.of(context).pop();
+      // Editing existing class
+      setState(() { isSubmitting = true; });
+      context.read<ClassCubit>().updateClass(newClass);
     }
   }
 
@@ -198,16 +274,28 @@ class _ClassFormPageState extends State<ClassFormPage> {
         if (isSubmitting) {
           if (state.status == ClassStatus.loaded) {
             setState(() { isSubmitting = false; });
+            final isEdit = widget.initialClass != null;
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Class successfully added!')),
+              SnackBar(
+                content: Text(isEdit 
+                  ? 'Class successfully updated!' 
+                  : 'Class successfully added!'),
+                backgroundColor: Colors.green,
+              ),
             );
             await Future.delayed(const Duration(milliseconds: 500));
             context.read<ClassCubit>().fetchClasses();
             Navigator.of(context).pop();
           } else if (state.status == ClassStatus.error) {
             setState(() { isSubmitting = false; });
+            final isEdit = widget.initialClass != null;
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Failed to add class: ${state.error ?? 'Unknown error'}')),
+              SnackBar(
+                content: Text(isEdit
+                  ? 'Failed to update class: ${state.error ?? 'Unknown error'}'
+                  : 'Failed to add class: ${state.error ?? 'Unknown error'}'),
+                backgroundColor: Colors.red,
+              ),
             );
           }
         }
@@ -547,7 +635,14 @@ class _ClassFormPageState extends State<ClassFormPage> {
                       ],
                     ),
                     const SizedBox(height: 12),
-                    if (_pickedImage != null)
+                    if (_isUploadingImage)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    else if (_pickedImage != null)
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.file(
@@ -557,7 +652,43 @@ class _ClassFormPageState extends State<ClassFormPage> {
                           fit: BoxFit.cover,
                         ),
                       )
-                    else if (imageController.text.isNotEmpty)
+                    else if (_uploadedImageUrl != null && _uploadedImageUrl!.isNotEmpty)
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          _uploadedImageUrl!,
+                          width: 120,
+                          height: 120,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: 120,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(Icons.broken_image),
+                            );
+                          },
+                          loadingBuilder: (context, child, loadingProgress) {
+                            if (loadingProgress == null) return child;
+                            return Container(
+                              width: 120,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[200],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          },
+                        ),
+                      )
+                    else if (imageController.text.isNotEmpty && 
+                             !imageController.text.startsWith('http'))
                       ClipRRect(
                         borderRadius: BorderRadius.circular(8),
                         child: Image.file(
@@ -565,6 +696,17 @@ class _ClassFormPageState extends State<ClassFormPage> {
                           width: 120,
                           height: 120,
                           fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: 120,
+                              height: 120,
+                              decoration: BoxDecoration(
+                                color: Colors.grey[300],
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: const Icon(Icons.broken_image),
+                            );
+                          },
                         ),
                       ),
                     const SizedBox(height: 32),

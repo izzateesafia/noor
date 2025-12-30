@@ -217,39 +217,84 @@ class _ManageClassesPageState extends State<ManageClassesPage> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 color: Theme.of(context).cardColor,
                 margin: const EdgeInsets.only(bottom: 18),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(16),
-                  leading: classModel.image != null && classModel.image!.isNotEmpty
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.asset(
-                            classModel.image!,
-                            width: 60,
-                            height: 60,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                width: 60,
-                                height: 60,
-                                decoration: BoxDecoration(
-                                  color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                                  borderRadius: BorderRadius.circular(8),
-                                ),
-                                child: Icon(Icons.class_, color: Theme.of(context).colorScheme.primary, size: 30),
-                              );
-                            },
-                          ),
-                        )
-                      : Icon(Icons.class_, color: Theme.of(context).colorScheme.primary, size: 40),
-                  title: Text(
-                    classModel.title,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  subtitle: Text(
-                    'Instructor: ${classModel.instructor}\nPrice: RM ${classModel.price.toStringAsFixed(2)}',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.8),
-                      fontSize: 13,
+                child: InkWell(
+                  onTap: () => _addOrEditClass(classModel: classModel),
+                  borderRadius: BorderRadius.circular(16),
+                  child: ListTile(
+                    contentPadding: const EdgeInsets.all(16),
+                    leading: classModel.image != null && classModel.image!.isNotEmpty
+                        ? ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: classModel.image!.startsWith('http://') || classModel.image!.startsWith('https://')
+                                ? Image.network(
+                                    classModel.image!,
+                                    width: 60,
+                                    height: 60,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        width: 60,
+                                        height: 60,
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Icon(Icons.class_, color: Theme.of(context).colorScheme.primary, size: 30),
+                                      );
+                                    },
+                                    loadingBuilder: (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return Container(
+                                        width: 60,
+                                        height: 60,
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Center(
+                                          child: CircularProgressIndicator(
+                                            value: loadingProgress.expectedTotalBytes != null
+                                                ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                                : null,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : Image.asset(
+                                    classModel.image!,
+                                    width: 60,
+                                    height: 60,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        width: 60,
+                                        height: 60,
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(8),
+                                        ),
+                                        child: Icon(Icons.class_, color: Theme.of(context).colorScheme.primary, size: 30),
+                                      );
+                                    },
+                                  ),
+                          )
+                        : Icon(Icons.class_, color: Theme.of(context).colorScheme.primary, size: 40),
+                    title: Text(
+                      classModel.title,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, fontSize: 16),
+                    ),
+                    subtitle: Text(
+                      'Instructor: ${classModel.instructor}\nPrice: RM ${classModel.price.toStringAsFixed(2)}',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.8),
+                        fontSize: 13,
+                      ),
+                    ),
+                    trailing: Icon(
+                      Icons.edit,
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                      size: 20,
                     ),
                   ),
                 ),

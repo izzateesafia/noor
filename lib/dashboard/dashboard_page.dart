@@ -36,6 +36,12 @@ import '../widgets/daily_verse_widget.dart';
 import 'terkini_news_feed.dart';
 import '../services/location_service.dart';
 import 'package:geolocator/geolocator.dart';
+import '../cubit/video_cubit.dart';
+import '../cubit/video_states.dart';
+import '../repository/video_repository.dart';
+import '../models/video.dart';
+import '../videos_page.dart';
+import '../user_profile_page.dart';
 
 class DashboardPage extends StatefulWidget {
   const DashboardPage({super.key});
@@ -209,6 +215,61 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
     }
   }
 
+  Widget _buildFeaturedVideosSection(BuildContext context, List<Video> videos) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: AppColors.primary.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(Icons.star, color: AppColors.primary, size: 24),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    'Featured Videos',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        SizedBox(
+          height: 220,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            itemCount: videos.length,
+            itemBuilder: (context, index) {
+              final video = videos[index];
+              return Padding(
+                padding: const EdgeInsets.only(right: 12),
+                child: SizedBox(
+                  width: 160,
+                  child: VideoCard(video: video, isHorizontal: true),
+                ),
+              );
+            },
+          ),
+        ),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
   Widget _buildHijriDateDisplay() {
     return BlocBuilder<PrayerTimesCubit, PrayerTimesState>(
       builder: (context, state) {
@@ -300,6 +361,9 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
             ),
             BlocProvider<NewsCubit>.value(
               value: context.read<NewsCubit>(),
+            ),
+            BlocProvider<VideoCubit>(
+              create: (context) => VideoCubit(VideoRepository())..fetchVideos(),
             ),
           ],
           child: BlocConsumer<UserCubit, UserState>(
@@ -616,6 +680,25 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
                             _buildHijriDateDisplay(),
                             PrayerTimesCard(),
                             const DailyVerseWidget(),
+                            // Featured Videos Section
+                            BlocBuilder<VideoCubit, VideoState>(
+                              builder: (context, videoState) {
+                                if (videoState.status == VideoStatus.loading) {
+                                  return const SizedBox.shrink();
+                                }
+                                
+                                final featuredVideos = videoState.videos
+                                    .where((v) => v.isFeatured && !v.isHidden)
+                                    .take(10)
+                                    .toList();
+                                
+                                if (featuredVideos.isEmpty) {
+                                  return const SizedBox.shrink();
+                                }
+                                
+                                return _buildFeaturedVideosSection(context, featuredVideos);
+                              },
+                            ),
                             BlocBuilder<NewsCubit, NewsState>(
                               builder: (context, newsState) {
                                 // Debug logging
@@ -669,10 +752,65 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
                         ),
                         ),
                       ),
-                      // Admin button - only visible for admin users
+                      // Floating Profile Icon - top right
+                      Positioned(
+                        top: 8,
+                        right: 16,
+                        child: GestureDetector(
+                          onTap: () {
+                            Navigator.of(context).push(
+                              MaterialPageRoute(builder: (_) => const UserProfilePage()),
+                            );
+                          },
+                          child: Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(
+                                color: Colors.white,
+                                width: 2,
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.2),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: ClipOval(
+                              child: user.profileImage != null && user.profileImage!.isNotEmpty
+                                  ? Image.network(
+                                      user.profileImage!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return Container(
+                                          color: Theme.of(context).colorScheme.primary,
+                                          child: const Icon(
+                                            Icons.person,
+                                            color: Colors.white,
+                                            size: 24,
+                                          ),
+                                        );
+                                      },
+                                    )
+                                  : Container(
+                                      color: Theme.of(context).colorScheme.primary,
+                                      child: const Icon(
+                                        Icons.person,
+                                        color: Colors.white,
+                                        size: 24,
+                                      ),
+                                    ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Admin button - only visible for admin users (below profile icon)
                       if (user.roles.contains(UserType.admin))
                         Positioned(
-                          top: 8,
+                          top: 56,
                           right: 16,
                           child: ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(

@@ -157,70 +157,23 @@ class _MasterTrainerDashboardPageState extends State<MasterTrainerDashboardPage>
                     ),
                     const SizedBox(height: 16),
                     
-                    // Row 1: Total Users and Roles Distribution
-                    Row(
-                      children: [
-                        Expanded(
-                          child: BlocBuilder<UserCubit, UserState>(
-                            builder: (context, state) => _UsersPieChart(
-                              users: state.users,
-                              primaryColor: primaryColor,
-                              isDark: isDark,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: BlocBuilder<UserCubit, UserState>(
-                            builder: (context, state) => _RolesDistributionChart(
-                              users: state.users,
-                              primaryColor: primaryColor,
-                              isDark: isDark,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    
-                    // Row 2: New Registrations and Active vs Inactive
-                    Row(
-                      children: [
-                        Expanded(
-                          child: BlocBuilder<UserCubit, UserState>(
-                            builder: (context, state) => _NewRegistrationsChart(
-                              users: state.users,
-                              primaryColor: primaryColor,
-                              isDark: isDark,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 16),
-                        Expanded(
-                          child: BlocBuilder<UserCubit, UserState>(
-                            builder: (context, state) => _ActiveInactiveChart(
-                              users: state.users,
-                              primaryColor: primaryColor,
-                              isDark: isDark,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                    
-                    // Row 3: Enrollment Chart
+                    // New Registrations Chart
                     BlocBuilder<UserCubit, UserState>(
-                      builder: (context, userState) {
-                        return BlocBuilder<ClassCubit, ClassState>(
-                          builder: (context, classState) => _EnrollmentChart(
-                            users: userState.users,
-                            classes: classState.classes,
-                            primaryColor: primaryColor,
-                            isDark: isDark,
-                          ),
-                        );
-                      },
+                      builder: (context, state) => _NewRegistrationsChart(
+                        users: state.users,
+                        primaryColor: primaryColor,
+                        isDark: isDark,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Active vs Inactive Statistics
+                    BlocBuilder<UserCubit, UserState>(
+                      builder: (context, state) => _ActiveInactiveStats(
+                        users: state.users,
+                        primaryColor: primaryColor,
+                        isDark: isDark,
+                      ),
                     ),
                   ],
                 ),
@@ -817,242 +770,6 @@ class _TopClassesList extends StatelessWidget {
 
 // Chart Widgets for Real-time Analytics
 
-class _UsersPieChart extends StatelessWidget {
-  final List<UserModel> users;
-  final Color primaryColor;
-  final bool isDark;
-
-  const _UsersPieChart({
-    required this.users,
-    required this.primaryColor,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final students = users.where((u) => u.roles.contains(UserType.student)).length;
-    final trainers = users.where((u) => 
-      u.roles.contains(UserType.trainer) || u.roles.contains(UserType.masterTrainer)
-    ).length;
-    final admins = users.where((u) => u.roles.contains(UserType.admin)).length;
-
-    if (users.isEmpty) {
-      return _buildEmptyChart('No users');
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Total Users',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 200,
-            child: PieChart(
-              PieChartData(
-                sections: [
-                  PieChartSectionData(
-                    value: students.toDouble(),
-                    title: 'Students\n$students',
-                    color: Colors.blue,
-                    radius: 60,
-                  ),
-                  PieChartSectionData(
-                    value: trainers.toDouble(),
-                    title: 'Trainers\n$trainers',
-                    color: Colors.purple,
-                    radius: 60,
-                  ),
-                  if (admins > 0)
-                    PieChartSectionData(
-                      value: admins.toDouble(),
-                      title: 'Admins\n$admins',
-                      color: Colors.red,
-                      radius: 60,
-                    ),
-                ],
-                sectionsSpace: 2,
-                centerSpaceRadius: 40,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyChart(String message) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Center(
-        child: Text(
-          message,
-          style: TextStyle(color: Colors.grey[600]),
-        ),
-      ),
-    );
-  }
-}
-
-class _RolesDistributionChart extends StatelessWidget {
-  final List<UserModel> users;
-  final Color primaryColor;
-  final bool isDark;
-
-  const _RolesDistributionChart({
-    required this.users,
-    required this.primaryColor,
-    required this.isDark,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final roleCounts = <UserType, int>{};
-    for (final user in users) {
-      for (final role in user.roles) {
-        roleCounts[role] = (roleCounts[role] ?? 0) + 1;
-      }
-    }
-
-    if (roleCounts.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isDark ? AppColors.darkCard : Colors.white,
-          borderRadius: BorderRadius.circular(12),
-        ),
-        child: const Center(child: Text('No data')),
-      );
-    }
-
-    final sortedRoles = roleCounts.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            'Roles & Permissions',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 200,
-            child: BarChart(
-              BarChartData(
-                alignment: BarChartAlignment.spaceAround,
-                maxY: sortedRoles.isEmpty ? 1 : sortedRoles.first.value.toDouble() * 1.2,
-                barTouchData: BarTouchData(enabled: false),
-                titlesData: FlTitlesData(
-                  show: true,
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        if (value.toInt() >= sortedRoles.length) return const Text('');
-                        final role = sortedRoles[value.toInt()].key;
-                        String label;
-                        switch (role) {
-                          case UserType.student:
-                            label = 'Student';
-                            break;
-                          case UserType.trainer:
-                            label = 'Trainer';
-                            break;
-                          case UserType.masterTrainer:
-                            label = 'Master';
-                            break;
-                          case UserType.admin:
-                            label = 'Admin';
-                            break;
-                        }
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            label,
-                            style: TextStyle(fontSize: 10, color: Colors.grey[600]),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 40,
-                      getTitlesWidget: (value, meta) => Text(
-                        value.toInt().toString(),
-                        style: TextStyle(fontSize: 10, color: Colors.grey[600]),
-                      ),
-                    ),
-                  ),
-                  topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                  rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                ),
-                gridData: FlGridData(show: false),
-                borderData: FlBorderData(show: false),
-                barGroups: sortedRoles.asMap().entries.map((entry) {
-                  final index = entry.key;
-                  final role = entry.value.key;
-                  final count = entry.value.value;
-                  Color color;
-                  switch (role) {
-                    case UserType.student:
-                      color = Colors.blue;
-                      break;
-                    case UserType.trainer:
-                      color = Colors.purple;
-                      break;
-                    case UserType.masterTrainer:
-                      color = Colors.deepPurple;
-                      break;
-                    case UserType.admin:
-                      color = Colors.red;
-                      break;
-                  }
-                  return BarChartGroupData(
-                    x: index,
-                    barRods: [
-                      BarChartRodData(
-                        toY: count.toDouble(),
-                        color: color,
-                        width: 20,
-                        borderRadius: const BorderRadius.vertical(top: Radius.circular(4)),
-                      ),
-                    ],
-                  );
-                }).toList(),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _NewRegistrationsChart extends StatelessWidget {
   final List<UserModel> users;
   final Color primaryColor;
@@ -1300,12 +1017,12 @@ class _NewRegistrationsChart extends StatelessWidget {
   }
 }
 
-class _ActiveInactiveChart extends StatelessWidget {
+class _ActiveInactiveStats extends StatelessWidget {
   final List<UserModel> users;
   final Color primaryColor;
   final bool isDark;
 
-  const _ActiveInactiveChart({
+  const _ActiveInactiveStats({
     required this.users,
     required this.primaryColor,
     required this.isDark,
@@ -1316,6 +1033,9 @@ class _ActiveInactiveChart extends StatelessWidget {
     // Consider users with completed biodata as active
     final active = users.where((u) => u.hasCompletedBiodata).length;
     final inactive = users.length - active;
+    final total = users.length;
+    final activePercentage = total > 0 ? (active / total * 100) : 0.0;
+    final inactivePercentage = total > 0 ? (inactive / total * 100) : 0.0;
 
     if (users.isEmpty) {
       return Container(
@@ -1343,60 +1063,127 @@ class _ActiveInactiveChart extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
           ),
-          const SizedBox(height: 16),
-          SizedBox(
-            height: 200,
-            child: PieChart(
-              PieChartData(
-                sections: [
-                  PieChartSectionData(
-                    value: active.toDouble(),
-                    title: 'Active\n$active',
-                    color: Colors.green,
-                    radius: 60,
-                  ),
-                  PieChartSectionData(
-                    value: inactive.toDouble(),
-                    title: 'Inactive\n$inactive',
-                    color: Colors.orange,
-                    radius: 60,
-                  ),
-                ],
-                sectionsSpace: 2,
-                centerSpaceRadius: 40,
-              ),
-            ),
+          const SizedBox(height: 24),
+          // Active Statistics
+          _buildStatCard(
+            context: context,
+            label: 'Active Users',
+            value: active.toString(),
+            percentage: activePercentage,
+            color: Colors.green,
+            icon: Icons.check_circle,
           ),
           const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildLegendItem('Active', Colors.green, active),
-              _buildLegendItem('Inactive', Colors.orange, inactive),
-            ],
+          // Inactive Statistics
+          _buildStatCard(
+            context: context,
+            label: 'Inactive Users',
+            value: inactive.toString(),
+            percentage: inactivePercentage,
+            color: Colors.orange,
+            icon: Icons.cancel,
+          ),
+          const SizedBox(height: 16),
+          // Total
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: primaryColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  'Total Users',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.w600,
+                      ),
+                ),
+                Text(
+                  total.toString(),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: primaryColor,
+                      ),
+                ),
+              ],
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildLegendItem(String label, Color color, int count) {
-    return Row(
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(
-            color: color,
-            shape: BoxShape.circle,
+  Widget _buildStatCard({
+    required BuildContext context,
+    required String label,
+    required String value,
+    required double percentage,
+    required Color color,
+    required IconData icon,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: color.withOpacity(0.3),
+          width: 1,
+        ),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Icon(
+              icon,
+              color: Colors.white,
+              size: 24,
+            ),
           ),
-        ),
-        const SizedBox(width: 4),
-        Text(
-          '$label: $count',
-          style: TextStyle(fontSize: 12, color: Colors.grey[700]),
-        ),
-      ],
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: Colors.grey[700],
+                        fontSize: 12,
+                      ),
+                ),
+                const SizedBox(height: 4),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    Text(
+                      value,
+                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: color,
+                          ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${percentage.toStringAsFixed(1)}%',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Colors.grey[600],
+                          ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

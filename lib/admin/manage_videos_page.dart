@@ -64,6 +64,80 @@ class _ManageVideosView extends StatelessWidget {
     );
   }
 
+  void _duplicateVideo(BuildContext context, Video video) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Duplicate Video'),
+        content: Text('Are you sure you want to duplicate "${video.title}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+            child: const Text('Duplicate'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      final duplicatedVideo = video.copyWith(
+        id: '', // New ID will be generated
+        title: '${video.title} (Copy)',
+        isFeatured: false,
+        isPopular: false,
+        isForYou: false,
+      );
+      context.read<VideoCubit>().addVideo(duplicatedVideo);
+    }
+  }
+
+  void _toggleHideVideo(BuildContext context, Video video) {
+    final newVideo = video.copyWith(isHidden: !video.isHidden);
+    context.read<VideoCubit>().updateVideo(newVideo);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          video.isHidden ? 'Video is now visible' : 'Video is now hidden',
+        ),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
+  void _showSectionSelector(BuildContext context, Video video) {
+    showDialog(
+      context: context,
+      builder: (ctx) => _SectionSelectorDialog(
+        video: video,
+        onSave: (isFeatured, isPopular, isForYou) async {
+          final updatedVideo = video.copyWith(
+            isFeatured: isFeatured,
+            isPopular: isPopular,
+            isForYou: isForYou,
+          );
+          
+          await context.read<VideoCubit>().updateVideo(updatedVideo);
+          if (ctx.mounted) {
+            Navigator.of(ctx).pop();
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Video sections updated successfully'),
+                  backgroundColor: Colors.green,
+                ),
+              );
+            }
+          }
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,149 +146,342 @@ class _ManageVideosView extends StatelessWidget {
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
       ),
-      body: BlocBuilder<VideoCubit, VideoState>(
-        builder: (context, state) {
-          if (state.status == VideoStatus.loading) {
-            return const Center(child: CircularProgressIndicator());
-          }
+      body: Stack(
+        children: [
+          BlocBuilder<VideoCubit, VideoState>(
+            builder: (context, state) {
+              if (state.status == VideoStatus.loading) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-          if (state.status == VideoStatus.error) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
-                  const SizedBox(height: 16),
-                  Text('Error: ${state.error}'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => context.read<VideoCubit>().fetchVideos(),
-                    child: const Text('Retry'),
+              if (state.status == VideoStatus.error) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.error_outline, size: 64,
+                          color: Colors.red[300]),
+                      const SizedBox(height: 16),
+                      Text('Error: ${state.error}'),
+                      const SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () =>
+                            context.read<VideoCubit>().fetchVideos(),
+                        child: const Text('Retry'),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            );
-          }
+                );
+              }
 
-          if (state.videos.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.video_library_outlined, size: 64, color: Colors.grey[400]),
-                  const SizedBox(height: 16),
-                  const Text('No videos yet'),
-                  const SizedBox(height: 8),
-                  ElevatedButton(
-                    onPressed: () => _addVideo(context),
-                    child: const Text('Add First Video'),
+              if (state.videos.isEmpty) {
+                return Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.video_library_outlined, size: 64,
+                          color: Colors.grey[400]),
+                      const SizedBox(height: 16),
+                      const Text('No videos yet'),
+                      const SizedBox(height: 8),
+                      ElevatedButton(
+                        onPressed: () => _addVideo(context),
+                        child: const Text('Add First Video'),
+                      ),
+                      const SizedBox(height: 16),
+                      OutlinedButton.icon(
+                        onPressed: () async {
+                          await seedDummyVideos();
+                          if (context.mounted) {
+                            context.read<VideoCubit>().fetchVideos();
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                    'Dummy videos added successfully!'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          }
+                        },
+                        icon: const Icon(Icons.auto_awesome),
+                        label: const Text('Add Dummy Videos (for testing)'),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  OutlinedButton.icon(
-                    onPressed: () async {
-                      await seedDummyVideos();
-                      if (context.mounted) {
-                        context.read<VideoCubit>().fetchVideos();
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Dummy videos added successfully!'),
-                            backgroundColor: Colors.green,
-                          ),
-                        );
-                      }
-                    },
-                    icon: const Icon(Icons.auto_awesome),
-                    label: const Text('Add Dummy Videos (for testing)'),
-                  ),
-                ],
-              ),
-            );
-          }
+                );
+              }
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(16),
-            itemCount: state.videos.length,
-            itemBuilder: (context, index) {
-              final video = state.videos[index];
-              return Card(
-                margin: const EdgeInsets.only(bottom: 12),
-                child: ListTile(
-                  leading: video.thumbnailUrl.isNotEmpty
-                      ? ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            video.thumbnailUrl,
-                            width: 60,
-                            height: 60,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return Container(
-                                width: 60,
-                                height: 60,
-                                color: Colors.grey[300],
-                                child: const Icon(Icons.video_library),
-                              );
-                            },
-                          ),
-                        )
-                      : Container(
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: state.videos.length,
+                itemBuilder: (context, index) {
+                  final video = state.videos[index];
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 12),
+                    child: ListTile(
+                      leading: video.thumbnailUrl.isNotEmpty
+                          ? ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.network(
+                          video.thumbnailUrl,
                           width: 60,
                           height: 60,
-                          color: Colors.grey[300],
-                          child: const Icon(Icons.video_library),
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            return Container(
+                              width: 60,
+                              height: 60,
+                              color: Colors.grey[300],
+                              child: const Icon(Icons.video_library),
+                            );
+                          },
                         ),
-                  title: Text(video.title),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (video.category != null) Text('Category: ${video.category}'),
-                      if (video.views != null) Text('Views: ${video.views}'),
-                      if (video.isPremium)
-                        const Text('Premium', style: TextStyle(color: Colors.amber)),
-                    ],
-                  ),
-                  trailing: PopupMenuButton(
-                    itemBuilder: (context) => [
-                      const PopupMenuItem(
-                        value: 'edit',
-                        child: Row(
-                          children: [
-                            Icon(Icons.edit, size: 20),
-                            SizedBox(width: 8),
-                            Text('Edit'),
-                          ],
-                        ),
+                      )
+                          : Container(
+                        width: 60,
+                        height: 60,
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.video_library),
                       ),
-                      const PopupMenuItem(
-                        value: 'delete',
-                        child: Row(
-                          children: [
-                            Icon(Icons.delete, size: 20, color: Colors.red),
-                            SizedBox(width: 8),
-                            Text('Delete', style: TextStyle(color: Colors.red)),
-                          ],
-                        ),
+                      title: Row(
+                        children: [
+                          Expanded(child: Text(video.title)),
+                          if (video.isHidden)
+                            Icon(Icons.visibility_off, size: 16,
+                                color: Colors.grey[600]),
+                        ],
                       ),
-                    ],
-                    onSelected: (value) {
-                      if (value == 'edit') {
-                        _editVideo(context, video);
-                      } else if (value == 'delete') {
-                        _deleteVideo(context, video);
-                      }
-                    },
-                  ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          if (video.category != null) Text(
+                              'Category: ${video.category}'),
+                          if (video.views != null) Text(
+                              'Views: ${video.views}'),
+                          Wrap(
+                            spacing: 8,
+                            children: [
+                              if (video.isPremium)
+                                Chip(
+                                  label: const Text('Premium',
+                                      style: TextStyle(fontSize: 10)),
+                                  backgroundColor: Colors.amber,
+                                  padding: EdgeInsets.zero,
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                              if (video.isFeatured)
+                                Chip(
+                                  label: const Text('Featured',
+                                      style: TextStyle(fontSize: 10)),
+                                  backgroundColor: Colors.blue[100],
+                                  padding: EdgeInsets.zero,
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                              if (video.isPopular)
+                                Chip(
+                                  label: const Text('Popular',
+                                      style: TextStyle(fontSize: 10)),
+                                  backgroundColor: Colors.green[100],
+                                  padding: EdgeInsets.zero,
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                              if (video.isForYou)
+                                Chip(
+                                  label: const Text('For You',
+                                      style: TextStyle(fontSize: 10)),
+                                  backgroundColor: Colors.purple[100],
+                                  padding: EdgeInsets.zero,
+                                  visualDensity: VisualDensity.compact,
+                                ),
+                            ],
+                          ),
+                        ],
+                      ),
+                      trailing: PopupMenuButton<String>(
+                        icon: Icon(
+                          Icons.more_vert,
+                          color: Theme
+                              .of(context)
+                              .colorScheme
+                              .primary
+                              .withOpacity(0.6),
+                        ),
+                        onSelected: (value) {
+                          switch (value) {
+                            case 'edit':
+                              _editVideo(context, video);
+                              break;
+                            case 'duplicate':
+                              _duplicateVideo(context, video);
+                              break;
+                            case 'hide':
+                              _toggleHideVideo(context, video);
+                              break;
+                            case 'sections':
+                              _showSectionSelector(context, video);
+                              break;
+                            case 'delete':
+                              _deleteVideo(context, video);
+                              break;
+                          }
+                        },
+                        itemBuilder: (context) =>
+                        [
+                          PopupMenuItem(
+                            value: 'edit',
+                            child: Row(
+                              children: [
+                                Icon(
+                                    Icons.edit, color: Colors.orange, size: 20),
+                                const SizedBox(width: 12),
+                                const Text('Edit'),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'duplicate',
+                            child: Row(
+                              children: [
+                                Icon(Icons.copy, color: Colors.blue, size: 20),
+                                const SizedBox(width: 12),
+                                const Text('Duplicate'),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'sections',
+                            child: Row(
+                              children: [
+                                Icon(Icons.category, color: Colors.purple,
+                                    size: 20),
+                                const SizedBox(width: 12),
+                                const Text('Select Sections'),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'hide',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  video.isHidden ? Icons.visibility : Icons
+                                      .visibility_off,
+                                  color: Colors.grey,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(video.isHidden ? 'Show' : 'Hide'),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'delete',
+                            child: Row(
+                              children: [
+                                Icon(Icons.delete, color: Colors.red, size: 20),
+                                const SizedBox(width: 12),
+                                const Text('Delete',
+                                    style: TextStyle(color: Colors.red)),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
+              );
+              // Floating + button at top right
+              Positioned(
+                top: 8,
+                right: 16,
+                child: FloatingActionButton(
+                  onPressed: () => _addVideo(context),
+                  backgroundColor: AppColors.primary,
+                  child: const Icon(Icons.add, color: Colors.white),
                 ),
               );
+            }),
+      ]),
+    );
+  }
+}
+
+class _SectionSelectorDialog extends StatefulWidget {
+  final Video video;
+  final Future<void> Function(bool isFeatured, bool isPopular, bool isForYou) onSave;
+
+  const _SectionSelectorDialog({
+    required this.video,
+    required this.onSave,
+  });
+
+  @override
+  State<_SectionSelectorDialog> createState() => _SectionSelectorDialogState();
+}
+
+class _SectionSelectorDialogState extends State<_SectionSelectorDialog> {
+  late bool _isFeatured;
+  late bool _isPopular;
+  late bool _isForYou;
+
+  @override
+  void initState() {
+    super.initState();
+    _isFeatured = widget.video.isFeatured;
+    _isPopular = widget.video.isPopular;
+    _isForYou = widget.video.isForYou;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: Text('Select Sections for "${widget.video.title}"'),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          CheckboxListTile(
+            title: const Text('Featured'),
+            value: _isFeatured,
+            onChanged: (value) {
+              setState(() {
+                _isFeatured = value ?? false;
+              });
             },
-          );
-        },
+          ),
+          CheckboxListTile(
+            title: const Text('Popular'),
+            value: _isPopular,
+            onChanged: (value) {
+              setState(() {
+                _isPopular = value ?? false;
+              });
+            },
+          ),
+          CheckboxListTile(
+            title: const Text('For You'),
+            value: _isForYou,
+            onChanged: (value) {
+              setState(() {
+                _isForYou = value ?? false;
+              });
+            },
+          ),
+        ],
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _addVideo(context),
-        backgroundColor: AppColors.primary,
-        child: const Icon(Icons.add, color: Colors.white),
-      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () async {
+            await widget.onSave(_isFeatured, _isPopular, _isForYou);
+          },
+          child: const Text('Save'),
+        ),
+      ],
     );
   }
 }

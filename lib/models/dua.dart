@@ -18,6 +18,32 @@ class Dua {
   });
 
   factory Dua.fromJson(Map<String, dynamic> json) {
+    DateTime? parseUploaded(dynamic uploaded) {
+      if (uploaded == null) return null;
+      
+      // Handle Firestore Timestamp
+      if (uploaded is Map && uploaded.containsKey('_seconds')) {
+        final seconds = uploaded['_seconds'] as int;
+        return DateTime.fromMillisecondsSinceEpoch(seconds * 1000);
+      }
+      
+      // Handle Firestore Timestamp (alternative format)
+      if (uploaded is Map && uploaded.containsKey('seconds')) {
+        final seconds = uploaded['seconds'] as int;
+        final nanoseconds = (uploaded['nanoseconds'] as int?) ?? 0;
+        return DateTime.fromMillisecondsSinceEpoch(
+          seconds * 1000 + (nanoseconds ~/ 1000000),
+        );
+      }
+      
+      // Handle ISO string
+      if (uploaded is String) {
+        return DateTime.tryParse(uploaded);
+      }
+      
+      return null;
+    }
+    
     return Dua(
       id: json['id'] as String,
       title: json['title'] as String,
@@ -25,7 +51,7 @@ class Dua {
       image: json['image'] as String?,
       link: json['link'] as String?,
       notes: json['notes'] as String?,
-      uploaded: json['uploaded'] != null ? DateTime.tryParse(json['uploaded']) : null,
+      uploaded: parseUploaded(json['uploaded']),
     );
   }
 

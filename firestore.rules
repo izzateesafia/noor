@@ -8,6 +8,7 @@ service cloud.firestore {
       return request.auth != null && 
              exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles != null &&
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles is list &&
              'admin' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles;
     }
     
@@ -67,6 +68,15 @@ service cloud.firestore {
       allow read: if true;
       
       // Only admins can write news
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Duas collection
+    match /duas/{duaId} {
+      // Authenticated users can read duas
+      allow read: if isAuthenticated();
+      
+      // Only admins can write duas
       allow create, update, delete: if isAdmin();
     }
     

@@ -7,6 +7,7 @@ import 'admin/manage_users_page.dart';
 import 'admin/manage_live_streams_page.dart';
 import 'admin/manage_news_page.dart';
 import 'admin/manage_videos_page.dart';
+import 'admin/notification_editor_page.dart';
 import 'deep_link_test_page.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -389,6 +390,18 @@ class AdminPage extends StatelessWidget {
                   icon: Icons.message,
                   label: 'Manage Welcome Message',
                   onTap: () => _showWelcomeMessageDialog(context),
+                ),
+                const SizedBox(height: 18),
+                _AdminActionButton(
+                  icon: Icons.notifications_active,
+                  label: 'Send Notifications',
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const NotificationEditorPage(),
+                      ),
+                    );
+                  },
                 ),
                 const SizedBox(height: 18),
                 _AdminActionButton(

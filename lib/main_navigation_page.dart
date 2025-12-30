@@ -8,7 +8,6 @@ import 'dashboard/dashboard_page.dart';
 import 'dashboard/jurulatih_dashboard_page.dart';
 import 'dashboard/master_trainer_dashboard_page.dart';
 import 'menu_page.dart';
-import 'user_profile_page.dart';
 import 'quran_reader_page.dart';
 
 class MainNavigationPage extends StatefulWidget {
@@ -32,7 +31,6 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
       return [
         dashboardPage,
         const MenuPage(),
-        const UserProfilePage(),
         const QuranReaderPage(),
       ];
     }
@@ -70,7 +68,6 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
     return [
       dashboardPage,
       const MenuPage(),
-      const UserProfilePage(),
       const QuranReaderPage(),
     ];
   }
@@ -147,11 +144,6 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
                     icon: Icon(Icons.menu_outlined),
                     activeIcon: Icon(Icons.menu),
                     label: 'Menu',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.person_outline),
-                    activeIcon: Icon(Icons.person),
-                    label: 'Profile',
                   ),
                   BottomNavigationBarItem(
                     icon: Icon(Icons.menu_book_outlined),
