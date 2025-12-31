@@ -53,7 +53,7 @@ class NewsDetailPage extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          DateFormat('dd MMMM yyyy', 'ms').format(news.uploaded!),
+                          DateFormat('dd MMM yyyy').format(news.uploaded!),
                           style: TextStyle(
                             color: Theme.of(context).iconTheme.color?.withOpacity(0.6) ?? Colors.grey,
                             fontSize: 14,

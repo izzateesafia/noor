@@ -10,6 +10,7 @@ import 'theme_constants.dart';
 import 'cubit/user_cubit.dart';
 import 'cubit/user_states.dart';
 import 'all_videos_page.dart';
+import 'pages/video_player_page.dart';
 
 class VideosPage extends StatelessWidget {
   const VideosPage({super.key});
@@ -431,6 +432,16 @@ class VideoCard extends StatelessWidget {
     return views.toString();
   }
 
+  bool _isYouTubeUrl(String url) {
+    return url.contains('youtube.com') || 
+           url.contains('youtu.be') || 
+           url.contains('m.youtube.com');
+  }
+
+  bool _isFirebaseStorageUrl(String url) {
+    return url.contains('firebasestorage.googleapis.com');
+  }
+
   Future<void> _playVideo(BuildContext context) async {
     // Check if video is premium and user is not premium
     final userState = context.read<UserCubit>().state;
@@ -454,6 +465,30 @@ class VideoCard extends StatelessWidget {
     }
 
     try {
+      // Check if YouTube URL
+      if (_isYouTubeUrl(video.videoUrl)) {
+        final Uri url = Uri.parse(video.videoUrl);
+        if (await canLaunchUrl(url)) {
+          await launchUrl(url, mode: LaunchMode.externalApplication);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Cannot open YouTube video')),
+          );
+        }
+        return;
+      }
+
+      // Check if Firebase Storage URL - play in-app
+      if (_isFirebaseStorageUrl(video.videoUrl)) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => VideoPlayerPage(video: video),
+          ),
+        );
+        return;
+      }
+
+      // Fallback: Open other URLs externally
       final Uri url = Uri.parse(video.videoUrl);
       if (await canLaunchUrl(url)) {
         await launchUrl(url, mode: LaunchMode.externalApplication);
@@ -816,6 +851,16 @@ class _FeaturedVideoCard extends StatelessWidget {
     return views.toString();
   }
 
+  bool _isYouTubeUrl(String url) {
+    return url.contains('youtube.com') || 
+           url.contains('youtu.be') || 
+           url.contains('m.youtube.com');
+  }
+
+  bool _isFirebaseStorageUrl(String url) {
+    return url.contains('firebasestorage.googleapis.com');
+  }
+
   Future<void> _playVideo(BuildContext context) async {
     final userState = context.read<UserCubit>().state;
     final isPremium = userState.currentUser?.isPremium ?? false;
@@ -838,6 +883,30 @@ class _FeaturedVideoCard extends StatelessWidget {
     }
 
     try {
+      // Check if YouTube URL
+      if (_isYouTubeUrl(video.videoUrl)) {
+        final Uri url = Uri.parse(video.videoUrl);
+        if (await canLaunchUrl(url)) {
+          await launchUrl(url, mode: LaunchMode.externalApplication);
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Cannot open YouTube video')),
+          );
+        }
+        return;
+      }
+
+      // Check if Firebase Storage URL - play in-app
+      if (_isFirebaseStorageUrl(video.videoUrl)) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => VideoPlayerPage(video: video),
+          ),
+        );
+        return;
+      }
+
+      // Fallback: Open other URLs externally
       final Uri url = Uri.parse(video.videoUrl);
       if (await canLaunchUrl(url)) {
         await launchUrl(url, mode: LaunchMode.externalApplication);

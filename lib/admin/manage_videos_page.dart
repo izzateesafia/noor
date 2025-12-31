@@ -150,8 +150,15 @@ class _ManageVideosView extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Manage Videos'),
-        backgroundColor: AppColors.primary,
-        foregroundColor: Theme.of(context).colorScheme.onPrimary,
+        backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+        foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.add),
+            onPressed: () => _addVideo(context),
+            tooltip: 'Add Video',
+          ),
+        ],
       ),
       body: Stack(
         children: [
@@ -397,19 +404,9 @@ class _ManageVideosView extends StatelessWidget {
                     ),
                   );
                 },
-              );
-              // Floating + button at top right
-              Positioned(
-                top: 8,
-                right: 16,
-                child: FloatingActionButton(
-                  onPressed: () => _addVideo(context),
-                  backgroundColor: AppColors.primary,
-                  child: const Icon(Icons.add, color: Colors.white),
-                ),
-              );
-            }),
-      ]),
+              );})
+        ],
+      ),
     );
   }
 }

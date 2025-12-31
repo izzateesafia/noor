@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/news.dart';
 import '../theme_constants.dart';
-import '../pages/news_detail_page.dart';
+import '../pages/news_post_page.dart';
 import 'dart:io';
 
 class TerkiniNewsFeed extends StatelessWidget {
@@ -78,7 +78,7 @@ class _NewsCard extends StatelessWidget {
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => NewsDetailPage(news: news),
+            builder: (context) => NewsPostPage(news: news),
           ),
         );
       },

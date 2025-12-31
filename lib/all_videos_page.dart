@@ -31,8 +31,8 @@ class _AllVideosPageState extends State<AllVideosPage> {
       child: Scaffold(
         appBar: AppBar(
           title: const Text('All Videos'),
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
+          backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+          foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
         ),
         body: Column(
           children: [
@@ -66,10 +66,12 @@ class _AllVideosPageState extends State<AllVideosPage> {
                             });
                             context.read<VideoCubit>().filterByCategory(_selectedCategory);
                           },
-                          selectedColor: AppColors.primary,
-                          checkmarkColor: Colors.white,
+                          selectedColor: Theme.of(context).colorScheme.primary,
+                          checkmarkColor: Theme.of(context).colorScheme.onPrimary,
                           labelStyle: TextStyle(
-                            color: isSelected ? Colors.white : Colors.black87,
+                            color: isSelected 
+                                ? Theme.of(context).colorScheme.onPrimary 
+                                : Theme.of(context).textTheme.bodyLarge?.color,
                             fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                           ),
                         ),
@@ -92,11 +94,18 @@ class _AllVideosPageState extends State<AllVideosPage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+                          Icon(
+                            Icons.error_outline, 
+                            size: 64, 
+                            color: Theme.of(context).colorScheme.error,
+                          ),
                           const SizedBox(height: 16),
                           Text(
                             'Error loading videos',
-                            style: TextStyle(color: Colors.red[300], fontSize: 18),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.error, 
+                              fontSize: 18,
+                            ),
                           ),
                           if (state.error != null) ...[
                             const SizedBox(height: 8),
@@ -104,7 +113,10 @@ class _AllVideosPageState extends State<AllVideosPage> {
                               padding: const EdgeInsets.symmetric(horizontal: 32),
                               child: Text(
                                 state.error!,
-                                style: TextStyle(color: Colors.red[200], fontSize: 12),
+                                style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error.withOpacity(0.7), 
+                                  fontSize: 12,
+                                ),
                                 textAlign: TextAlign.center,
                               ),
                             ),
@@ -128,13 +140,20 @@ class _AllVideosPageState extends State<AllVideosPage> {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.video_library_outlined, size: 64, color: Colors.grey[400]),
+                          Icon(
+                            Icons.video_library_outlined, 
+                            size: 64, 
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+                          ),
                           const SizedBox(height: 16),
                           Text(
                             _selectedCategory == null
                                 ? 'No videos available'
                                 : 'No videos in this category',
-                            style: TextStyle(color: Colors.grey[600], fontSize: 18),
+                            style: TextStyle(
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6), 
+                              fontSize: 18,
+                            ),
                           ),
                         ],
                       ),
