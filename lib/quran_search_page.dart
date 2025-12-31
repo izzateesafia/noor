@@ -18,12 +18,8 @@ class _QuranSearchPageState extends State<QuranSearchPage> {
   String _selectedTranslation = 'indonesian';
 
   final Map<String, String> _translations = {
-    'indonesian': 'Bahasa Indonesia (Closest to Malay)',
-    'enSaheeh': 'English (Saheeh International)',
-    'enClearQuran': 'English (Clear Quran)',
-    'urdu': 'Urdu',
-    'french': 'French',
-    'turkish': 'Turkish',
+    'indonesian': 'Bahasa Indonesia (Paling hampir dengan Bahasa Melayu)',
+    'enSaheeh': 'Bahasa Inggeris (Saheeh International)',
   };
 
   @override
@@ -320,36 +316,7 @@ class _QuranSearchPageState extends State<QuranSearchPage> {
           verseNumber,
           translation: quran.Translation.enSaheeh,
         );
-      case 'enClearQuran':
-        return quran.getVerseTranslation(
-          surahNumber,
-          verseNumber,
-          translation: quran.Translation.enClearQuran,
-        );
-      case 'urdu':
-        return quran.getVerseTranslation(
-          surahNumber,
-          verseNumber,
-          translation: quran.Translation.urdu,
-        );
       case 'indonesian':
-        return quran.getVerseTranslation(
-          surahNumber,
-          verseNumber,
-          translation: quran.Translation.indonesian,
-        );
-      case 'french':
-        return quran.getVerseTranslation(
-          surahNumber,
-          verseNumber,
-          translation: quran.Translation.frHamidullah,
-        );
-      case 'turkish':
-        return quran.getVerseTranslation(
-          surahNumber,
-          verseNumber,
-          translation: quran.Translation.trSaheeh,
-        );
       default:
         return quran.getVerseTranslation(
           surahNumber,

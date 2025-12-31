@@ -7,7 +7,7 @@ import 'package:intl/intl.dart';
 import 'cubit/dua_cubit.dart';
 import 'cubit/dua_states.dart';
 import 'repository/dua_repository.dart';
-import 'pages/dua_detail_page.dart';
+import 'pages/dua_post_page.dart';
 
 class DuasPage extends StatelessWidget {
   const DuasPage({super.key});
@@ -47,7 +47,7 @@ class DuasPage extends StatelessWidget {
                   onTap: () {
                     Navigator.of(context).push(
                       MaterialPageRoute(
-                        builder: (context) => DuaDetailPage(dua: dua),
+                        builder: (context) => DuaPostPage(dua: dua),
                       ),
                     );
                   },

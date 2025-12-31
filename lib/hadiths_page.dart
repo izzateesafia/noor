@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'cubit/hadith_cubit.dart';
 import 'cubit/hadith_states.dart';
-import 'pages/hadith_detail_page.dart';
+import 'pages/hadith_post_page.dart';
 
 class HadithsPage extends StatefulWidget {
   const HadithsPage({super.key});
@@ -114,7 +114,7 @@ class _HadithsPageState extends State<HadithsPage> {
                     onTap: () {
                       Navigator.of(context).push(
                         MaterialPageRoute(
-                          builder: (context) => HadithDetailPage(hadith: hadith),
+                          builder: (context) => HadithPostPage(hadith: hadith),
                         ),
                       );
                     },

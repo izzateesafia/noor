@@ -9,8 +9,8 @@ import '../models/user_model.dart';
 import '../class_payment_page.dart';
 import '../models/dua.dart';
 import '../models/hadith.dart';
-import '../pages/dua_detail_page.dart';
-import '../pages/hadith_detail_page.dart';
+import '../pages/dua_post_page.dart';
+import '../pages/hadith_post_page.dart';
 
 class FeaturedSection extends StatelessWidget {
   final UserModel user;
@@ -109,13 +109,7 @@ class FeaturedSection extends StatelessWidget {
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.only(left: 0, right: 0),
-                      children: hadiths!.take(5).map((h) => _buildFeaturedHadithCard(
-                        context, 
-                        h.title, 
-                        h.content, 
-                        h.narrator ?? h.source ?? h.book ?? 'Unknown',
-                        h.image
-                      )).toList(),
+                      children: hadiths!.take(5).map((h) => _buildFeaturedHadithCard(context, h)).toList(),
                     ),
                   );
                 }
@@ -291,7 +285,7 @@ class FeaturedSection extends StatelessWidget {
       onTap: () {
         Navigator.of(context).push(
           MaterialPageRoute(
-            builder: (context) => DuaDetailPage(dua: dua),
+            builder: (context) => DuaPostPage(dua: dua),
           ),
         );
       },
@@ -347,115 +341,125 @@ class FeaturedSection extends StatelessWidget {
     ));
   }
 
-  Widget _buildFeaturedHadithCard(BuildContext context, String title, String content, String source, String? image) {
-    return Container(
-      width: 220,
-      margin: const EdgeInsets.only(right: 16),
-      child: Card(
-        elevation: 4,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        color: Theme.of(context).cardColor,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(
-              color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
-              width: 1,
-            ),
+  Widget _buildFeaturedHadithCard(BuildContext context, Hadith hadith) {
+    final source = hadith.narrator ?? hadith.source ?? hadith.book ?? 'Unknown';
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => HadithPostPage(hadith: hadith),
           ),
-          child: Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Header with decorative elements
-                Row(
-                  children: [
-                    Container(
-                      width: 4,
-                      height: 16,
+        );
+      },
+      child: Container(
+        width: 220,
+        margin: const EdgeInsets.only(right: 16),
+        child: Card(
+          elevation: 4,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          color: Theme.of(context).cardColor,
+          child: Container(
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+                width: 1,
+              ),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  // Header with decorative elements
+                  Row(
+                    children: [
+                      Container(
+                        width: 4,
+                        height: 16,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          hadith.title,
+                          style: Theme.of(context).textTheme.headlineSmall,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  // Image section
+                  _buildHadithImage(context, hadith.image),
+                  const SizedBox(height: 8),
+                  // Content with elegant styling
+                  Flexible(
+                    child: Container(
+                      padding: const EdgeInsets.all(8),
                       decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary,
-                        borderRadius: BorderRadius.circular(2),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: Theme.of(context).textTheme.headlineSmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 8),
-                // Image section
-                _buildHadithImage(context, image),
-                const SizedBox(height: 8),
-                // Content with elegant styling
-                Flexible(
-                  child: Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor.withOpacity(0.7),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                        width: 1,
-                      ),
-                    ),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Icon(
-                          Icons.format_quote,
-                          size: 14,
-                          color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                        color: Theme.of(context).cardColor.withOpacity(0.7),
+                        borderRadius: BorderRadius.circular(10),
+                        border: Border.all(
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                          width: 1,
                         ),
-                        const SizedBox(width: 4),
-                        Expanded(
-                          child: Text(
-                            content,
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.3, fontStyle: FontStyle.italic),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                      ),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Icon(
+                            Icons.format_quote,
+                            size: 14,
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 4),
+                          Expanded(
+                            child: Text(
+                              hadith.content,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.3, fontStyle: FontStyle.italic),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                ),
-                const SizedBox(height: 6),
-                // Source with book icon
-                Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(4),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(6),
+                  const SizedBox(height: 6),
+                  // Source with book icon
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: Icon(
+                          Icons.book,
+                          size: 12,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                       ),
-                      child: Icon(
-                        Icons.book,
-                        size: 12,
-                        color: Theme.of(context).colorScheme.primary,
+                      const SizedBox(width: 6),
+                      Expanded(
+                        child: Text(
+                          source,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        source,
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
         ),

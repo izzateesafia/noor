@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quran/quran.dart' as quran;
 import '../theme_constants.dart';
+import 'surah_detail_page.dart';
 
 class DailyVerseWidget extends StatefulWidget {
   const DailyVerseWidget({super.key});
@@ -172,8 +173,15 @@ class _DailyVerseWidgetState extends State<DailyVerseWidget> {
               // Action Buttons
               OutlinedButton.icon(
                 onPressed: () {
-                  // Navigate to Quran reader
-                  Navigator.of(context).pushNamed('/quran');
+                  // Navigate directly to the specific surah
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (context) => SurahDetailPage(
+                        surahNumber: _surahNumber,
+                        surahName: _surahName,
+                      ),
+                    ),
+                  );
                 },
                 icon: const Icon(Icons.visibility, size: 16),
                 label: const Text('Baca Surah Penuh'),

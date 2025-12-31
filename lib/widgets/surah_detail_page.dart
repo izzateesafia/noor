@@ -26,10 +26,6 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
   final Map<String, String> _translations = {
     'indonesian': 'Bahasa Indonesia (Paling hampir dengan Bahasa Melayu)',
     'enSaheeh': 'Bahasa Inggeris (Saheeh International)',
-    'enClearQuran': 'Bahasa Inggeris (Clear Quran)',
-    'urdu': 'Urdu',
-    'french': 'French',
-    'turkish': 'Turkish',
   };
 
   @override
@@ -109,31 +105,41 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
           
           // Controls
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).cardColor,
+              boxShadow: [
+                BoxShadow(
+                  color: Theme.of(context).shadowColor.withOpacity(0.05),
+                  blurRadius: 4,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
             child: Row(
               children: [
+                Icon(
+                  Icons.translate,
+                  color: Theme.of(context).colorScheme.primary,
+                  size: 20,
+                ),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: FilterChip(
-                    label: const Text('Arabic'),
-                    selected: _showArabic,
-                    onSelected: null, // Disable selection - always selected
-                    selectedColor: AppColors.primary.withOpacity(0.2),
-                    checkmarkColor: AppColors.primary,
+                  child: Text(
+                    'Tunjukkan Terjemahan',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: FilterChip(
-                    label: const Text('Translation'),
-                    selected: _showTranslation,
-                    onSelected: (selected) {
-                      setState(() {
-                        _showTranslation = selected;
-                      });
-                    },
-                    selectedColor: AppColors.primary.withOpacity(0.2),
-                    checkmarkColor: AppColors.primary,
-                  ),
+                Switch(
+                  value: _showTranslation,
+                  onChanged: (value) {
+                    setState(() {
+                      _showTranslation = value;
+                    });
+                  },
+                  activeColor: AppColors.primary,
                 ),
               ],
             ),
@@ -298,36 +304,7 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
           verseNumber,
           translation: quran.Translation.enSaheeh,
         );
-      case 'enClearQuran':
-        return quran.getVerseTranslation(
-          surahNumber,
-          verseNumber,
-          translation: quran.Translation.enClearQuran,
-        );
-      case 'urdu':
-        return quran.getVerseTranslation(
-          surahNumber,
-          verseNumber,
-          translation: quran.Translation.urdu,
-        );
       case 'indonesian':
-        return quran.getVerseTranslation(
-          surahNumber,
-          verseNumber,
-          translation: quran.Translation.indonesian,
-        );
-      case 'french':
-        return quran.getVerseTranslation(
-          surahNumber,
-          verseNumber,
-          translation: quran.Translation.frHamidullah,
-        );
-      case 'turkish':
-        return quran.getVerseTranslation(
-          surahNumber,
-          verseNumber,
-          translation: quran.Translation.trSaheeh,
-        );
       default:
         return quran.getVerseTranslation(
           surahNumber,
