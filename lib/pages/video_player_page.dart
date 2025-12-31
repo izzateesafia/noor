@@ -301,7 +301,7 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                 _initializePlayer();
               },
               icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
+              label: const Text('Cuba Lagi'),
             ),
           ],
         ),

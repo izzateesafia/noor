@@ -9,6 +9,7 @@ class ClassModel {
   final String description;
   final String? image;
   final double price;
+  final String? paymentUrl;
 
   ClassModel({
     required this.id,
@@ -20,6 +21,7 @@ class ClassModel {
     required this.description,
     this.image,
     required this.price,
+    this.paymentUrl,
   });
 
   factory ClassModel.fromJson(Map<String, dynamic> json) {
@@ -33,6 +35,7 @@ class ClassModel {
       description: json['description'] as String,
       image: json['image'] as String?,
       price: (json['price'] as num).toDouble(),
+      paymentUrl: json['paymentUrl'] as String?,
     );
   }
 
@@ -47,6 +50,7 @@ class ClassModel {
       'description': description,
       'image': image,
       'price': price,
+      'paymentUrl': paymentUrl,
     };
   }
 } 

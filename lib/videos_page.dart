@@ -26,7 +26,7 @@ class VideosPage extends StatelessWidget {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Videos'),
+          title: const Text('Video'),
           backgroundColor: AppColors.primary,
           foregroundColor: Theme.of(context).colorScheme.onPrimary,
           actions: [
@@ -96,7 +96,7 @@ class VideosPage extends StatelessWidget {
                         context.read<VideoCubit>().fetchCategories();
                       },
                       icon: const Icon(Icons.refresh),
-                      label: const Text('Retry'),
+                      label: const Text('Cuba Lagi'),
                     ),
                   ],
                 ),
@@ -130,7 +130,7 @@ class VideosPage extends StatelessWidget {
                 // For You Section
                 _buildVideoSection(
                   context,
-                  title: 'For You',
+                  title: 'Untuk Anda',
                   icon: Icons.person,
                   videos: forYouVideos,
                   showPlaceholders: true,
@@ -201,7 +201,7 @@ class VideosPage extends StatelessWidget {
               ),
               const SizedBox(width: 12),
               Text(
-                'Featured',
+                'Pilihan',
                 style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                       fontWeight: FontWeight.bold,
                       fontSize: 22,
@@ -285,7 +285,7 @@ class VideosPage extends StatelessWidget {
     return List.generate(count, (index) {
       return Video(
         id: 'placeholder_$index',
-        title: 'Coming Soon',
+        title: 'Akan Datang',
         description: 'Video content will be available soon',
         thumbnailUrl: '',
         videoUrl: '',
@@ -450,7 +450,7 @@ class VideoCard extends StatelessWidget {
     if (video.isPremium && !isPremium) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('This video is available for premium users only'),
+          content: const Text('Video ini hanya tersedia untuk pengguna premium'),
           backgroundColor: Colors.orange,
         ),
       );
@@ -459,7 +459,7 @@ class VideoCard extends StatelessWidget {
 
     if (video.videoUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Video URL not available')),
+        const SnackBar(content: Text('URL video tidak tersedia')),
       );
       return;
     }
@@ -472,7 +472,7 @@ class VideoCard extends StatelessWidget {
           await launchUrl(url, mode: LaunchMode.externalApplication);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Cannot open YouTube video')),
+            const SnackBar(content: Text('Tidak dapat membuka video YouTube')),
           );
         }
         return;
@@ -494,12 +494,12 @@ class VideoCard extends StatelessWidget {
         await launchUrl(url, mode: LaunchMode.externalApplication);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Cannot open video')),
+          const SnackBar(content: Text('Tidak dapat membuka video')),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error opening video: $e')),
+        SnackBar(content: Text('Ralat membuka video: $e')),
       );
     }
   }
@@ -868,7 +868,7 @@ class _FeaturedVideoCard extends StatelessWidget {
     if (video.isPremium && !isPremium) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('This video is available for premium users only'),
+          content: const Text('Video ini hanya tersedia untuk pengguna premium'),
           backgroundColor: Colors.orange,
         ),
       );
@@ -877,7 +877,7 @@ class _FeaturedVideoCard extends StatelessWidget {
 
     if (video.videoUrl.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Video URL not available')),
+        const SnackBar(content: Text('URL video tidak tersedia')),
       );
       return;
     }
@@ -890,7 +890,7 @@ class _FeaturedVideoCard extends StatelessWidget {
           await launchUrl(url, mode: LaunchMode.externalApplication);
         } else {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Cannot open YouTube video')),
+            const SnackBar(content: Text('Tidak dapat membuka video YouTube')),
           );
         }
         return;
@@ -912,12 +912,12 @@ class _FeaturedVideoCard extends StatelessWidget {
         await launchUrl(url, mode: LaunchMode.externalApplication);
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Cannot open video')),
+          const SnackBar(content: Text('Tidak dapat membuka video')),
         );
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error opening video: $e')),
+        SnackBar(content: Text('Ralat membuka video: $e')),
       );
     }
   }

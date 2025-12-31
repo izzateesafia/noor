@@ -100,8 +100,8 @@ class PrayerAlarmService {
 
   /// Start monitoring prayer times
   void _startPrayerMonitoring() {
-    // Check every minute for prayer times
-    _prayerCheckTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
+    // Check every 30 seconds for more accurate prayer time detection
+    _prayerCheckTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
       _checkPrayerTimes();
     });
     
@@ -109,21 +109,38 @@ class PrayerAlarmService {
     _checkPrayerTimes();
     
     if (kDebugMode) {
-      print('Prayer monitoring started');
+      final timestamp = DateTime.now().toIso8601String();
+      print('[$timestamp] PrayerAlarmService: Prayer monitoring started (checks every 30 seconds)');
     }
   }
 
   /// Check if it's time for any prayer
   Future<void> _checkPrayerTimes() async {
-    if (!_alarmEnabled) return;
+    if (!_alarmEnabled) {
+      if (kDebugMode) {
+        final timestamp = DateTime.now().toIso8601String();
+        print('[$timestamp] PrayerAlarmService: Alarm is disabled, skipping check');
+      }
+      return;
+    }
     
     try {
+      final timestamp = DateTime.now().toIso8601String();
+      if (kDebugMode) {
+        print('[$timestamp] PrayerAlarmService: Checking prayer times...');
+      }
+      
       // Get current prayer times
       final prayerTimesData = await _prayerTimesRepository.getCurrentPrayerTimes('Kuala Lumpur', 'Kuala Lumpur');
       final prayerTimes = prayerTimesData.prayerTimes;
       
       final now = DateTime.now();
       final currentTime = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+      
+      if (kDebugMode) {
+        print('[$timestamp] PrayerAlarmService: Current time: $currentTime');
+        print('[$timestamp] PrayerAlarmService: Prayer times - Fajr: ${prayerTimes.fajr}, Dhuhr: ${prayerTimes.dhuhr}, Asr: ${prayerTimes.asr}, Maghrib: ${prayerTimes.maghrib}, Isha: ${prayerTimes.isha}');
+      }
       
       // Check each prayer time
       final prayers = [
@@ -140,12 +157,17 @@ class PrayerAlarmService {
         
         // Check if this prayer is enabled and it's time for it
         if (_enabledPrayers.contains(prayerName) && _isPrayerTime(currentTime, prayerTime)) {
+          if (kDebugMode) {
+            print('[$timestamp] PrayerAlarmService: 🕌 It is time for $prayerName ($prayerTime), playing azan...');
+          }
           await _playAdhanForPrayer(prayerName);
         }
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      final errorTimestamp = DateTime.now().toIso8601String();
       if (kDebugMode) {
-        print('Error checking prayer times: $e');
+        print('[$errorTimestamp] PrayerAlarmService: ❌ Error checking prayer times: $e');
+        print('[$errorTimestamp] PrayerAlarmService: Stack trace: $stackTrace');
       }
     }
   }
@@ -199,23 +221,44 @@ class PrayerAlarmService {
   /// Play adhan for specific prayer
   Future<void> _playAdhanForPrayer(String prayerName) async {
     try {
+      final timestamp = DateTime.now().toIso8601String();
+      
+      // Check if we already played for this prayer today
+      final now = DateTime.now();
+      final todayKey = '${prayerName}_${now.year}_${now.month}_${now.day}';
+      
       // Update last played info
-      _lastPlayedPrayer = prayerName;
-      _lastPlayedTime = DateTime.now();
-      
-      // Play the adhan
-      await _adhanAudioService.playAdhanForPrayer(prayerName);
-      
-      if (kDebugMode) {
-        print('Adhan played for $prayerName at ${DateTime.now()}');
+      if (_lastPlayedPrayer != prayerName || 
+          _lastPlayedTime == null || 
+          !_isSameDay(_lastPlayedTime!, now)) {
+        
+        _lastPlayedPrayer = prayerName;
+        _lastPlayedTime = now;
+        
+        if (kDebugMode) {
+          print('[$timestamp] PrayerAlarmService: 🕌 Playing azan for $prayerName');
+        }
+        
+        // Play the adhan
+        await _adhanAudioService.playAdhanForPrayer(prayerName);
+        
+        if (kDebugMode) {
+          print('[$timestamp] PrayerAlarmService: ✅ Adhan played for $prayerName at ${now.toString()}');
+        }
+        
+        // Show notification (optional)
+        await _showPrayerNotification(prayerName);
+      } else {
+        if (kDebugMode) {
+          print('[$timestamp] PrayerAlarmService: ⏭️ Skipping azan for $prayerName (already played today)');
+        }
       }
       
-      // Show notification (optional)
-      await _showPrayerNotification(prayerName);
-      
-    } catch (e) {
+    } catch (e, stackTrace) {
+      final errorTimestamp = DateTime.now().toIso8601String();
       if (kDebugMode) {
-        print('Error playing adhan for $prayerName: $e');
+        print('[$errorTimestamp] PrayerAlarmService: ❌ Error playing adhan for $prayerName: $e');
+        print('[$errorTimestamp] PrayerAlarmService: Stack trace: $stackTrace');
       }
     }
   }

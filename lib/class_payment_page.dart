@@ -3,12 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_credit_card/flutter_credit_card.dart';
 import 'package:flutter_stripe/flutter_stripe.dart' as stripe;
+import 'package:url_launcher/url_launcher.dart';
 import 'models/class_model.dart';
 import 'models/payment/order_request.dart';
 import 'blocs/payment/payment_bloc.dart';
 import 'cubit/user_cubit.dart';
 import 'cubit/user_states.dart';
-import 'theme_constants.dart';
 
 class ClassPaymentPage extends StatefulWidget {
   final ClassModel classModel;
@@ -84,24 +84,24 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
         return Scaffold(
           appBar: AppBar(
             title: const Text('Pembayaran Kelas'),
-            backgroundColor: AppColors.appBar,
-            foregroundColor: AppColors.onAppBar,
+            backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
+            foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
           ),
-          backgroundColor: AppColors.background,
+          backgroundColor: Theme.of(context).scaffoldBackgroundColor,
           body: BlocConsumer<PaymentBloc, PaymentState>(
             listener: (context, state) {
               if (state is PaymentError) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(state.message ?? 'Payment failed'),
-                    backgroundColor: Colors.red,
+                    content: Text(state.message ?? 'Pembayaran gagal'),
+                    backgroundColor: Theme.of(context).colorScheme.error,
                   ),
                 );
               } else if (state is PaymentSuccess) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Payment successful! You are now enrolled in the class!'),
-                    backgroundColor: Colors.green,
+                  SnackBar(
+                    content: const Text('Pembayaran berjaya! Anda kini telah mendaftar dalam kelas!'),
+                    backgroundColor: Theme.of(context).colorScheme.primaryContainer,
                   ),
                 );
                 Navigator.of(context).pop();
@@ -124,31 +124,82 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
 
   Widget _buildPaymentContent() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Class Information
-          _buildClassInfo(),
-          const SizedBox(height: 24),
+          // Class Image at Top
+          if (widget.classModel.image != null && widget.classModel.image!.isNotEmpty)
+            _buildClassImage(),
           
-          // Payment Method Selection
-          _buildPaymentMethodSelection(),
-          const SizedBox(height: 24),
-          
-          // Card Payment Form (if selected and not using saved card)
-          if (_selectedIndex == 1) _buildCardPaymentForm(),
-          
-          const SizedBox(height: 24),
-          
-          // Personal Information Form
-          _buildPersonalInfoForm(),
-          
-          const SizedBox(height: 32),
-          
-          // Pay Button
-          _buildPayButton(),
+          Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Class Information
+                _buildClassInfo(),
+                const SizedBox(height: 24),
+
+                      _buildOnPayButton(),
+
+          // // Payment Method Selection
+          // _buildPaymentMethodSelection(),
+          // const SizedBox(height: 24),
+          //
+          // // Card Payment Form (if selected and not using saved card)
+          // if (_selectedIndex == 1) _buildCardPaymentForm(),
+          //
+          // const SizedBox(height: 24),
+          //
+          // // Personal Information Form
+          // _buildPersonalInfoForm(),
+          //
+          // const SizedBox(height: 32),
+          //
+          //       // Pay Button
+          //       _buildPayButton(),
+              ],
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildClassImage() {
+    return ClipRRect(
+      child: Image.network(
+        widget.classModel.image!,
+        width: double.infinity,
+        height: 250,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: double.infinity,
+            height: 250,
+            color: Theme.of(context).colorScheme.surfaceVariant,
+            child: Icon(
+              Icons.image_not_supported,
+              size: 64,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+            ),
+          );
+        },
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: double.infinity,
+            height: 250,
+            color: Theme.of(context).colorScheme.surfaceVariant,
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                    : null,
+              ),
+            ),
+          );
+        },
       ),
     );
   }
@@ -169,7 +220,7 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
             Text(
               widget.classModel.title,
               style: TextStyle(
-                color: AppColors.text,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
                 fontWeight: FontWeight.bold,
                 fontSize: 22,
               ),
@@ -178,7 +229,7 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
             Text(
               'Pengajar: ${widget.classModel.instructor}',
               style: TextStyle(
-                color: AppColors.secondary,
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                 fontSize: 16,
               ),
             ),
@@ -186,7 +237,7 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
             Text(
               widget.classModel.description,
               style: TextStyle(
-                color: AppColors.text,
+                color: Theme.of(context).textTheme.bodyLarge?.color,
                 fontSize: 14,
               ),
             ),
@@ -196,7 +247,7 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
                 Text(
                   'Jumlah:',
                   style: TextStyle(
-                    color: AppColors.text,
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
                     fontWeight: FontWeight.bold,
                     fontSize: 16,
                   ),
@@ -205,7 +256,7 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
                 Text(
                   'RM ${widget.classModel.price.toStringAsFixed(2)}',
                   style: TextStyle(
-                    color: AppColors.primary,
+                    color: Theme.of(context).colorScheme.primary,
                     fontWeight: FontWeight.bold,
                     fontSize: 20,
                   ),
@@ -227,9 +278,9 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Payment Method',
+          'Kaedah Pembayaran',
           style: TextStyle(
-            color: AppColors.text,
+            color: Theme.of(context).textTheme.bodyLarge?.color,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
@@ -251,7 +302,7 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
           child: Row(
             children: [
               _buildToggleButton("Apple Pay", 0),
-              _buildToggleButton("Card", 1),
+              _buildToggleButton("Kad", 1),
             ],
           ),
         ),
@@ -270,12 +321,12 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: _selectedIndex == 2 
-              ? AppColors.primary.withOpacity(0.1)
+              ? Theme.of(context).colorScheme.primary.withOpacity(0.1)
               : Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
             color: _selectedIndex == 2 
-                ? AppColors.primary
+                ? Theme.of(context).colorScheme.primary
                 : Theme.of(context).dividerColor.withValues(alpha: 0.3),
             width: _selectedIndex == 2 ? 2 : 1,
           ),
@@ -284,7 +335,7 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
           children: [
             Icon(
               Icons.credit_card,
-              color: _selectedIndex == 2 ? AppColors.primary : AppColors.text,
+              color: _selectedIndex == 2 ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodyLarge?.color,
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -292,17 +343,17 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Use Saved Card',
+                    'Guna Kad Tersimpan',
                     style: TextStyle(
-                      color: _selectedIndex == 2 ? AppColors.primary : AppColors.text,
+                      color: _selectedIndex == 2 ? Theme.of(context).colorScheme.primary : Theme.of(context).textTheme.bodyLarge?.color,
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
                   ),
                   Text(
-                    'Pay with your previously saved card',
+                    'Bayar dengan kad yang telah disimpan',
                     style: TextStyle(
-                      color: AppColors.secondary,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                       fontSize: 12,
                     ),
                   ),
@@ -312,7 +363,7 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
             if (_selectedIndex == 2)
               Icon(
                 Icons.check_circle,
-                color: AppColors.primary,
+                color: Theme.of(context).colorScheme.primary,
               ),
           ],
         ),
@@ -332,14 +383,14 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
-            color: isSelected ? AppColors.primary : Colors.transparent,
+            color: isSelected ? Theme.of(context).colorScheme.primary : Colors.transparent,
             borderRadius: BorderRadius.circular(32),
           ),
           child: Text(
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: isSelected ? Colors.white : AppColors.text,
+              color: isSelected ? Theme.of(context).colorScheme.onPrimary : Theme.of(context).textTheme.bodyLarge?.color,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -382,9 +433,9 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Personal Information',
+          'Maklumat Peribadi',
           style: TextStyle(
-            color: AppColors.text,
+            color: Theme.of(context).textTheme.bodyLarge?.color,
             fontWeight: FontWeight.bold,
             fontSize: 18,
           ),
@@ -396,9 +447,9 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
               child: TextField(
                 controller: _firstNameController,
                 decoration: InputDecoration(
-                  labelText: 'First Name',
+                  labelText: 'Nama Pertama',
                   border: OutlineInputBorder(),
-                  labelStyle: TextStyle(color: AppColors.text),
+                  labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                 ),
                 onChanged: (value) => _formData['first_name'] = value,
               ),
@@ -408,9 +459,9 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
               child: TextField(
                 controller: _lastNameController,
                 decoration: InputDecoration(
-                  labelText: 'Last Name',
+                  labelText: 'Nama Akhir',
                   border: OutlineInputBorder(),
-                  labelStyle: TextStyle(color: AppColors.text),
+                  labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
                 ),
                 onChanged: (value) => _formData['last_name'] = value,
               ),
@@ -421,9 +472,9 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
         TextField(
           controller: _emailController,
           decoration: InputDecoration(
-            labelText: 'Email',
+            labelText: 'E-mel',
             border: OutlineInputBorder(),
-            labelStyle: TextStyle(color: AppColors.text),
+            labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
           ),
           keyboardType: TextInputType.emailAddress,
           onChanged: (value) => _formData['email'] = value,
@@ -432,9 +483,9 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
         TextField(
           controller: _phoneController,
           decoration: InputDecoration(
-            labelText: 'Phone Number',
+            labelText: 'Nombor Telefon',
             border: OutlineInputBorder(),
-            labelStyle: TextStyle(color: AppColors.text),
+            labelStyle: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
           ),
           keyboardType: TextInputType.phone,
           onChanged: (value) => _formData['phone_number'] = value,
@@ -443,15 +494,70 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
     );
   }
 
+  Widget _buildOnPayButton() {
+    final hasPaymentUrl = widget.classModel.paymentUrl != null && 
+                         widget.classModel.paymentUrl!.isNotEmpty;
+    
+    return SizedBox(
+      width: double.infinity,
+      child: ElevatedButton.icon(
+        icon: const Icon(Icons.payment),
+        label: Text('Bayar RM ${widget.classModel.price.toStringAsFixed(2)}'),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: hasPaymentUrl 
+              ? Theme.of(context).colorScheme.primary
+              : Theme.of(context).colorScheme.primary.withOpacity(0.5),
+          foregroundColor: Theme.of(context).colorScheme.onPrimary,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        onPressed: hasPaymentUrl ? () => _launchPaymentUrl() : null,
+      ),
+    );
+  }
+
+  Future<void> _launchPaymentUrl() async {
+    if (widget.classModel.paymentUrl == null || 
+        widget.classModel.paymentUrl!.isEmpty) {
+      return;
+    }
+
+    try {
+      final uri = Uri.parse(widget.classModel.paymentUrl!);
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Tidak dapat membuka pautan pembayaran'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ralat membuka pautan: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
+  }
+
   Widget _buildPayButton() {
     return SizedBox(
       width: double.infinity,
       child: ElevatedButton.icon(
         icon: const Icon(Icons.payment),
-        label: Text('Pay RM ${widget.classModel.price.toStringAsFixed(2)}'),
+        label: Text('Bayar RM ${widget.classModel.price.toStringAsFixed(2)}'),
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
+          backgroundColor: Theme.of(context).colorScheme.primary,
+          foregroundColor: Theme.of(context).colorScheme.onPrimary,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
           padding: const EdgeInsets.symmetric(vertical: 16),
           textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -467,7 +573,7 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
     
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please log in to purchase class')),
+        const SnackBar(content: Text('Sila log masuk untuk membeli kelas')),
       );
       return;
     }
@@ -530,28 +636,28 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
   bool _validateForm() {
     if (_formData['first_name'] == null || _formData['first_name'].isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your first name')),
+        const SnackBar(content: Text('Sila masukkan nama pertama anda')),
       );
       return false;
     }
     
     if (_formData['last_name'] == null || _formData['last_name'].isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your last name')),
+        const SnackBar(content: Text('Sila masukkan nama akhir anda')),
       );
       return false;
     }
     
     if (_formData['email'] == null || _formData['email'].isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your email')),
+        const SnackBar(content: Text('Sila masukkan e-mel anda')),
       );
       return false;
     }
     
     if (_formData['phone_number'] == null || _formData['phone_number'].isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter your phone number')),
+        const SnackBar(content: Text('Sila masukkan nombor telefon anda')),
       );
       return false;
     }
@@ -560,7 +666,7 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
     if (_selectedIndex == 1) {
       if (_cardNumber.isEmpty || _expiryDate.isEmpty || _cardHolderName.isEmpty || _cvvCode.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter complete card details')),
+          const SnackBar(content: Text('Sila masukkan butiran kad lengkap')),
         );
         return false;
       }
@@ -570,7 +676,7 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
       final savedPaymentMethodId = userState.currentUser?.stripePaymentMethodId;
       if (savedPaymentMethodId == null || savedPaymentMethodId.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No saved card found. Please add a card first.')),
+          const SnackBar(content: Text('Tiada kad tersimpan. Sila tambah kad terlebih dahulu.')),
         );
         return false;
       }

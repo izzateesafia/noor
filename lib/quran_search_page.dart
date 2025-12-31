@@ -26,7 +26,7 @@ class _QuranSearchPageState extends State<QuranSearchPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Search Quran'),
+        title: const Text('Cari Al-Quran'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         elevation: 0,

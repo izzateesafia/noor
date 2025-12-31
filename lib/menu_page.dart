@@ -18,22 +18,10 @@ class MenuPage extends StatelessWidget {
             onTap: () => Navigator.of(context).pushNamed('/quran'),
           ),
           MenuItem(
-            icon: Icons.book,
-            label: 'Mushaf',
-            description: 'Mushaf digital untuk bacaan',
-            onTap: () => Navigator.of(context).pushNamed('/mushaf'),
-          ),
-          MenuItem(
             icon: Icons.picture_as_pdf,
             label: 'Mushaf PDF',
             description: 'Pilih mushaf dengan berbagai riwayah',
             onTap: () => Navigator.of(context).pushNamed('/mushaf_pdf_selection'),
-          ),
-          MenuItem(
-            icon: Icons.search,
-            label: 'Cari Ayat',
-            description: 'Cari ayat dalam Al-Quran',
-            onTap: () => Navigator.of(context).pushNamed('/quran_search'),
           ),
         ],
       ),

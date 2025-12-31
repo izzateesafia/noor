@@ -103,94 +103,150 @@ class _ClassesPageState extends State<ClassesPage> {
                   margin: const EdgeInsets.only(bottom: 16),
                   child: Padding(
                     padding: const EdgeInsets.all(16),
-                    child: Column(
+                    child: Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            if (classItem.image != null && classItem.image!.isNotEmpty)
-                              ClipRRect(
-                                borderRadius: BorderRadius.circular(10),
-                                child: Image.asset(
-                                  classItem.image!,
-                                  width: 70,
-                                  height: 70,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      width: 70,
-                                      height: 70,
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Icon(
-                                        Icons.image,
-                                        color: Theme.of(context).colorScheme.primary,
-                                        size: 36,
-                                      ),
-                                    );
-                                  },
+                        // Image on the left
+                        if (classItem.image != null && classItem.image!.isNotEmpty)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: classItem.image!.startsWith('http://') || classItem.image!.startsWith('https://')
+                                ? Image.network(
+                                    classItem.image!,
+                                    width: 120,
+                                    height: 120,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        width: 120,
+                                        height: 120,
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Icon(
+                                          Icons.image,
+                                          color: Theme.of(context).colorScheme.primary,
+                                          size: 48,
+                                        ),
+                                      );
+                                    },
+                                    loadingBuilder: (context, child, loadingProgress) {
+                                      if (loadingProgress == null) return child;
+                                      return Container(
+                                        width: 120,
+                                        height: 120,
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).colorScheme.surfaceVariant,
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Center(
+                                          child: CircularProgressIndicator(
+                                            value: loadingProgress.expectedTotalBytes != null
+                                                ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                                                : null,
+                                          ),
+                                        ),
+                                      );
+                                    },
+                                  )
+                                : Image.asset(
+                                    classItem.image!,
+                                    width: 120,
+                                    height: 120,
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) {
+                                      return Container(
+                                        width: 120,
+                                        height: 120,
+                                        decoration: BoxDecoration(
+                                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                          borderRadius: BorderRadius.circular(10),
+                                        ),
+                                        child: Icon(
+                                          Icons.image,
+                                          color: Theme.of(context).colorScheme.primary,
+                                          size: 48,
+                                        ),
+                                      );
+                                    },
+                                  ),
+                          )
+                        else
+                          Container(
+                            width: 120,
+                            height: 120,
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            child: Icon(
+                              Icons.class_,
+                              color: Theme.of(context).colorScheme.primary,
+                              size: 48,
+                            ),
+                          ),
+                        const SizedBox(width: 16),
+                        // Details on the right
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                classItem.title,
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
                                 ),
                               ),
-                            const SizedBox(width: 18),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                              const SizedBox(height: 4),
+                              Text(
+                                classItem.instructor,
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
+                                  fontSize: 13,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                classItem.description,
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  fontSize: 13,
+                                  color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.8),
+                                ),
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
                                 children: [
                                   Text(
-                                    classItem.title,
-                                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    classItem.price == 0.0 ? 'Percuma' : 'RM ${classItem.price.toStringAsFixed(2)}',
+                                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                      color: classItem.price == 0.0
+                                          ? Theme.of(context).colorScheme.primary
+                                          : Theme.of(context).textTheme.bodyLarge?.color,
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 16,
+                                      fontSize: 15,
                                     ),
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    classItem.instructor,
-                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                                      color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
-                                      fontSize: 13,
+                                  const Spacer(),
+                                  ElevatedButton(
+                                    onPressed: enrolled ? null : () => _enroll(classItem, user),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: enrolled
+                                          ? Theme.of(context).disabledColor
+                                          : Theme.of(context).colorScheme.primary,
+                                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
                                     ),
+                                    child: Text(enrolled ? 'Didaftar' : 'Info'),
                                   ),
                                 ],
                               ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          classItem.description,
-                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontSize: 14),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Text(
-                              classItem.price == 0.0 ? 'Free' : 'RM ${classItem.price.toStringAsFixed(2)}',
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                color: classItem.price == 0.0
-                                    ? Theme.of(context).colorScheme.primary
-                                    : Theme.of(context).textTheme.bodyLarge?.color,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 15,
-                              ),
-                            ),
-                            const Spacer(),
-                            ElevatedButton(
-                              onPressed: enrolled ? null : () => _enroll(classItem, user),
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: enrolled
-                                    ? Theme.of(context).disabledColor
-                                    : Theme.of(context).colorScheme.primary,
-                                foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
-                              ),
-                              child: Text(enrolled ? 'Enrolled' : 'Enroll'),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),

@@ -236,7 +236,7 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'Featured Videos',
+                    'Video',
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       fontSize: 20,
@@ -292,22 +292,26 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
             children: [
               Icon(
                 Icons.calendar_today,
                 color: AppColors.primary,
                 size: 20,
               ),
-              const SizedBox(width: 12),
-              Text(
-                '${hijriDate.hijriDate} ${hijriDate.hijriMonth} ${hijriDate.hijriYear}',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: AppColors.primary,
+              const SizedBox(width: 8),
+              Flexible(
+                child: Text(
+                  '${hijriDate.hijriDate} ${hijriDate.hijriMonth} ${hijriDate.hijriYear}',
+                  style: TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.primary,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: 6),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(

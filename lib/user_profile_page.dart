@@ -14,6 +14,7 @@ import 'repository/user_repository.dart';
 import 'repository/class_repository.dart';
 import 'services/image_upload_service.dart';
 import 'utils/toast_util.dart';
+import 'main.dart';
 
 class UserProfilePage extends StatelessWidget {
   const UserProfilePage({super.key});
@@ -107,6 +108,19 @@ class _UserProfileViewState extends State<_UserProfileView> {
           appBar: AppBar(
             title: const Text('Profil'),
             actions: [
+              // Theme toggle switch
+              ValueListenableBuilder<ThemeMode>(
+                valueListenable: themeModeNotifier,
+                builder: (context, mode, _) => IconButton(
+                  icon: Icon(
+                    mode == ThemeMode.dark ? Icons.light_mode : Icons.dark_mode,
+                  ),
+                  onPressed: () {
+                    themeModeNotifier.value = mode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+                  },
+                  tooltip: mode == ThemeMode.dark ? 'Tukar ke Mod Terang' : 'Tukar ke Mod Gelap',
+                ),
+              ),
               if (user.isPremium)
                 Padding(
                   padding: const EdgeInsets.all(8.0),

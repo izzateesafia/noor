@@ -19,6 +19,7 @@ class ScheduledAlarmService {
   bool _isInitialized = false;
   bool _alarmEnabled = true;
   Set<String> _enabledPrayers = {'Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'};
+  Timer? _prayerCheckTimer;
 
   // Initialize the alarm service
   Future<void> initialize() async {
@@ -48,6 +49,7 @@ class ScheduledAlarmService {
       await _notifications.initialize(
         initializationSettings,
         onDidReceiveNotificationResponse: _onNotificationTapped,
+        onDidReceiveBackgroundNotificationResponse: _onNotificationTapped,
       );
 
       // Request notification permissions
@@ -73,6 +75,9 @@ class ScheduledAlarmService {
 
       // Schedule all prayer notifications for today
       await _scheduleTodayPrayers();
+      
+      // Start timer to check prayer times and auto-play azan
+      _startPrayerTimeChecker();
 
       _isInitialized = true;
 
@@ -171,20 +176,21 @@ class ScheduledAlarmService {
       final today = DateTime(now.year, now.month, now.day);
 
       // Get real prayer times from API
+      final timestamp = DateTime.now().toIso8601String();
       if (kDebugMode) {
-        print('ScheduledAlarmService: Fetching prayer times from API...');
+        print('[$timestamp] ScheduledAlarmService: Fetching prayer times from API...');
       }
       
       final prayerTimesData = await _prayerTimesRepository.getCurrentPrayerTimes('Kuala Lumpur', 'Kuala Lumpur');
       final prayerTimes = prayerTimesData.prayerTimes;
 
       if (kDebugMode) {
-        print('ScheduledAlarmService: Got prayer times from API:');
-        print('  Fajr: ${prayerTimes.fajr}');
-        print('  Dhuhr: ${prayerTimes.dhuhr}');
-        print('  Asr: ${prayerTimes.asr}');
-        print('  Maghrib: ${prayerTimes.maghrib}');
-        print('  Isha: ${prayerTimes.isha}');
+        print('[$timestamp] ScheduledAlarmService: ✅ Got prayer times from API:');
+        print('[$timestamp]   Fajr: ${prayerTimes.fajr}');
+        print('[$timestamp]   Dhuhr: ${prayerTimes.dhuhr}');
+        print('[$timestamp]   Asr: ${prayerTimes.asr}');
+        print('[$timestamp]   Maghrib: ${prayerTimes.maghrib}');
+        print('[$timestamp]   Isha: ${prayerTimes.isha}');
       }
 
       // Convert prayer time strings to DateTime objects
@@ -227,12 +233,15 @@ class ScheduledAlarmService {
         payload: 'reschedule',
       );
 
+      final endTimestamp = DateTime.now().toIso8601String();
       if (kDebugMode) {
-        print('Scheduled ${_enabledPrayers.length} prayer notifications for today');
+        print('[$endTimestamp] ScheduledAlarmService: ✅ Scheduled ${_enabledPrayers.length} prayer notifications for today');
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      final errorTimestamp = DateTime.now().toIso8601String();
       if (kDebugMode) {
-        print('Error scheduling prayers: $e');
+        print('[$errorTimestamp] ScheduledAlarmService: ❌ Error scheduling prayers: $e');
+        print('[$errorTimestamp] ScheduledAlarmService: Stack trace: $stackTrace');
       }
     }
   }
@@ -242,6 +251,16 @@ class ScheduledAlarmService {
     try {
       final prayerDisplayName = _getPrayerDisplayName(prayerName);
       final notificationId = prayerName.hashCode;
+      final timestamp = DateTime.now().toIso8601String();
+      
+      // Store prayer info in SharedPreferences for automatic playback
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('scheduled_prayer_$notificationId', prayerName);
+      await prefs.setInt('scheduled_prayer_time_$notificationId', prayerTime.millisecondsSinceEpoch);
+      
+      if (kDebugMode) {
+        print('[$timestamp] ScheduledAlarmService: Storing prayer info for $prayerDisplayName (ID: $notificationId) at ${prayerTime.toString()}');
+      }
       
       // Convert to timezone-aware datetime
       final scheduledTz = tz.TZDateTime.from(prayerTime, tz.local);
@@ -293,28 +312,116 @@ class ScheduledAlarmService {
       );
 
       if (kDebugMode) {
-        print('Scheduled notification for $prayerDisplayName at ${prayerTime.toString()}');
+        print('[$timestamp] ScheduledAlarmService: ✅ Scheduled notification for $prayerDisplayName at ${prayerTime.toString()} (ID: $notificationId)');
       }
     } catch (e) {
+      final errorTimestamp = DateTime.now().toIso8601String();
       if (kDebugMode) {
-        print('Error scheduling notification for $prayerName: $e');
+        print('[$errorTimestamp] ScheduledAlarmService: ❌ Error scheduling notification for $prayerName: $e');
       }
     }
   }
 
-  // Handle notification tap
+  // Handle notification tap or background notification
   void _onNotificationTapped(NotificationResponse response) {
-    if (response.payload == 'reschedule') {
-      // Reschedule tomorrow's prayers
-      _scheduleTodayPrayers();
-    } else if (response.payload?.startsWith('adhan_') == true) {
-      // Play adhan audio when notification is tapped
-      final prayerName = response.payload!.substring(6);
-      _adhanAudioService.playAdhanForPrayer(prayerName);
-    }
+    final timestamp = DateTime.now().toIso8601String();
+    final payload = response.payload ?? '';
     
     if (kDebugMode) {
-      print('Notification tapped: ${response.payload}');
+      print('[$timestamp] ScheduledAlarmService: Notification received - Payload: $payload, Action: ${response.actionId}');
+    }
+    
+    if (payload == 'reschedule') {
+      // Reschedule tomorrow's prayers
+      if (kDebugMode) {
+        print('[$timestamp] ScheduledAlarmService: Rescheduling prayers');
+      }
+      _scheduleTodayPrayers();
+    } else if (payload.startsWith('adhan_')) {
+      // Play adhan audio when notification is tapped or received
+      final prayerName = payload.substring(6);
+      if (kDebugMode) {
+        print('[$timestamp] ScheduledAlarmService: 🕌 Playing azan for $prayerName (notification triggered)');
+      }
+      _adhanAudioService.playAdhanForPrayer(prayerName);
+    } else if (payload.startsWith('test_adhan_')) {
+      // Test notification
+      final prayerName = payload.substring(11);
+      if (kDebugMode) {
+        print('[$timestamp] ScheduledAlarmService: 🧪 Test azan for $prayerName');
+      }
+      _adhanAudioService.playAdhanForPrayer(prayerName);
+    } else if (payload.startsWith('test_scheduled_')) {
+      // Test scheduled notification
+      final prayerName = payload.substring(15);
+      if (kDebugMode) {
+        print('[$timestamp] ScheduledAlarmService: 🧪 Test scheduled azan for $prayerName');
+      }
+      _adhanAudioService.playAdhanForPrayer(prayerName);
+    }
+  }
+  
+  // Start timer to periodically check prayer times and auto-play azan
+  void _startPrayerTimeChecker() {
+    // Check every 30 seconds for prayer times
+    _prayerCheckTimer?.cancel();
+    _prayerCheckTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+      _checkAndPlayAzanForCurrentTime();
+    });
+    
+    // Also check immediately
+    _checkAndPlayAzanForCurrentTime();
+    
+    if (kDebugMode) {
+      final timestamp = DateTime.now().toIso8601String();
+      print('[$timestamp] ScheduledAlarmService: ✅ Started prayer time checker (checks every 30 seconds)');
+    }
+  }
+  
+  // Check and play azan for any prayer time that just passed
+  Future<void> _checkAndPlayAzanForCurrentTime() async {
+    if (!_alarmEnabled) return;
+    
+    try {
+      final now = DateTime.now();
+      final timestamp = now.toIso8601String();
+      
+      // Get all scheduled prayer notifications
+      final prefs = await SharedPreferences.getInstance();
+      final allKeys = prefs.getKeys();
+      
+      for (String key in allKeys) {
+        if (key.startsWith('scheduled_prayer_') && !key.endsWith('_time')) {
+          final notificationIdStr = key.replaceFirst('scheduled_prayer_', '');
+          final prayerName = prefs.getString(key);
+          final prayerTimeMs = prefs.getInt('scheduled_prayer_time_$notificationIdStr');
+          
+          if (prayerName != null && prayerTimeMs != null) {
+            final prayerTime = DateTime.fromMillisecondsSinceEpoch(prayerTimeMs);
+            final timeDiff = now.difference(prayerTime).inMinutes;
+            
+            // If prayer time was 0-2 minutes ago, play azan
+            if (timeDiff >= 0 && timeDiff <= 2) {
+              // Check if we already played for this prayer today
+              final lastPlayedKey = 'last_played_${prayerName}_${now.year}_${now.month}_${now.day}';
+              final lastPlayed = prefs.getBool(lastPlayedKey) ?? false;
+              
+              if (!lastPlayed) {
+                if (kDebugMode) {
+                  print('[$timestamp] ScheduledAlarmService: 🕌 Auto-playing azan for $prayerName (time check: ${prayerTime.toString()})');
+                }
+                await _adhanAudioService.playAdhanForPrayer(prayerName);
+                await prefs.setBool(lastPlayedKey, true);
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      final errorTimestamp = DateTime.now().toIso8601String();
+      if (kDebugMode) {
+        print('[$errorTimestamp] ScheduledAlarmService: Error checking prayer times: $e');
+      }
     }
   }
 
@@ -387,42 +494,70 @@ class ScheduledAlarmService {
 
   // Test adhan for specific prayer
   Future<void> testAdhan(String prayerName) async {
+    final prayerDisplayName = _getPrayerDisplayName(prayerName);
+    final timestamp = DateTime.now().toIso8601String();
+    
+    if (kDebugMode) {
+      print('[$timestamp] ScheduledAlarmService: Testing adhan for $prayerName ($prayerDisplayName)');
+    }
+    
+    // Show notification first, then play audio
+    try {
+      await _notifications.show(
+        prayerName.hashCode + 1000, // Different ID to avoid conflicts
+        'Uji - Waktu $prayerDisplayName',
+        'Azan sedang dimainkan sekarang',
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            'adhan_channel',
+            'Azan Notifications',
+            channelDescription: 'Notifications for prayer times and adhan',
+            importance: Importance.max,
+            priority: Priority.high,
+            playSound: false, // Don't play sound from notification since we're playing full azan
+            enableVibration: true,
+            showWhen: true,
+            icon: '@mipmap/ic_launcher',
+            fullScreenIntent: true,
+            category: AndroidNotificationCategory.alarm,
+            autoCancel: false, // Keep notification visible during test
+            visibility: NotificationVisibility.public,
+            ongoing: false,
+            enableLights: true,
+            ledColor: const Color(0xFF4CAF50), // Green for test
+            ledOnMs: 1000,
+            ledOffMs: 500,
+            ticker: 'Uji Azan - $prayerDisplayName',
+            largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: false, // Don't play sound from notification since we're playing full azan
+            interruptionLevel: InterruptionLevel.active,
+          ),
+        ),
+        payload: 'test_adhan_$prayerName',
+      );
+      
+      if (kDebugMode) {
+        print('[$timestamp] ScheduledAlarmService: ✅ Test notification shown for $prayerDisplayName');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('[$timestamp] ScheduledAlarmService: ❌ Error showing test notification: $e');
+      }
+    }
+    
+    // Small delay to ensure notification appears before audio
+    await Future.delayed(const Duration(milliseconds: 300));
+    
+    // Play the adhan audio
     await _adhanAudioService.playAdhanForPrayer(prayerName);
     
-    // Also show immediate notification for testing
-    await _notifications.show(
-      prayerName.hashCode + 1000, // Different ID to avoid conflicts
-      'Test - Waktu ${_getPrayerDisplayName(prayerName)}',
-      'Azan akan dimainkan sekarang',
-      NotificationDetails(
-        android: AndroidNotificationDetails(
-          'adhan_channel',
-          'Azan Notifications',
-          channelDescription: 'Notifications for prayer times and adhan',
-          importance: Importance.max,
-          priority: Priority.high,
-          playSound: true,
-          enableVibration: true,
-          showWhen: true,
-          icon: '@mipmap/ic_launcher',
-          sound: RawResourceAndroidNotificationSound(
-            prayerName.toLowerCase() == 'fajr' ? 'azan_fajr' : 'azan'
-          ),
-          fullScreenIntent: true,
-          category: AndroidNotificationCategory.alarm,
-          autoCancel: true,
-          visibility: NotificationVisibility.public,
-        ),
-        iOS: DarwinNotificationDetails(
-          presentAlert: true,
-          presentBadge: true,
-          presentSound: true,
-          sound: prayerName.toLowerCase() == 'fajr' ? 'azan_fajr.mp3' : 'azan.mp3',
-          interruptionLevel: InterruptionLevel.critical,
-        ),
-      ),
-      payload: 'test_adhan_$prayerName',
-    );
+    if (kDebugMode) {
+      print('[$timestamp] ScheduledAlarmService: ✅ Test adhan audio started for $prayerDisplayName');
+    }
   }
 
   // Schedule test notification for next minute
@@ -510,6 +645,8 @@ class ScheduledAlarmService {
 
   // Dispose resources
   void dispose() {
+    _prayerCheckTimer?.cancel();
+    _prayerCheckTimer = null;
     _adhanAudioService.dispose();
     _isInitialized = false;
   }

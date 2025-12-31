@@ -88,7 +88,7 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
       await _prayerAlarmService.testAdhan(prayerName);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Menguji azan untuk $prayerName')),
+          SnackBar(content: Text('Menguji azan untuk ${_getPrayerDisplayName(prayerName)}')),
         );
       }
     } catch (e) {
@@ -98,6 +98,57 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
         );
       }
     }
+  }
+
+  void _showQuickTestDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.play_circle, color: AppColors.primary),
+              const SizedBox(width: 8),
+              const Text('Uji Azan Sekarang'),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'Pilih solat untuk menguji azan:',
+                style: TextStyle(fontSize: 16),
+              ),
+              const SizedBox(height: 16),
+              ...['Fajr', 'Dhuhr', 'Asr', 'Maghrib', 'Isha'].map((prayer) {
+                return ListTile(
+                  leading: Icon(
+                    Icons.volume_up,
+                    color: AppColors.primary,
+                  ),
+                  title: Text(_getPrayerDisplayName(prayer)),
+                  onTap: () {
+                    Navigator.of(context).pop();
+                    _testAdhan(prayer);
+                  },
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                );
+              }).toList(),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Batal'),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -117,7 +168,7 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Prayer Alarm Settings'),
+        title: const Text('Tetapan Penggera Solat'),
         backgroundColor: AppColors.primary,
         foregroundColor: Colors.white,
         actions: [
@@ -181,6 +232,67 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
               ),
             ),
 
+            const SizedBox(height: 16),
+
+            // Quick Test Card
+            Card(
+              elevation: 2,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              color: Colors.green[50],
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Icons.play_circle, color: Colors.green[700], size: 24),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Uji Azan Sekarang',
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green[700],
+                                ),
+                              ),
+                              Text(
+                                'Uji azan untuk mana-mana solat tanpa menunggu waktu solat',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: Colors.green[700],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: _showQuickTestDialog,
+                        icon: const Icon(Icons.play_arrow),
+                        label: const Text('Pilih Solat untuk Uji'),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green[700],
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
 
             // Prayer Selection
             if (_alarmEnabled) ...[
@@ -259,95 +371,95 @@ class _PrayerAlarmSettingsPageState extends State<PrayerAlarmSettingsPage> {
             ],
 
             // Information Card
-            Card(
-              elevation: 2,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              color: Colors.blue[50],
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.info_outline, color: Colors.blue[700], size: 24),
-                        const SizedBox(width: 12),
-                        Text(
-                          'Cara ia berfungsi',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.blue[700],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      '• Aplikasi memeriksa waktu solat setiap minit\n'
-                      '• Azan akan dimainkan secara automatik apabila waktu solat tiba\n'
-                      '• Azan setiap solat dimainkan hanya sekali sehari\n'
-                      '• Pastikan kelantangan peranti anda dihidupkan\n'
-                      '• Aplikasi berfungsi di latar belakang apabila diminimumkan',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.blue[700],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
-
-            // iOS Setup Guide
-            Card(
-              color: Colors.orange[50],
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Icons.phone_iphone, color: Colors.orange[700], size: 24),
-                        const SizedBox(width: 8),
-                        Text(
-                          'iOS Users - Important!',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: Colors.orange[700],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Apple limits background audio for third-party apps. For best results, please check the iOS setup guide.',
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.orange[700],
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: () {
-                          Navigator.pushNamed(context, '/ios_setup_guide');
-                        },
-                        icon: const Icon(Icons.settings),
-                        label: const Text('iOS Setup Guide'),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orange[700],
-                          foregroundColor: Colors.white,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 16),
+            // Card(
+            //   elevation: 2,
+            //   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+            //   color: Colors.blue[50],
+            //   child: Padding(
+            //     padding: const EdgeInsets.all(16),
+            //     child: Column(
+            //       crossAxisAlignment: CrossAxisAlignment.start,
+            //       children: [
+            //         Row(
+            //           children: [
+            //             Icon(Icons.info_outline, color: Colors.blue[700], size: 24),
+            //             const SizedBox(width: 12),
+            //             Text(
+            //               'Cara ia berfungsi',
+            //               style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            //                 fontWeight: FontWeight.bold,
+            //                 color: Colors.blue[700],
+            //               ),
+            //             ),
+            //           ],
+            //         ),
+            //         const SizedBox(height: 12),
+            //         Text(
+            //           '• Aplikasi memeriksa waktu solat setiap minit\n'
+            //           '• Azan akan dimainkan secara automatik apabila waktu solat tiba\n'
+            //           '• Azan setiap solat dimainkan hanya sekali sehari\n'
+            //           '• Pastikan kelantangan peranti anda dihidupkan\n'
+            //           '• Aplikasi berfungsi di latar belakang apabila diminimumkan',
+            //           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            //             color: Colors.blue[700],
+            //           ),
+            //         ),
+            //       ],
+            //     ),
+            //   ),
+            // ),
+            //
+            // const SizedBox(height: 16),
+            //
+            // // iOS Setup Guide
+            // Card(
+            //   color: Colors.orange[50],
+            //   child: Padding(
+            //     padding: const EdgeInsets.all(16),
+            //     child: Column(
+            //       crossAxisAlignment: CrossAxisAlignment.start,
+            //       children: [
+            //         Row(
+            //           children: [
+            //             Icon(Icons.phone_iphone, color: Colors.orange[700], size: 24),
+            //             const SizedBox(width: 8),
+            //             Text(
+            //               'iOS Users - Important!',
+            //               style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            //                 fontWeight: FontWeight.bold,
+            //                 color: Colors.orange[700],
+            //               ),
+            //             ),
+            //           ],
+            //         ),
+            //         const SizedBox(height: 8),
+            //         Text(
+            //           'Apple limits background audio for third-party apps. For best results, please check the iOS setup guide.',
+            //           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            //             color: Colors.orange[700],
+            //           ),
+            //         ),
+            //         const SizedBox(height: 8),
+            //         SizedBox(
+            //           width: double.infinity,
+            //           child: ElevatedButton.icon(
+            //             onPressed: () {
+            //               Navigator.pushNamed(context, '/ios_setup_guide');
+            //             },
+            //             icon: const Icon(Icons.settings),
+            //             label: const Text('iOS Setup Guide'),
+            //             style: ElevatedButton.styleFrom(
+            //               backgroundColor: Colors.orange[700],
+            //               foregroundColor: Colors.white,
+            //             ),
+            //           ),
+            //         ),
+            //       ],
+            //     ),
+            //   ),
+            // ),
+            //
+            // const SizedBox(height: 16),
 
             // // Test Buttons
             // Column(

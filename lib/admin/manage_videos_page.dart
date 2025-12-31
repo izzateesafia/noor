@@ -45,12 +45,12 @@ class _ManageVideosView extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Delete Video'),
-        content: Text('Are you sure you want to delete "${video.title}"?'),
+        title: const Text('Padam Video'),
+        content: Text('Adakah anda pasti mahu memadam "${video.title}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('Cancel'),
+            child: const Text('Batal'),
           ),
           TextButton(
             onPressed: () {
@@ -58,7 +58,7 @@ class _ManageVideosView extends StatelessWidget {
               context.read<VideoCubit>().deleteVideo(video.id);
             },
             child: Text(
-              'Delete',
+              'Padam',
               style: TextStyle(
                 color: Theme.of(context).colorScheme.error,
               ),
@@ -73,19 +73,19 @@ class _ManageVideosView extends StatelessWidget {
     final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Duplicate Video'),
-        content: Text('Are you sure you want to duplicate "${video.title}"?'),
+        title: const Text('Salin Video'),
+        content: Text('Adakah anda pasti mahu menyalin "${video.title}"?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(false),
-            child: const Text('Cancel'),
+            child: const Text('Batal'),
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(true),
             style: ElevatedButton.styleFrom(
               backgroundColor: Theme.of(context).colorScheme.primary,
             ),
-            child: const Text('Duplicate'),
+            child: const Text('Salin'),
           ),
         ],
       ),
@@ -109,7 +109,7 @@ class _ManageVideosView extends StatelessWidget {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          video.isHidden ? 'Video is now visible' : 'Video is now hidden',
+          video.isHidden ? 'Video kini kelihatan' : 'Video kini disembunyikan',
         ),
         backgroundColor: Colors.green, // Success color - keep as is
       ),
@@ -134,7 +134,7 @@ class _ManageVideosView extends StatelessWidget {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Video sections updated successfully'),
+                  content: const Text('Bahagian video berjaya dikemaskini'),
                   backgroundColor: Colors.green, // Success color - keep as is
                 ),
               );
@@ -149,14 +149,14 @@ class _ManageVideosView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Manage Videos'),
+        title: const Text('Urus Video'),
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
         foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
             onPressed: () => _addVideo(context),
-            tooltip: 'Add Video',
+            tooltip: 'Tambah Video',
           ),
         ],
       ),
@@ -176,12 +176,12 @@ class _ManageVideosView extends StatelessWidget {
                       Icon(Icons.error_outline, size: 64,
                           color: Theme.of(context).colorScheme.error),
                       const SizedBox(height: 16),
-                      Text('Error: ${state.error}'),
+                      Text('Ralat: ${state.error}'),
                       const SizedBox(height: 16),
                       ElevatedButton(
                         onPressed: () =>
                             context.read<VideoCubit>().fetchVideos(),
-                        child: const Text('Retry'),
+                        child: const Text('Cuba Lagi'),
                       ),
                     ],
                   ),
@@ -196,11 +196,11 @@ class _ManageVideosView extends StatelessWidget {
                       Icon(Icons.video_library_outlined, size: 64,
                           color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
                       const SizedBox(height: 16),
-                      const Text('No videos yet'),
+                      const Text('Tiada video lagi'),
                       const SizedBox(height: 8),
                       ElevatedButton(
                         onPressed: () => _addVideo(context),
-                        child: const Text('Add First Video'),
+                        child: const Text('Tambah Video Pertama'),
                       ),
                       const SizedBox(height: 16),
                       OutlinedButton.icon(
@@ -211,14 +211,14 @@ class _ManageVideosView extends StatelessWidget {
                             ScaffoldMessenger.of(context).showSnackBar(
                               const SnackBar(
                                 content: Text(
-                                    'Dummy videos added successfully!'),
+                                    'Video dummy berjaya ditambah!'),
                                 backgroundColor: Colors.green, // Success color - keep as is // Success color - keep as is
                               ),
                             );
                           }
                         },
                         icon: const Icon(Icons.auto_awesome),
-                        label: const Text('Add Dummy Videos (for testing)'),
+                        label: const Text('Tambah Video Dummy (untuk ujian)'),
                       ),
                     ],
                   ),
@@ -269,9 +269,9 @@ class _ManageVideosView extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           if (video.category != null) Text(
-                              'Category: ${video.category}'),
+                              'Kategori: ${video.category}'),
                           if (video.views != null) Text(
-                              'Views: ${video.views}'),
+                              'Tontonan: ${video.views}'),
                           Wrap(
                             spacing: 8,
                             children: [
@@ -285,7 +285,7 @@ class _ManageVideosView extends StatelessWidget {
                                 ),
                               if (video.isFeatured)
                                 Chip(
-                                  label: const Text('Featured',
+                                  label: const Text('Pilihan',
                                       style: TextStyle(fontSize: 10)),
                                   backgroundColor: Colors.blue[100],
                                   padding: EdgeInsets.zero,
@@ -301,7 +301,7 @@ class _ManageVideosView extends StatelessWidget {
                                 ),
                               if (video.isForYou)
                                 Chip(
-                                  label: const Text('For You',
+                                  label: const Text('Untuk Anda',
                                       style: TextStyle(fontSize: 10)),
                                   backgroundColor: Colors.purple[100],
                                   padding: EdgeInsets.zero,
@@ -358,7 +358,7 @@ class _ManageVideosView extends StatelessWidget {
                               children: [
                                 Icon(Icons.copy, color: Colors.blue, size: 20),
                                 const SizedBox(width: 12),
-                                const Text('Duplicate'),
+                                const Text('Salin'),
                               ],
                             ),
                           ),
@@ -369,7 +369,7 @@ class _ManageVideosView extends StatelessWidget {
                                 Icon(Icons.category, color: Colors.purple,
                                     size: 20),
                                 const SizedBox(width: 12),
-                                const Text('Select Sections'),
+                                const Text('Pilih Bahagian'),
                               ],
                             ),
                           ),
@@ -384,7 +384,7 @@ class _ManageVideosView extends StatelessWidget {
                                   size: 20,
                                 ),
                                 const SizedBox(width: 12),
-                                Text(video.isHidden ? 'Show' : 'Hide'),
+                                Text(video.isHidden ? 'Tunjukkan' : 'Sembunyikan'),
                               ],
                             ),
                           ),
@@ -394,7 +394,7 @@ class _ManageVideosView extends StatelessWidget {
                               children: [
                                 Icon(Icons.delete, color: Colors.red, size: 20),
                                 const SizedBox(width: 12),
-                                const Text('Delete',
+                                const Text('Padam',
                                     style: TextStyle(color: Colors.red)),
                               ],
                             ),
@@ -440,13 +440,13 @@ class _SectionSelectorDialogState extends State<_SectionSelectorDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text('Select Sections for "${widget.video.title}"'),
+      title: Text('Pilih Bahagian untuk "${widget.video.title}"'),
       content: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CheckboxListTile(
-            title: const Text('Featured'),
+            title: const Text('Pilihan'),
             value: _isFeatured,
             onChanged: (value) {
               setState(() {
@@ -464,7 +464,7 @@ class _SectionSelectorDialogState extends State<_SectionSelectorDialog> {
             },
           ),
           CheckboxListTile(
-            title: const Text('For You'),
+            title: const Text('Untuk Anda'),
             value: _isForYou,
             onChanged: (value) {
               setState(() {
@@ -477,13 +477,13 @@ class _SectionSelectorDialogState extends State<_SectionSelectorDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.of(context).pop(),
-          child: const Text('Cancel'),
+          child: const Text('Batal'),
         ),
         ElevatedButton(
           onPressed: () async {
             await widget.onSave(_isFeatured, _isPopular, _isForYou);
           },
-          child: const Text('Save'),
+          child: const Text('Simpan'),
         ),
       ],
     );

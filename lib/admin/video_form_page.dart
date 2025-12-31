@@ -145,7 +145,7 @@ class _VideoFormPageState extends State<VideoFormPage> {
       // Validate URLs if using URL mode
       if (_useThumbnailUrl && thumbnailUrl.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter a thumbnail URL or upload an image')),
+          const SnackBar(content: Text('Sila masukkan URL gambar kecil atau muat naik gambar')),
         );
         setState(() {
           _isUploading = false;
@@ -155,7 +155,7 @@ class _VideoFormPageState extends State<VideoFormPage> {
 
       if (_useVideoUrl && videoUrl.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please enter a video URL or upload a video file')),
+          const SnackBar(content: Text('Sila masukkan URL video atau muat naik fail video')),
         );
         setState(() {
           _isUploading = false;
@@ -195,7 +195,7 @@ class _VideoFormPageState extends State<VideoFormPage> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error saving video: $e')),
+          SnackBar(content: Text('Ralat menyimpan video: $e')),
         );
         setState(() {
           _isUploading = false;
@@ -239,7 +239,7 @@ class _VideoFormPageState extends State<VideoFormPage> {
                 ),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
-                    return 'Please enter a title';
+                    return 'Sila masukkan tajuk';
                   }
                   return null;
                 },
@@ -282,7 +282,7 @@ class _VideoFormPageState extends State<VideoFormPage> {
                               ),
                               Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 12),
-                                child: Text('Upload'),
+                                child: const Text('Muat Naik'),
                               ),
                             ],
                           ),
@@ -299,7 +299,7 @@ class _VideoFormPageState extends State<VideoFormPage> {
                           ),
                           validator: (value) {
                             if (_useThumbnailUrl && (value == null || value.trim().isEmpty)) {
-                              return 'Please enter a thumbnail URL';
+                              return 'Sila masukkan URL gambar kecil';
                             }
                             return null;
                           },
@@ -332,13 +332,13 @@ class _VideoFormPageState extends State<VideoFormPage> {
                             ElevatedButton.icon(
                               onPressed: () => _pickThumbnail(ImageSource.gallery),
                               icon: const Icon(Icons.photo_library),
-                              label: const Text('Gallery'),
+                              label: const Text('Galeri'),
                             ),
                             const SizedBox(width: 12),
                             ElevatedButton.icon(
                               onPressed: () => _pickThumbnail(ImageSource.camera),
                               icon: const Icon(Icons.camera_alt),
-                              label: const Text('Camera'),
+                              label: const Text('Kamera'),
                             ),
                           ],
                         ),
@@ -376,7 +376,7 @@ class _VideoFormPageState extends State<VideoFormPage> {
                               ),
                               Padding(
                                 padding: EdgeInsets.symmetric(horizontal: 12),
-                                child: Text('Upload'),
+                                child: const Text('Muat Naik'),
                               ),
                             ],
                           ),
@@ -393,7 +393,7 @@ class _VideoFormPageState extends State<VideoFormPage> {
                           ),
                           validator: (value) {
                             if (_useVideoUrl && (value == null || value.trim().isEmpty)) {
-                              return 'Please enter a video URL';
+                              return 'Sila masukkan URL video';
                             }
                             return null;
                           },
@@ -424,7 +424,7 @@ class _VideoFormPageState extends State<VideoFormPage> {
                         ElevatedButton.icon(
                           onPressed: _pickVideo,
                           icon: const Icon(Icons.video_file),
-                          label: const Text('Pick Video File'),
+                          label: const Text('Pilih Fail Video'),
                         ),
                       ],
                     ],
@@ -447,7 +447,7 @@ class _VideoFormPageState extends State<VideoFormPage> {
                     items: [
                       const DropdownMenuItem<String>(
                         value: null,
-                        child: Text('None'),
+                        child: const Text('Tiada'),
                       ),
                       ...VideoCategory.predefinedCategories.map((category) {
                         return DropdownMenuItem<String>(
@@ -457,7 +457,7 @@ class _VideoFormPageState extends State<VideoFormPage> {
                       }),
                       const DropdownMenuItem<String>(
                         value: '__CUSTOM__',
-                        child: Text('Custom'),
+                        child: const Text('Kustom'),
                       ),
                     ],
                     onChanged: (value) {
@@ -482,9 +482,9 @@ class _VideoFormPageState extends State<VideoFormPage> {
                     TextFormField(
                       controller: _customCategoryController,
                       decoration: const InputDecoration(
-                        labelText: 'Custom Category Name',
+                        labelText: 'Nama Kategori Kustom',
                         border: OutlineInputBorder(),
-                        hintText: 'Enter custom category',
+                        hintText: 'Masukkan kategori kustom',
                       ),
                     ),
                   ],
@@ -502,8 +502,8 @@ class _VideoFormPageState extends State<VideoFormPage> {
               ),
               const SizedBox(height: 16),
               SwitchListTile(
-                title: const Text('Premium Video'),
-                subtitle: const Text('Only premium users can access this video'),
+                title: const Text('Video Premium'),
+                subtitle: const Text('Hanya pengguna premium boleh mengakses video ini'),
                 value: _isPremium,
                 onChanged: (value) {
                   setState(() {
@@ -534,10 +534,10 @@ class _VideoFormPageState extends State<VideoFormPage> {
                             ),
                           ),
                           SizedBox(width: 12),
-                          Text('Uploading...'),
+                          const Text('Memuat naik...'),
                         ],
                       )
-                    : const Text('Save Video'),
+                    : const Text('Simpan Video'),
               ),
             ],
           ),

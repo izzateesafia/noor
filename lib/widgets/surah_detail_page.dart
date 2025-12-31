@@ -329,9 +329,9 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
       // TODO: Implement audio playback using audioplayers
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Playing ${widget.surahName} audio...'),
+          content: Text('Memainkan audio ${widget.surahName}...'),
           action: SnackBarAction(
-            label: 'Stop',
+            label: 'Hentikan',
             onPressed: () {
               setState(() {
                 _isPlaying = false;
@@ -353,7 +353,7 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
     // TODO: Implement audio playback using audioplayers
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Playing verse $verseNumber audio...'),
+        content: Text('Memainkan audio ayat $verseNumber...'),
       ),
     );
   }
@@ -365,7 +365,7 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
     // TODO: Implement sharing functionality
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Sharing verse $verseNumber...'),
+        content: Text('Berkongsi ayat $verseNumber...'),
       ),
     );
   }

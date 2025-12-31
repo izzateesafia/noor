@@ -224,19 +224,19 @@ class _DailyVerseWidgetState extends State<DailyVerseWidget> {
                 // TODO: Implement audio playback using audioplayers
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
-                    content: Text('Audio playback will be implemented'),
+                    content: const Text('Pemain audio akan ditambah tidak lama lagi'),
                   ),
                 );
               },
               icon: const Icon(Icons.play_arrow),
-              label: const Text('Play Audio'),
+              label: const Text('Mainkan Audio'),
             ),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Close'),
+            child: const Text('Tutup'),
           ),
         ],
       ),

@@ -26,6 +26,7 @@ class _ClassFormPageState extends State<ClassFormPage> {
   late TextEditingController levelController;
   late TextEditingController descriptionController;
   late TextEditingController imageController;
+  late TextEditingController paymentUrlController;
 
   // Enhanced fields
   TimeOfDay? selectedTime;
@@ -49,19 +50,53 @@ class _ClassFormPageState extends State<ClassFormPage> {
     final c = widget.initialClass;
     titleController = TextEditingController(text: c?.title ?? '');
     instructorController = TextEditingController(text: c?.instructor ?? '');
-    priceController = TextEditingController(text: c?.price.toString() ?? '0.0');
+    priceController = TextEditingController(text: c?.price.toString() ?? '');
     levelController = TextEditingController(text: c?.level ?? '');
     descriptionController = TextEditingController(text: c?.description ?? '');
     imageController = TextEditingController(text: c?.image ?? '');
+    paymentUrlController = TextEditingController(text: c?.paymentUrl ?? '');
     // Parse time and days from initialClass
-    if (c != null) {
-      // Parse time (e.g., '14:00')
-      if (c.time.isNotEmpty && c.time.contains(':')) {
-        final parts = c.time.split(':');
-        selectedTime = TimeOfDay(hour: int.tryParse(parts[0]) ?? 14, minute: int.tryParse(parts[1]) ?? 0);
-      }
-      // Parse days (e.g., 'Mon,Wed')
+    if (c != null && c.time.isNotEmpty) {
+      // First, extract days by finding day names in the string
       selectedDays = allDays.where((d) => c.time.contains(d)).toList();
+      
+      // Remove days from the string to get the time portion
+      String timePortion = c.time;
+      for (final day in allDays) {
+        timePortion = timePortion.replaceAll(day, '');
+      }
+      // Remove separators and clean up
+      timePortion = timePortion.replaceAll('|', '').replaceAll(',', '').trim();
+      
+      // Parse time from the remaining string
+      if (timePortion.isNotEmpty && timePortion.contains(':')) {
+        // Handle 24-hour format (HH:MM) or 12-hour format (H:MM AM/PM)
+        final timePattern = RegExp(r'(\d{1,2}):(\d{2})\s*(AM|PM)?', caseSensitive: false);
+        final match = timePattern.firstMatch(timePortion);
+        
+        if (match != null) {
+          int hour = int.tryParse(match.group(1) ?? '') ?? 0;
+          int minute = int.tryParse(match.group(2) ?? '') ?? 0;
+          final period = match.group(3)?.toUpperCase();
+          
+          // Convert 12-hour to 24-hour format if needed
+          if (period == 'PM' && hour != 12) {
+            hour += 12;
+          } else if (period == 'AM' && hour == 12) {
+            hour = 0;
+          }
+          
+          selectedTime = TimeOfDay(hour: hour, minute: minute);
+        } else {
+          // Fallback: try simple HH:MM format
+          final parts = timePortion.split(':');
+          if (parts.length >= 2) {
+            final hour = int.tryParse(parts[0].trim()) ?? 0;
+            final minute = int.tryParse(parts[1].trim().split(' ')[0]) ?? 0;
+            selectedTime = TimeOfDay(hour: hour, minute: minute);
+          }
+        }
+      }
       // Parse duration (e.g., '60 min')
       final dur = int.tryParse(c.duration.replaceAll(RegExp(r'[^0-9]'), ''));
       if (dur != null) durationMinutes = dur;
@@ -93,6 +128,7 @@ class _ClassFormPageState extends State<ClassFormPage> {
     levelController.dispose();
     descriptionController.dispose();
     imageController.dispose();
+    paymentUrlController.dispose();
     super.dispose();
   }
 
@@ -249,9 +285,25 @@ class _ClassFormPageState extends State<ClassFormPage> {
       return;
     }
 
-    final timeStr = selectedTime != null ? selectedTime!.format(context) : '';
-    final daysStr = selectedDays.join(',');
-    final timeField = daysStr.isNotEmpty ? '$daysStr $timeStr' : timeStr;
+    // Format time consistently using 24-hour format
+    final timeStr = selectedTime != null 
+        ? '${selectedTime!.hour.toString().padLeft(2, '0')}:${selectedTime!.minute.toString().padLeft(2, '0')}'
+        : '';
+    
+    // Format days with proper spacing
+    final daysStr = selectedDays.join(', ');
+    
+    // Combine days and time with a clear separator
+    String timeField;
+    if (daysStr.isNotEmpty && timeStr.isNotEmpty) {
+      timeField = '$daysStr | $timeStr';
+    } else if (daysStr.isNotEmpty) {
+      timeField = daysStr;
+    } else if (timeStr.isNotEmpty) {
+      timeField = timeStr;
+    } else {
+      timeField = '';
+    }
     // Use uploaded Firebase Storage URL if available, otherwise use the controller value
     final imageUrl = _uploadedImageUrl ?? imageController.text.trim();
     
@@ -265,6 +317,7 @@ class _ClassFormPageState extends State<ClassFormPage> {
       level: selectedLevel ?? levelController.text,
       description: descriptionController.text.trim(),
       image: imageUrl.isNotEmpty ? imageUrl : null,
+      paymentUrl: paymentUrlController.text.trim().isEmpty ? null : paymentUrlController.text.trim(),
     );
     
     if (widget.initialClass == null) {
@@ -627,6 +680,52 @@ class _ClassFormPageState extends State<ClassFormPage> {
                             : Colors.white,
                       ),
                       maxLines: 3,
+                    ),
+                    const SizedBox(height: 14),
+                    TextField(
+                      controller: paymentUrlController,
+                      decoration: InputDecoration(
+                        labelText: 'Payment URL',
+                        hintText: 'https://example.com/payment',
+                        filled: true,
+                        fillColor: Theme.of(context).brightness == Brightness.light 
+                            ? Colors.grey[100] 
+                            : Colors.grey[800],
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: Theme.of(context).brightness == Brightness.light 
+                                ? Colors.black 
+                                : Colors.white,
+                          ),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: Theme.of(context).brightness == Brightness.light 
+                                ? Colors.black 
+                                : Colors.white,
+                          ),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(
+                            color: AppColors.primary,
+                            width: 2,
+                          ),
+                        ),
+                        labelStyle: TextStyle(
+                          color: Theme.of(context).brightness == Brightness.light 
+                              ? Colors.black87 
+                              : Colors.white70,
+                        ),
+                      ),
+                      style: TextStyle(
+                        color: Theme.of(context).brightness == Brightness.light 
+                            ? Colors.black 
+                            : Colors.white,
+                      ),
+                      keyboardType: TextInputType.url,
                     ),
                     const SizedBox(height: 14),
                     Text('Class Image', style: Theme.of(context).textTheme.titleMedium),

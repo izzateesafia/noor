@@ -30,7 +30,7 @@ class _AllVideosPageState extends State<AllVideosPage> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('All Videos'),
+          title: const Text('Semua Video'),
           backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
           foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
         ),
@@ -125,7 +125,7 @@ class _AllVideosPageState extends State<AllVideosPage> {
                           ElevatedButton.icon(
                             onPressed: () => context.read<VideoCubit>().fetchVideos(),
                             icon: const Icon(Icons.refresh),
-                            label: const Text('Retry'),
+                            label: const Text('Cuba Lagi'),
                           ),
                         ],
                       ),
