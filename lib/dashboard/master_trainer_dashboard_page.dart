@@ -516,7 +516,7 @@ class _AreaChart extends StatelessWidget {
     return Container(
       height: 120,
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: CustomPaint(
@@ -624,7 +624,7 @@ class _CircularProgressChart extends StatelessWidget {
       width: 120,
       height: 120,
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Stack(
@@ -686,7 +686,7 @@ class _TopClassesList extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.darkCard : Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
         ),
         child: Text(
@@ -698,7 +698,7 @@ class _TopClassesList extends StatelessWidget {
 
     return Container(
                 decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
+        color: Theme.of(context).cardColor,
                   borderRadius: BorderRadius.circular(12),
                 ),
       child: Column(
@@ -809,7 +809,7 @@ class _NewRegistrationsChart extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -1041,7 +1041,7 @@ class _ActiveInactiveStats extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.darkCard : Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
         ),
         child: const Center(child: Text('No data')),
@@ -1051,7 +1051,7 @@ class _ActiveInactiveStats extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
@@ -1143,7 +1143,7 @@ class _ActiveInactiveStats extends StatelessWidget {
             ),
             child: Icon(
               icon,
-              color: Colors.white,
+              color: Theme.of(context).colorScheme.onPrimary,
               size: 24,
             ),
           ),
@@ -1155,7 +1155,7 @@ class _ActiveInactiveStats extends StatelessWidget {
                 Text(
                   label,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: Colors.grey[700],
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                         fontSize: 12,
                       ),
                 ),
@@ -1174,7 +1174,7 @@ class _ActiveInactiveStats extends StatelessWidget {
                     Text(
                       '${percentage.toStringAsFixed(1)}%',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                           ),
                     ),
                   ],
@@ -1226,7 +1226,7 @@ class _EnrollmentChart extends StatelessWidget {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isDark ? AppColors.darkCard : Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(12),
         ),
         child: const Center(child: Text('No enrollment data')),
@@ -1238,7 +1238,7 @@ class _EnrollmentChart extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isDark ? AppColors.darkCard : Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(

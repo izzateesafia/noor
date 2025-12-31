@@ -109,7 +109,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
               decoration: BoxDecoration(
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.1),
+                    color: Theme.of(context).colorScheme.shadow.withOpacity(0.1),
                     blurRadius: 10,
                     offset: const Offset(0, -2),
                   ),
@@ -125,7 +125,7 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
                 type: BottomNavigationBarType.fixed,
                 backgroundColor: Theme.of(context).scaffoldBackgroundColor,
                 selectedItemColor: AppColors.primary,
-                unselectedItemColor: Colors.grey[600],
+                unselectedItemColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                 selectedLabelStyle: const TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 12,

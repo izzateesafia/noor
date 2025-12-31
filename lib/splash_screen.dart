@@ -73,17 +73,21 @@ class _SplashScreenState extends State<SplashScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.flash_on, size: 100, color: Colors.red.shade900),
+            Icon(
+              Icons.flash_on,
+              size: 100,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             const SizedBox(height: 24),
             Text(
               'Daily Quran',
               style: TextStyle(
-                color: Colors.red.shade900,
+                color: Theme.of(context).colorScheme.primary,
                 fontSize: 40,
                 fontWeight: FontWeight.bold,
               ),
@@ -92,9 +96,12 @@ class _SplashScreenState extends State<SplashScreen> {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Center(
-                child: const Text(
+                child: Text(
                   'Teman harian untuk menjadi Muslim yang lebih baik',
-                  style: TextStyle(color: Colors.white, fontSize: 18),
+                  style: TextStyle(
+                    color: Theme.of(context).textTheme.bodyLarge?.color,
+                    fontSize: 18,
+                  ),
                 ),
               ),
             ),

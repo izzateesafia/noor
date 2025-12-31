@@ -246,7 +246,7 @@ class _NewsFormPageState extends State<NewsFormPage> {
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
                         height: 200,
-                        color: Colors.grey[300],
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
                         child: const Icon(Icons.error),
                       );
                     },

@@ -57,7 +57,12 @@ class _ManageVideosView extends StatelessWidget {
               Navigator.of(ctx).pop();
               context.read<VideoCubit>().deleteVideo(video.id);
             },
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(
+              'Delete',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.error,
+              ),
+            ),
           ),
         ],
       ),
@@ -77,7 +82,9 @@ class _ManageVideosView extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+            ),
             child: const Text('Duplicate'),
           ),
         ],
@@ -104,7 +111,7 @@ class _ManageVideosView extends StatelessWidget {
         content: Text(
           video.isHidden ? 'Video is now visible' : 'Video is now hidden',
         ),
-        backgroundColor: Colors.green,
+        backgroundColor: Colors.green, // Success color - keep as is
       ),
     );
   }
@@ -128,7 +135,7 @@ class _ManageVideosView extends StatelessWidget {
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
                   content: Text('Video sections updated successfully'),
-                  backgroundColor: Colors.green,
+                  backgroundColor: Colors.green, // Success color - keep as is
                 ),
               );
             }
@@ -144,7 +151,7 @@ class _ManageVideosView extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Manage Videos'),
         backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
       ),
       body: Stack(
         children: [
@@ -160,7 +167,7 @@ class _ManageVideosView extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.error_outline, size: 64,
-                          color: Colors.red[300]),
+                          color: Theme.of(context).colorScheme.error),
                       const SizedBox(height: 16),
                       Text('Error: ${state.error}'),
                       const SizedBox(height: 16),
@@ -180,7 +187,7 @@ class _ManageVideosView extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(Icons.video_library_outlined, size: 64,
-                          color: Colors.grey[400]),
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4)),
                       const SizedBox(height: 16),
                       const Text('No videos yet'),
                       const SizedBox(height: 8),
@@ -198,7 +205,7 @@ class _ManageVideosView extends StatelessWidget {
                               const SnackBar(
                                 content: Text(
                                     'Dummy videos added successfully!'),
-                                backgroundColor: Colors.green,
+                                backgroundColor: Colors.green, // Success color - keep as is // Success color - keep as is
                               ),
                             );
                           }
@@ -231,7 +238,7 @@ class _ManageVideosView extends StatelessWidget {
                             return Container(
                               width: 60,
                               height: 60,
-                              color: Colors.grey[300],
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
                               child: const Icon(Icons.video_library),
                             );
                           },

@@ -107,7 +107,7 @@ class _ClassFormPageState extends State<ClassFormPage> {
               seedColor: AppColors.primary,
               brightness: Theme.of(context).brightness,
               primary: AppColors.primary,
-              onPrimary: Colors.white,
+              onPrimary: Theme.of(context).colorScheme.onPrimary,
             ),
           ),
           child: child!,
@@ -220,7 +220,7 @@ class _ClassFormPageState extends State<ClassFormPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to upload image: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -306,7 +306,7 @@ class _ClassFormPageState extends State<ClassFormPage> {
                 content: Text(isEdit
                   ? 'Failed to update class: ${state.error ?? 'Unknown error'}'
                   : 'Failed to add class: ${state.error ?? 'Unknown error'}'),
-                backgroundColor: Colors.red,
+                backgroundColor: Theme.of(context).colorScheme.error,
               ),
             );
           }

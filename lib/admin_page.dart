@@ -29,7 +29,10 @@ class AdminPage extends StatelessWidget {
           const Text('Siaran Langsung sebagai Ustaz', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
           const SizedBox(height: 18),
           ListTile(
-            leading: const Icon(Icons.ondemand_video, color: Colors.red),
+            leading: Icon(
+              Icons.ondemand_video,
+              color: Theme.of(context).colorScheme.primary,
+            ),
             title: const Text('YouTube Live'),
             subtitle: const Text('Buka YouTube Studio untuk memulakan siaran langsung'),
             onTap: () async {
@@ -41,7 +44,10 @@ class AdminPage extends StatelessWidget {
             },
           ),
           ListTile(
-            leading: const Icon(Icons.music_note, color: Colors.black),
+            leading: Icon(
+              Icons.music_note,
+              color: Theme.of(context).iconTheme.color,
+            ),
             title: const Text('TikTok Live'),
             subtitle: const Text('Open TikTok to start a live stream'),
             onTap: () async {
@@ -92,7 +98,9 @@ class AdminPage extends StatelessWidget {
                         padding: const EdgeInsets.only(bottom: 16),
                         child: Text(
                           errorMessage!,
-                          style: TextStyle(color: Colors.red[700]),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                          ),
                         ),
                       ),
                     TextField(
@@ -109,7 +117,7 @@ class AdminPage extends StatelessWidget {
                     Text(
                       'This message will be displayed on the dashboard for all users.',
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                           ),
                     ),
                   ],
@@ -146,7 +154,7 @@ class AdminPage extends StatelessWidget {
                           ScaffoldMessenger.of(context).showSnackBar(
                             const SnackBar(
                               content: Text('Welcome message updated successfully!'),
-                              backgroundColor: Colors.green,
+                              backgroundColor: Colors.green, // Success color - keep as is
                             ),
                           );
                         }
@@ -437,7 +445,7 @@ class _AdminActionButton extends StatelessWidget {
     final borderColor = primary;
     return OutlinedButton.icon(
       style: OutlinedButton.styleFrom(
-        backgroundColor: isDark ? cardColor : Colors.white,
+        backgroundColor: cardColor,
         foregroundColor: primary,
         side: BorderSide(color: borderColor, width: 2),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),

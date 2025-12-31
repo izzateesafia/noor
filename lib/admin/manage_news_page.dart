@@ -61,7 +61,9 @@ class _ManageNewsPageState extends State<ManageNewsPage> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+            ),
             child: const Text('Salin'),
           ),
         ],
@@ -85,7 +87,7 @@ class _ManageNewsPageState extends State<ManageNewsPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Berita "${news.title}" telah disalin'),
-              backgroundColor: Colors.green,
+              backgroundColor: Colors.green, // Success color - keep as is
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -98,7 +100,7 @@ class _ManageNewsPageState extends State<ManageNewsPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Ralat menyalin berita: $e'),
-              backgroundColor: Colors.red,
+              backgroundColor: Theme.of(context).colorScheme.error,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -152,7 +154,7 @@ class _ManageNewsPageState extends State<ManageNewsPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Ralat: ${state.error}'),
-              backgroundColor: Colors.red,
+              backgroundColor: Theme.of(context).colorScheme.error,
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -177,7 +179,7 @@ class _ManageNewsPageState extends State<ManageNewsPage> {
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
                       valueColor: AlwaysStoppedAnimation<Color>(
-                        Theme.of(context).appBarTheme.foregroundColor ?? Colors.white,
+                        Theme.of(context).colorScheme.onPrimary,
                       ),
                     ),
                   ),
@@ -336,7 +338,11 @@ class _ManageNewsPageState extends State<ManageNewsPage> {
                     value: 'duplicate',
                     child: Row(
                       children: [
-                        Icon(Icons.copy, color: Colors.blue, size: 20),
+                        Icon(
+                          Icons.copy,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 20,
+                        ),
                         const SizedBox(width: 12),
                         const Text('Duplicate'),
                       ],
@@ -346,7 +352,11 @@ class _ManageNewsPageState extends State<ManageNewsPage> {
                     value: 'delete',
                     child: Row(
                       children: [
-                        Icon(Icons.delete, color: Colors.red, size: 20),
+                        Icon(
+                          Icons.delete,
+                          color: Theme.of(context).colorScheme.error,
+                          size: 20,
+                        ),
                         const SizedBox(width: 12),
                         const Text('Padam'),
                       ],

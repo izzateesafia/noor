@@ -98,7 +98,7 @@ class NewsDetailPage extends StatelessWidget {
                         label: const Text('Buka Pautan'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
+                          foregroundColor: Theme.of(context).colorScheme.onPrimary,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                       ),

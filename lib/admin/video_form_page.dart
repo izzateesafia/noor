@@ -222,7 +222,7 @@ class _VideoFormPageState extends State<VideoFormPage> {
         appBar: AppBar(
           title: Text(widget.initialVideo == null ? 'Add Video' : 'Edit Video'),
           backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
+          foregroundColor: Theme.of(context).colorScheme.onPrimary,
         ),
         body: SingleChildScrollView(
           padding: const EdgeInsets.all(16),
@@ -516,11 +516,11 @@ class _VideoFormPageState extends State<VideoFormPage> {
                 onPressed: _isUploading ? null : _save,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
-                  foregroundColor: Colors.white,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 child: _isUploading
-                    ? const Row(
+                    ?  Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           SizedBox(
@@ -528,7 +528,9 @@ class _VideoFormPageState extends State<VideoFormPage> {
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Theme.of(context).colorScheme.onPrimary,
+                              ),
                             ),
                           ),
                           SizedBox(width: 12),

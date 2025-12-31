@@ -382,7 +382,7 @@ class _TrainerActionCard extends StatelessWidget {
                     Text(
                       subtitle,
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.grey[600],
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                           ),
                     ),
                   ],
@@ -391,7 +391,7 @@ class _TrainerActionCard extends StatelessWidget {
               Icon(
                 Icons.arrow_forward_ios,
                 size: 16,
-                color: Colors.grey[400],
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
               ),
             ],
           ),

@@ -46,6 +46,100 @@ class _ManageHadithsPageState extends State<ManageHadithsPage> {
     await context.read<HadithCubit>().deleteHadith(hadith.id);
   }
 
+  Widget _buildHadithImage(String imageUrl) {
+    // Check if it's a network URL (Firebase Storage)
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return Image.network(
+        imageUrl,
+        width: 80,
+        height: 80,
+        fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded / loadingProgress.expectedTotalBytes!
+                    : null,
+                color: AppColors.primary,
+              ),
+            ),
+          );
+        },
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.book,
+              color: AppColors.primary,
+              size: 40,
+            ),
+          );
+        },
+      );
+    }
+    // Check if it's an asset
+    else if (imageUrl.startsWith('assets/')) {
+      return Image.asset(
+        imageUrl,
+        width: 80,
+        height: 80,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.book,
+              color: AppColors.primary,
+              size: 40,
+            ),
+          );
+        },
+      );
+    }
+    // Otherwise, treat as local file
+    else {
+      return Image.file(
+        File(imageUrl),
+        width: 80,
+        height: 80,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: 80,
+            height: 80,
+            decoration: BoxDecoration(
+              color: AppColors.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.book,
+              color: AppColors.primary,
+              size: 40,
+            ),
+          );
+        },
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -70,7 +164,11 @@ class _ManageHadithsPageState extends State<ManageHadithsPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.error, color: Colors.red, size: 48),
+                  Icon(
+                    Icons.error,
+                    color: Theme.of(context).colorScheme.error,
+                    size: 48,
+                  ),
                   const SizedBox(height: 16),
                   Text(state.error ?? 'Error loading hadiths'),
                   const SizedBox(height: 16),
@@ -97,7 +195,7 @@ class _ManageHadithsPageState extends State<ManageHadithsPage> {
               return Card(
                 elevation: 2,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                color: Theme.of(context).brightness == Brightness.dark ? AppColors.darkCard : AppColors.lightCard,
+                color: Theme.of(context).cardColor,
                 margin: const EdgeInsets.only(bottom: 16),
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -107,49 +205,7 @@ class _ManageHadithsPageState extends State<ManageHadithsPage> {
                       if (hadith.image != null && hadith.image!.isNotEmpty)
                         ClipRRect(
                           borderRadius: BorderRadius.circular(10),
-                          child: hadith.image!.startsWith('assets/')
-                              ? Image.asset(
-                                  hadith.image!,
-                                  width: 80,
-                                  height: 80,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      width: 80,
-                                      height: 80,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primary.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Icon(
-                                        Icons.book,
-                                        color: AppColors.primary,
-                                        size: 40,
-                                      ),
-                                    );
-                                  },
-                                )
-                              : Image.file(
-                                  File(hadith.image!),
-                                  width: 80,
-                                  height: 80,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (context, error, stackTrace) {
-                                    return Container(
-                                      width: 80,
-                                      height: 80,
-                                      decoration: BoxDecoration(
-                                        color: AppColors.primary.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(10),
-                                      ),
-                                      child: Icon(
-                                        Icons.book,
-                                        color: AppColors.primary,
-                                        size: 40,
-                                      ),
-                                    );
-                                  },
-                                ),
+                          child: _buildHadithImage(hadith.image!),
                         ),
                       const SizedBox(width: 18),
                       Expanded(
@@ -159,7 +215,7 @@ class _ManageHadithsPageState extends State<ManageHadithsPage> {
                             Text(
                               hadith.title,
                               style: TextStyle(
-                                color: Theme.of(context).brightness == Brightness.dark ? AppColors.darkText : AppColors.text,
+                                color: Theme.of(context).textTheme.bodyLarge?.color,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 16,
                               ),
@@ -168,7 +224,7 @@ class _ManageHadithsPageState extends State<ManageHadithsPage> {
                             Text(
                               hadith.content,
                               style: TextStyle(
-                                color: Theme.of(context).brightness == Brightness.dark ? AppColors.darkText : AppColors.text,
+                                color: Theme.of(context).textTheme.bodyLarge?.color,
                                 fontSize: 14,
                               ),
                             ),
@@ -205,7 +261,10 @@ class _ManageHadithsPageState extends State<ManageHadithsPage> {
                             onPressed: () => _editHadith(context, hadith),
                           ),
                           IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
+                            icon: Icon(
+                              Icons.delete,
+                              color: Theme.of(context).colorScheme.error,
+                            ),
                             tooltip: 'Delete',
                             onPressed: () => _deleteHadith(context, hadith),
                           ),

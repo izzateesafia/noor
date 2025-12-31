@@ -170,38 +170,17 @@ class _DailyVerseWidgetState extends State<DailyVerseWidget> {
               const SizedBox(height: 16),
 
               // Action Buttons
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton.icon(
-                      onPressed: () {
-                        // Navigate to Quran reader
-                        Navigator.of(context).pushNamed('/quran');
-                      },
-                      icon: const Icon(Icons.visibility, size: 16),
-                      label: const Text('Baca Surah Penuh'),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: AppColors.primary,
-                        side: BorderSide(color: AppColors.primary),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: () {
-                        // Play audio
-                        _playAudio();
-                      },
-                      icon: const Icon(Icons.play_arrow, size: 16),
-                      label: const Text('Dengar'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
+              OutlinedButton.icon(
+                onPressed: () {
+                  // Navigate to Quran reader
+                  Navigator.of(context).pushNamed('/quran');
+                },
+                icon: const Icon(Icons.visibility, size: 16),
+                label: const Text('Baca Surah Penuh'),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.primary,
+                  side: BorderSide(color: AppColors.primary),
+                ),
               ),
             ],
           ),

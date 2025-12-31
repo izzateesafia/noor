@@ -29,9 +29,9 @@ class ManageUsersPage extends StatelessWidget {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content: Text('Akses ditolak: Hanya admin boleh mengakses halaman ini.'),
-                  backgroundColor: Colors.red,
+                  backgroundColor: Theme.of(context).colorScheme.error,
                 ),
               );
             });
@@ -102,7 +102,12 @@ class _ManageUsersViewState extends State<_ManageUsersView> {
               context.read<UserCubit>().deleteUser(user.id);
               Navigator.of(ctx).pop();
             },
-            child: const Text('Padam', style: TextStyle(color: Colors.red)),
+            child: Text(
+              'Padam',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.error,
+              ),
+            ),
           ),
         ],
       ),
@@ -162,7 +167,7 @@ class _ManageUsersViewState extends State<_ManageUsersView> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${user.name} telah ditugaskan sebagai Jurulatih.'),
-            backgroundColor: Colors.green,
+            backgroundColor: Colors.green, // Success color - keep as is
           ),
         );
       }
@@ -231,7 +236,7 @@ class _ManageUsersViewState extends State<_ManageUsersView> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('${user.name} telah ditugaskan sebagai Master Trainer.'),
-            backgroundColor: Colors.green,
+            backgroundColor: Colors.green, // Success color - keep as is
           ),
         );
       }
@@ -256,14 +261,16 @@ class _ManageUsersViewState extends State<_ManageUsersView> {
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
           decoration: BoxDecoration(
-            color: Colors.red.shade100,
+            color: Theme.of(context).colorScheme.error.withOpacity(0.1),
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.red.shade300),
+            border: Border.all(
+              color: Theme.of(context).colorScheme.error.withOpacity(0.3),
+            ),
           ),
           child: Text(
             'Admin',
             style: TextStyle(
-              color: Colors.red.shade700,
+              color: Theme.of(context).colorScheme.error,
               fontSize: 10,
               fontWeight: FontWeight.bold,
             ),
@@ -487,7 +494,7 @@ class _ManageUsersViewState extends State<_ManageUsersView> {
                             // Delete user
                             SlidableAction(
                               onPressed: (_) => _deleteUser(user),
-                              backgroundColor: Colors.red,
+                              backgroundColor: Theme.of(context).colorScheme.error,
                               foregroundColor: Colors.white,
                               icon: Icons.delete,
                               label: 'Delete',

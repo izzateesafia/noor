@@ -314,10 +314,10 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
                   color: AppColors.primary,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: const Text(
+                child: Text(
                   'JAKIM',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onPrimary,
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
@@ -372,7 +372,7 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(userState.error ?? 'Gagal memuatkan data pengguna'),
-                    backgroundColor: Colors.red,
+                    backgroundColor: Theme.of(context).colorScheme.error,
                     duration: const Duration(seconds: 4),
                     action: SnackBarAction(
                       label: 'Cuba Lagi',
@@ -407,7 +407,7 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(state.message),
-                    backgroundColor: Colors.green,
+                    backgroundColor: Colors.green, // Success color - keep as is
                   ),
                 );
                 context.read<LiveStreamCubit>().clearMessage();
@@ -415,7 +415,7 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(state.message),
-                    backgroundColor: Colors.red,
+                    backgroundColor: Theme.of(context).colorScheme.error,
                   ),
                 );
                 context.read<LiveStreamCubit>().clearMessage();
@@ -511,12 +511,18 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
                       const SizedBox(height: 8),
                       Text(
                         liveStream.description,
-                        style: const TextStyle(fontSize: 14, color: Colors.grey),
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                        ),
                         textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 18),
                       ListTile(
-                        leading: const Icon(Icons.live_tv, color: Colors.red),
+                        leading: Icon(
+                          Icons.live_tv,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
                         title: const Text('Tonton di TikTok'),
                         subtitle: Text(liveStream.tiktokLiveLink),
                         onTap: () async {
@@ -527,9 +533,9 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
                           } else {
                             if (context.mounted) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Tidak dapat membuka pautan TikTok'),
-                                  backgroundColor: Colors.red,
+                                SnackBar(
+                                  content: const Text('Tidak dapat membuka pautan TikTok'),
+                                  backgroundColor: Theme.of(context).colorScheme.error,
                                 ),
                               );
                             }
@@ -597,12 +603,14 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
                                       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                                     ),
                                     icon: isLoading 
-                                        ? const SizedBox(
+                                        ? SizedBox(
                                             width: 16,
                                             height: 16,
                                             child: CircularProgressIndicator(
                                               strokeWidth: 2,
-                                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                              valueColor: AlwaysStoppedAnimation<Color>(
+                                                Theme.of(context).colorScheme.onPrimary,
+                                              ),
                                             ),
                                           )
                                         : const Icon(Icons.live_tv),
@@ -768,12 +776,12 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               border: Border.all(
-                                color: Colors.white,
+                                color: Theme.of(context).colorScheme.surface,
                                 width: 2,
                               ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: Colors.black.withOpacity(0.2),
+                                  color: Theme.of(context).colorScheme.shadow.withOpacity(0.2),
                                   blurRadius: 8,
                                   offset: const Offset(0, 2),
                                 ),
@@ -787,9 +795,9 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
                                       errorBuilder: (context, error, stackTrace) {
                                         return Container(
                                           color: Theme.of(context).colorScheme.primary,
-                                          child: const Icon(
+                                          child: Icon(
                                             Icons.person,
-                                            color: Colors.white,
+                                            color: Theme.of(context).colorScheme.onPrimary,
                                             size: 24,
                                           ),
                                         );
@@ -797,9 +805,9 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
                                     )
                                   : Container(
                                       color: Theme.of(context).colorScheme.primary,
-                                      child: const Icon(
+                                      child: Icon(
                                         Icons.person,
-                                        color: Colors.white,
+                                        color: Theme.of(context).colorScheme.onPrimary,
                                         size: 24,
                                       ),
                                     ),

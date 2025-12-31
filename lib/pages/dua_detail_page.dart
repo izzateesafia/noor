@@ -49,13 +49,13 @@ class DuaDetailPage extends StatelessWidget {
                         Icon(
                           Icons.calendar_today,
                           size: 16,
-                          color: Theme.of(context).iconTheme.color?.withOpacity(0.6) ?? Colors.grey,
+                          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                         ),
                         const SizedBox(width: 8),
                         Text(
                           DateFormat('dd MMMM yyyy', 'ms').format(dua.uploaded!),
                           style: TextStyle(
-                            color: Theme.of(context).iconTheme.color?.withOpacity(0.6) ?? Colors.grey,
+                            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                             fontSize: 14,
                           ),
                         ),
@@ -153,7 +153,7 @@ class DuaDetailPage extends StatelessWidget {
                         label: const Text('Buka Pautan'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
+                          foregroundColor: Theme.of(context).colorScheme.onPrimary,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                       ),

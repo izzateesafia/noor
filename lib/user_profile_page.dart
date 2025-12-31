@@ -111,7 +111,12 @@ class _UserProfileViewState extends State<_UserProfileView> {
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Chip(
-                    label: const Text('Premium', style: TextStyle(color: Colors.white)),
+                    label: Text(
+                      'Premium',
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
                     backgroundColor: Colors.amber,
                   ),
                 )
@@ -126,7 +131,7 @@ class _UserProfileViewState extends State<_UserProfileView> {
                     label: const Text('Upgrade'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.amber,
-                      foregroundColor: Colors.white,
+                      foregroundColor: Theme.of(context).colorScheme.onSurface,
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(20),
@@ -182,19 +187,28 @@ class _UserProfileViewState extends State<_UserProfileView> {
                   decoration: BoxDecoration(
                     color: Theme.of(context).colorScheme.primary,
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white, width: 2),
+                    border: Border.all(
+                      color: Theme.of(context).colorScheme.surface,
+                      width: 2,
+                    ),
                   ),
                   child: IconButton(
                     icon: _isUploadingImage
-                        ? const SizedBox(
+                        ? SizedBox(
                             width: 20,
                             height: 20,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Theme.of(context).colorScheme.onPrimary,
+                              ),
                             ),
                           )
-                        : const Icon(Icons.camera_alt, size: 20, color: Colors.white),
+                        : Icon(
+                            Icons.camera_alt,
+                            size: 20,
+                            color: Theme.of(context).colorScheme.onPrimary,
+                          ),
                     onPressed: _isUploadingImage ? null : () => _showImagePickerDialog(user),
                   ),
                 ),
@@ -211,11 +225,18 @@ class _UserProfileViewState extends State<_UserProfileView> {
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.location_on, size: 16, color: Colors.grey),
+                Icon(
+                  Icons.location_on,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                ),
                 const SizedBox(width: 4),
                 Text(
                   user.locationName!,
-                  style: TextStyle(color: Colors.grey[700], fontSize: 14),
+                  style: TextStyle(
+                    color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                    fontSize: 14,
+                  ),
                 ),
               ],
             ),
@@ -334,13 +355,13 @@ class _UserProfileViewState extends State<_UserProfileView> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.blue.withOpacity(0.1),
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
                 '${user.enrolledClassIds.length}',
                 style: TextStyle(
-                  color: Colors.blue[700],
+                  color: Theme.of(context).colorScheme.primary,
                   fontWeight: FontWeight.bold,
                   fontSize: 14,
                 ),

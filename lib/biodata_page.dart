@@ -359,7 +359,7 @@ class _BiodataPageState extends State<BiodataPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
             content: Text('Biodata saved successfully!'),
-            backgroundColor: Colors.green,
+            backgroundColor: Colors.green, // Success color - keep as is
           ),
         );
 
@@ -371,7 +371,7 @@ class _BiodataPageState extends State<BiodataPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Failed to save biodata: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -423,7 +423,7 @@ class _BiodataPageState extends State<BiodataPage> {
               Text(
                 'Please complete your profile to get started',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.grey[600],
+                  color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                 ),
               ),
               const SizedBox(height: 32),
@@ -449,12 +449,14 @@ class _BiodataPageState extends State<BiodataPage> {
                           Positioned.fill(
                             child: Container(
                               decoration: BoxDecoration(
-                                color: Colors.black.withOpacity(0.5),
+                                color: Theme.of(context).colorScheme.shadow.withOpacity(0.5),
                                 shape: BoxShape.circle,
                               ),
-                              child: const Center(
+                              child: Center(
                                 child: CircularProgressIndicator(
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                  valueColor: AlwaysStoppedAnimation<Color>(
+                                    Theme.of(context).colorScheme.onSurface,
+                                  ),
                                 ),
                               ),
                             ),
@@ -713,13 +715,15 @@ class _BiodataPageState extends State<BiodataPage> {
                   onPressed: (_isLoading || !_acceptedPolicy) ? null : _saveBiodata,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: Theme.of(context).colorScheme.primary,
-                    foregroundColor: Colors.white,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
                   ),
                   child: _isLoading
-                      ? const CircularProgressIndicator(color: Colors.white)
+                      ? CircularProgressIndicator(
+                          color: Theme.of(context).colorScheme.onPrimary,
+                        )
                       : const Text(
                           'Save & Continue',
                           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),

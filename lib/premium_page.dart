@@ -115,14 +115,14 @@ class _PremiumPageState extends State<PremiumPage> {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
                     content: Text(state.message ?? 'Payment failed'),
-                    backgroundColor: Colors.red,
+                    backgroundColor: Theme.of(context).colorScheme.error,
                   ),
                 );
               } else if (state is PaymentSuccess) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
                     content: Text('Payment successful! Welcome to Premium!'),
-                    backgroundColor: Colors.green,
+                    backgroundColor: Colors.green, // Success color - keep as is
                   ),
                 );
                 
@@ -173,25 +173,25 @@ class _PremiumPageState extends State<PremiumPage> {
             ),
             child: Column(
               children: [
-                const Icon(
+                Icon(
                   Icons.star,
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.onPrimary,
                   size: 48,
                 ),
                 const SizedBox(height: 16),
-                const Text(
+                Text(
                   'Upgrade to Premium',
                   style: TextStyle(
-                    color: Colors.white,
+                    color: Theme.of(context).colorScheme.onPrimary,
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 8),
-                const Text(
+                Text(
                   'Unlock all premium features and content',
                   style: TextStyle(
-                    color: Colors.white70,
+                    color: Theme.of(context).colorScheme.onPrimary.withOpacity(0.9),
                     fontSize: 16,
                   ),
                 ),
@@ -336,10 +336,10 @@ class _PremiumPageState extends State<PremiumPage> {
                         color: AppColors.primary,
                         borderRadius: BorderRadius.circular(20),
                       ),
-                      child: const Text(
+                      child: Text(
                         'POPULAR',
                         style: TextStyle(
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onPrimary,
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
                         ),
@@ -360,9 +360,9 @@ class _PremiumPageState extends State<PremiumPage> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
                   children: [
-                    const Icon(
+                    Icon(
                       Icons.check_circle,
-                      color: Colors.green,
+                      color: Colors.green, // Success indicator - keep as is
                       size: 20,
                     ),
                     const SizedBox(width: 12),
@@ -464,7 +464,9 @@ class _PremiumPageState extends State<PremiumPage> {
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: isSelected ? Colors.white : Theme.of(context).textTheme.bodyLarge?.color,
+              color: isSelected
+                  ? Theme.of(context).colorScheme.onPrimary
+                  : Theme.of(context).textTheme.bodyLarge?.color,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -614,10 +616,10 @@ class _PremiumPageState extends State<PremiumPage> {
             borderRadius: BorderRadius.circular(12),
           ),
         ),
-        child: const Text(
+        child: Text(
           'Subscribe Now',
           style: TextStyle(
-            color: Colors.white,
+            color: Theme.of(context).colorScheme.onPrimary,
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),

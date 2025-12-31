@@ -33,9 +33,9 @@ class ManageDuasPage extends StatelessWidget {
             WidgetsBinding.instance.addPostFrameCallback((_) {
               Navigator.of(context).pop();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
+                SnackBar(
                   content: Text('Akses ditolak: Hanya admin boleh mengakses halaman ini.'),
-                  backgroundColor: Colors.red,
+                  backgroundColor: Theme.of(context).colorScheme.error,
                 ),
               );
             });
@@ -100,7 +100,9 @@ class _ManageDuasView extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(ctx).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+            ),
             child: const Text('Salin'),
           ),
         ],
@@ -125,7 +127,7 @@ class _ManageDuasView extends StatelessWidget {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Doa "${dua.title}" telah disalin'),
-              backgroundColor: Colors.green,
+              backgroundColor: Colors.green, // Success color - keep as is
               behavior: SnackBarBehavior.floating,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
@@ -166,7 +168,12 @@ class _ManageDuasView extends StatelessWidget {
               context.read<DuaCubit>().deleteDua(dua.id);
               Navigator.of(ctx).pop();
             },
-            child: const Text('Padam', style: TextStyle(color: Colors.red)),
+            child: Text(
+              'Padam',
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.error,
+              ),
+            ),
           ),
         ],
       ),
@@ -206,7 +213,7 @@ class _ManageDuasView extends StatelessWidget {
                   children: [
                     Icon(
                       isPermissionError ? Icons.lock : Icons.error,
-                      color: Colors.red,
+                      color: Theme.of(context).colorScheme.error,
                       size: 48,
                     ),
                     const SizedBox(height: 16),
@@ -214,10 +221,10 @@ class _ManageDuasView extends StatelessWidget {
                       isPermissionError
                           ? 'Akses Ditolak'
                           : 'Ralat Memuatkan Doa',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.red,
+                        color: Theme.of(context).colorScheme.error,
                       ),
                     ),
                     const SizedBox(height: 8),
@@ -228,7 +235,7 @@ class _ManageDuasView extends StatelessWidget {
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 14,
-                        color: Colors.grey[700],
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                       ),
                     ),
                     const SizedBox(height: 24),

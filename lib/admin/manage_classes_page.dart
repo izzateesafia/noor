@@ -57,7 +57,9 @@ class _ManageClassesPageState extends State<ManageClassesPage> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
             child: const Text('Padam'),
           ),
         ],
@@ -78,7 +80,7 @@ class _ManageClassesPageState extends State<ManageClassesPage> {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text('Ralat: ${state.error}'),
-              backgroundColor: Colors.red,
+              backgroundColor: Theme.of(context).colorScheme.error,
             ),
           );
         } else if (state.status == ClassStatus.loaded && state.classes.isNotEmpty) {
@@ -96,14 +98,16 @@ class _ManageClassesPageState extends State<ManageClassesPage> {
             foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
             actions: [
               if (state.status == ClassStatus.loading)
-                const Padding(
+                 Padding(
                   padding: EdgeInsets.all(16.0),
                   child: SizedBox(
                     width: 20,
                     height: 20,
                     child: CircularProgressIndicator(
                       strokeWidth: 2,
-                      valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        Theme.of(context).colorScheme.onPrimary,
+                      ),
                     ),
                   ),
                 ),
@@ -144,11 +148,20 @@ class _ManageClassesPageState extends State<ManageClassesPage> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Icons.error_outline, size: 64, color: Colors.red),
+              Icon(
+                Icons.error_outline,
+                size: 64,
+                color: Theme.of(context).colorScheme.error,
+              ),
               const SizedBox(height: 16),
               Text('Error loading classes'),
               const SizedBox(height: 8),
-              Text(state.error ?? 'Unknown error', style: TextStyle(color: Colors.red)),
+              Text(
+                state.error ?? 'Unknown error',
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.error,
+                ),
+              ),
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: () => context.read<ClassCubit>().fetchClasses(),
@@ -199,14 +212,14 @@ class _ManageClassesPageState extends State<ManageClassesPage> {
                   SlidableAction(
                     onPressed: (context) => _addOrEditClass(classModel: classModel),
                     backgroundColor: Colors.orange,
-                    foregroundColor: Colors.white,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     icon: Icons.edit,
                     label: 'Edit',
                   ),
                   SlidableAction(
                     onPressed: (context) => _deleteClass(classModel),
-                    backgroundColor: Colors.red,
-                    foregroundColor: Colors.white,
+                    backgroundColor: Theme.of(context).colorScheme.error,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     icon: Icons.delete,
                     label: 'Delete',
                   ),

@@ -133,7 +133,13 @@ class _AdFormPageState extends State<AdFormPage> {
                 validator: (v) => v == null || v.trim().isEmpty ? 'Link required' : null,
               ),
               const SizedBox(height: 18),
-              Text('Deadline', style: TextStyle(color: AppColors.text, fontWeight: FontWeight.bold)),
+              Text(
+                'Deadline',
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 8),
               Row(
                 children: [
@@ -142,13 +148,16 @@ class _AdFormPageState extends State<AdFormPage> {
                       _deadline != null
                           ? '${_deadline!.toLocal()}'.split('.').first
                           : 'No deadline selected',
-                      style: TextStyle(color: AppColors.secondary, fontSize: 15),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+                        fontSize: 15,
+                      ),
                     ),
                   ),
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     ),
                     icon: const Icon(Icons.event),
                     label: const Text('Pick Date/Time'),
@@ -176,14 +185,20 @@ class _AdFormPageState extends State<AdFormPage> {
                 ],
               ),
               const SizedBox(height: 18),
-              Text('Image', style: TextStyle(color: AppColors.text, fontWeight: FontWeight.bold)),
+              Text(
+                'Image',
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 8),
               Row(
                 children: [
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     ),
                     icon: const Icon(Icons.photo_library),
                     label: const Text('Gallery'),
@@ -193,7 +208,7 @@ class _AdFormPageState extends State<AdFormPage> {
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     ),
                     icon: const Icon(Icons.camera_alt),
                     label: const Text('Camera'),

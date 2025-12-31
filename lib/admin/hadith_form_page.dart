@@ -94,7 +94,7 @@ class _HadithFormPageState extends State<HadithFormPage> {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text('Error uploading image: $e'),
-            backgroundColor: Colors.red,
+            backgroundColor: Theme.of(context).colorScheme.error,
           ),
         );
       }
@@ -181,14 +181,20 @@ class _HadithFormPageState extends State<HadithFormPage> {
                 },
               ),
               const SizedBox(height: 18),
-              Text('Image', style: TextStyle(color: AppColors.text, fontWeight: FontWeight.bold)),
+              Text(
+                'Image',
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
               const SizedBox(height: 8),
               Row(
                 children: [
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     ),
                     icon: const Icon(Icons.photo_library),
                     label: const Text('Gallery'),
@@ -198,7 +204,7 @@ class _HadithFormPageState extends State<HadithFormPage> {
                   ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
-                      foregroundColor: Colors.white,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
                     ),
                     icon: const Icon(Icons.camera_alt),
                     label: const Text('Camera'),
@@ -233,7 +239,7 @@ class _HadithFormPageState extends State<HadithFormPage> {
                     errorBuilder: (context, error, stackTrace) {
                       return Container(
                         height: 140,
-                        color: Colors.grey[300],
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.3),
                         child: const Icon(Icons.error),
                       );
                     },
@@ -255,16 +261,18 @@ class _HadithFormPageState extends State<HadithFormPage> {
                 child: ElevatedButton(
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.primary,
-                    foregroundColor: Colors.white,
+                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                   ),
                   onPressed: _isUploading ? null : _submit,
                   child: _isUploading
-                      ? const SizedBox(
+                      ? SizedBox(
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Theme.of(context).colorScheme.onPrimary,
+                            ),
                           ),
                         )
                       : Text(widget.initialHadith == null ? 'Add Hadith' : 'Save Changes'),

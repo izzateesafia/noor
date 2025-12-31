@@ -322,7 +322,7 @@ class _SignupPageState extends State<SignupPage> {
                   style: TextStyle(
                     letterSpacing: 2.0,
                     fontFamily: 'Kahfi',
-                    color: Colors.red.shade900,
+                    color: Theme.of(context).colorScheme.primary,
                     fontSize: 40,
                     fontWeight: FontWeight.bold,
                   ),
@@ -416,18 +416,20 @@ class _SignupPageState extends State<SignupPage> {
                   width: double.infinity,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red.shade900,
-                      foregroundColor: Colors.white,
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     onPressed: _isLoading ? null : _handleSignup,
                     child: _isLoading 
-                      ? const SizedBox(
+                      ? SizedBox(
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Theme.of(context).colorScheme.onPrimary,
+                            ),
                           ),
                         )
                       : const Text('Daftar'),
@@ -437,18 +439,26 @@ class _SignupPageState extends State<SignupPage> {
                 // Divider with "OR"
                 Row(
                   children: [
-                    Expanded(child: Divider(color: Colors.grey.shade400)),
+                    Expanded(
+                      child: Divider(
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                      ),
+                    ),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       child: Text(
                         'OR',
                         style: TextStyle(
-                          color: Colors.grey.shade600,
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
                           fontWeight: FontWeight.w500,
                         ),
                       ),
                     ),
-                    Expanded(child: Divider(color: Colors.grey.shade400)),
+                    Expanded(
+                      child: Divider(
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                      ),
+                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -457,19 +467,21 @@ class _SignupPageState extends State<SignupPage> {
                   width: double.infinity,
                   child: OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: Colors.grey.shade400),
+                      side: BorderSide(
+                        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
+                      ),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                     ),
                     onPressed: _isLoading ? null : () => _handleGoogleSignIn(),
                     icon: Icon(
                       Icons.g_mobiledata,
-                      color: Colors.red.shade700,
+                      color: Theme.of(context).colorScheme.primary,
                       size: 24,
                     ),
                     label: Text(
-                                              'Daftar dengan Google',
+                      'Daftar dengan Google',
                       style: TextStyle(
-                        color: Colors.grey.shade700,
+                        color: Theme.of(context).textTheme.bodyLarge?.color,
                         fontSize: 16,
                       ),
                     ),

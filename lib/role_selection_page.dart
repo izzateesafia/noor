@@ -57,9 +57,9 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
     
     if (_currentUser == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Gagal memuatkan maklumat pengguna. Sila cuba lagi.'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Gagal memuatkan maklumat pengguna. Sila cuba lagi.'),
+          backgroundColor: Theme.of(context).colorScheme.error,
         ),
       );
       return;
@@ -101,7 +101,7 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
           content: Text(
             'Peranan yang dipilih ($roleName) tidak sepadan dengan peranan anda ($userRoleName). Sila pilih peranan yang betul.',
           ),
-          backgroundColor: Colors.red,
+          backgroundColor: Theme.of(context).colorScheme.error,
           duration: const Duration(seconds: 4),
           behavior: SnackBarBehavior.floating,
           shape: RoundedRectangleBorder(
@@ -284,20 +284,22 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
                       ? _saveRole
                       : null,
                   child: _isSaving
-                      ? const SizedBox(
+                      ? SizedBox(
                           height: 20,
                           width: 20,
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              Theme.of(context).colorScheme.onPrimary,
+                            ),
                           ),
                         )
-                      : const Text(
+                      : Text(
                           'Continue',
                           style: TextStyle(
                             fontFamily: 'Montserrat',
                             fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                            color: Theme.of(context).colorScheme.onPrimary,
                             fontSize: 18,
                           ),
                         ),

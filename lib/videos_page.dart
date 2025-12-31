@@ -27,7 +27,7 @@ class VideosPage extends StatelessWidget {
         appBar: AppBar(
           title: const Text('Videos'),
           backgroundColor: AppColors.primary,
-          foregroundColor: Colors.white,
+          foregroundColor: Theme.of(context).colorScheme.onPrimary,
           actions: [
             TextButton.icon(
               onPressed: () {
@@ -37,10 +37,15 @@ class VideosPage extends StatelessWidget {
                   ),
                 );
               },
-              icon: const Icon(Icons.grid_view, color: Colors.white),
-              label: const Text(
+              icon: Icon(
+                Icons.grid_view,
+                color: Theme.of(context).colorScheme.onPrimary,
+              ),
+              label: Text(
                 'All Videos',
-                style: TextStyle(color: Colors.white),
+                style: TextStyle(
+                  color: Theme.of(context).colorScheme.onPrimary,
+                ),
               ),
             ),
           ],
@@ -56,11 +61,18 @@ class VideosPage extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(Icons.error_outline, size: 64, color: Colors.red[300]),
+                    Icon(
+                      Icons.error_outline,
+                      size: 64,
+                      color: Theme.of(context).colorScheme.error,
+                    ),
                     const SizedBox(height: 16),
                     Text(
                       'Error loading videos',
-                      style: TextStyle(color: Colors.red[300], fontSize: 18),
+                      style: TextStyle(
+                        color: Theme.of(context).colorScheme.error,
+                        fontSize: 18,
+                      ),
                     ),
                     if (state.error != null) ...[
                       const SizedBox(height: 8),
@@ -68,7 +80,10 @@ class VideosPage extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 32),
                         child: Text(
                           state.error!,
-                          style: TextStyle(color: Colors.red[200], fontSize: 12),
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error.withOpacity(0.8),
+                            fontSize: 12,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                       ),
@@ -380,8 +395,8 @@ class _AutoScrollFeaturedBannerState extends State<_AutoScrollFeaturedBanner> {
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     color: _currentPage == index
-                        ? Colors.white
-                        : Colors.white.withOpacity(0.4),
+                        ? Theme.of(context).colorScheme.surface
+                        : Theme.of(context).colorScheme.surface.withOpacity(0.4),
                   ),
                 ),
               ),
@@ -499,14 +514,14 @@ class VideoCard extends StatelessWidget {
                 // Play button overlay
                 Container(
                   decoration: BoxDecoration(
-                    color: Colors.black.withOpacity(0.3),
+                    color: Theme.of(context).colorScheme.shadow.withOpacity(0.3),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Center(
                     child: Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.9),
+                        color: Theme.of(context).colorScheme.surface.withOpacity(0.9),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
@@ -528,13 +543,13 @@ class VideoCard extends StatelessWidget {
                         vertical: 3,
                       ),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.7),
+                        color: Theme.of(context).colorScheme.shadow.withOpacity(0.7),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         _formatDuration(video.duration),
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.onSurface,
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
                         ),

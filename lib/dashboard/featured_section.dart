@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../theme_constants.dart';
@@ -75,7 +76,7 @@ class FeaturedSection extends StatelessWidget {
                   // Show up to 4 latest duas
                   final latestDuas = duas!.take(4).toList();
                   duaSection = SizedBox(
-                    height: 160,
+                    height: 200,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.only(left: 0, right: 0),
@@ -104,7 +105,7 @@ class FeaturedSection extends StatelessWidget {
                   hadithSection = Center(child: Text('Tiada hadis tersedia', style: Theme.of(context).textTheme.bodyMedium));
                 } else {
                   hadithSection = SizedBox(
-                    height: 160,
+                    height: 200,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.only(left: 0, right: 0),
@@ -113,7 +114,7 @@ class FeaturedSection extends StatelessWidget {
                         h.title, 
                         h.content, 
                         h.narrator ?? h.source ?? h.book ?? 'Unknown',
-                        h.image ?? 'assets/images/hadith_default.png'
+                        h.image
                       )).toList(),
                     ),
                   );
@@ -215,37 +216,7 @@ class FeaturedSection extends StatelessWidget {
                 ),
                 child: Stack(
                   children: [
-                    if (classModel.image != null && classModel.image!.isNotEmpty)
-                      ClipRRect(
-                        borderRadius: const BorderRadius.only(
-                          topLeft: Radius.circular(20),
-                          topRight: Radius.circular(20),
-                        ),
-                        child: Image.asset(
-                          classModel.image!,
-                          width: double.infinity,
-                          height: 80,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return Container(
-                              width: double.infinity,
-                              height: 80,
-                              decoration: BoxDecoration(
-                                color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
-                                borderRadius: const BorderRadius.only(
-                                  topLeft: Radius.circular(20),
-                                  topRight: Radius.circular(20),
-                                ),
-                              ),
-                              child: Icon(
-                                Icons.school,
-                                color: Theme.of(context).colorScheme.onPrimary,
-                                size: 40,
-                              ),
-                            );
-                          },
-                        ),
-                      ),
+                    _buildClassImage(context, classModel.image),
                     Positioned(
                       top: 8,
                       right: 8,
@@ -334,6 +305,7 @@ class FeaturedSection extends StatelessWidget {
         child: Padding(
           padding: const EdgeInsets.all(12),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
@@ -358,34 +330,16 @@ class FeaturedSection extends StatelessWidget {
                 ],
               ),
               const SizedBox(height: 8),
-              if (dua.image != null && dua.image!.isNotEmpty)
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: Image.asset(
-                    dua.image!,
-                    height: 60,
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                  ),
+              _buildDuaImage(context, dua.image),
+              const SizedBox(height: 8),
+              Flexible(
+                child: Text(
+                  dua.content,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.3, fontStyle: FontStyle.italic),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                 ),
-              if (dua.image != null && dua.image!.isNotEmpty) const SizedBox(height: 8),
-              Text(
-                dua.content,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.3, fontStyle: FontStyle.italic),
-                maxLines: 3,
-                overflow: TextOverflow.ellipsis,
               ),
-              if (dua.notes != null && dua.notes!.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  'Notes: ${dua.notes!}',
-                  style: TextStyle(
-                    color: AppColors.disabled,
-                    fontSize: 12,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ],
             ],
           ),
         ),
@@ -412,6 +366,7 @@ class FeaturedSection extends StatelessWidget {
           child: Padding(
             padding: const EdgeInsets.all(12),
             child: Column(
+              mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Header with decorative elements
@@ -430,49 +385,50 @@ class FeaturedSection extends StatelessWidget {
                       child: Text(
                         title,
                         style: Theme.of(context).textTheme.headlineSmall,
-                        maxLines: 2,
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
                   ],
                 ),
                 const SizedBox(height: 8),
+                // Image section
+                _buildHadithImage(context, image),
+                const SizedBox(height: 8),
                 // Content with elegant styling
-                Container(
-                  padding: const EdgeInsets.all(10),
-                  decoration: BoxDecoration(
-                    color: Theme.of(context).cardColor.withOpacity(0.7),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(
-                      color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                      width: 1,
+                Flexible(
+                  child: Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).cardColor.withOpacity(0.7),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(
+                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.format_quote,
+                          size: 14,
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                        ),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            content,
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.3, fontStyle: FontStyle.italic),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Icon(
-                            Icons.format_quote,
-                            size: 14,
-                            color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
-                          ),
-                          const SizedBox(width: 4),
-                          Expanded(
-                            child: Text(
-                              content,
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.3, fontStyle: FontStyle.italic),
-                              maxLines: 3,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: 6),
                 // Source with book icon
                 Row(
                   children: [
@@ -492,7 +448,8 @@ class FeaturedSection extends StatelessWidget {
                     Expanded(
                       child: Text(
                         source,
-                        style: Theme.of(context).textTheme.bodySmall,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
+                        maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                     ),
@@ -502,6 +459,334 @@ class FeaturedSection extends StatelessWidget {
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  // Helper method to build class image (network, asset, or default)
+  Widget _buildClassImage(BuildContext context, String? imageUrl) {
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return Container(
+        width: double.infinity,
+        height: 80,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Icon(
+          Icons.school,
+          color: Theme.of(context).colorScheme.onPrimary,
+          size: 40,
+        ),
+      );
+    }
+
+    // Network URL (Firebase Storage)
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+        child: Image.network(
+          imageUrl,
+          width: double.infinity,
+          height: 80,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              width: double.infinity,
+              height: 80,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+              ),
+              child: Icon(
+                Icons.school,
+                color: Theme.of(context).colorScheme.onPrimary,
+                size: 40,
+              ),
+            );
+          },
+        ),
+      );
+    }
+
+    // Asset image
+    if (imageUrl.startsWith('assets/')) {
+      return ClipRRect(
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(20),
+          topRight: Radius.circular(20),
+        ),
+        child: Image.asset(
+          imageUrl,
+          width: double.infinity,
+          height: 80,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              width: double.infinity,
+              height: 80,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(20),
+                  topRight: Radius.circular(20),
+                ),
+              ),
+              child: Icon(
+                Icons.school,
+                color: Theme.of(context).colorScheme.onPrimary,
+                size: 40,
+              ),
+            );
+          },
+        ),
+      );
+    }
+
+    // Local file
+    return ClipRRect(
+      borderRadius: const BorderRadius.only(
+        topLeft: Radius.circular(20),
+        topRight: Radius.circular(20),
+      ),
+      child: Image.file(
+        File(imageUrl),
+        width: double.infinity,
+        height: 80,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            width: double.infinity,
+            height: 80,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+              ),
+            ),
+            child: Icon(
+              Icons.school,
+              color: Theme.of(context).colorScheme.onPrimary,
+              size: 40,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // Helper method to build dua image (network, asset, or default)
+  Widget _buildDuaImage(BuildContext context, String? imageUrl) {
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Container(
+          height: 60,
+          width: double.infinity,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            Icons.favorite,
+            color: Theme.of(context).colorScheme.primary,
+            size: 30,
+          ),
+        ),
+      );
+    }
+
+    // Network URL (Firebase Storage)
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Image.network(
+          imageUrl,
+          height: 60,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              height: 60,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.favorite,
+                color: Theme.of(context).colorScheme.primary,
+                size: 30,
+              ),
+            );
+          },
+        ),
+      );
+    }
+
+    // Asset image
+    if (imageUrl.startsWith('assets/')) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Image.asset(
+          imageUrl,
+          height: 60,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              height: 60,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.favorite,
+                color: Theme.of(context).colorScheme.primary,
+                size: 30,
+              ),
+            );
+          },
+        ),
+      );
+    }
+
+    // Local file
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Image.file(
+        File(imageUrl),
+        height: 60,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            height: 60,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.favorite,
+              color: Theme.of(context).colorScheme.primary,
+              size: 30,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
+  // Helper method to build hadith image (network, asset, or default)
+  Widget _buildHadithImage(BuildContext context, String? imageUrl) {
+    // No image - show default
+    if (imageUrl == null || imageUrl.isEmpty) {
+      return Container(
+        height: 60,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          Icons.book,
+          color: Theme.of(context).colorScheme.primary,
+          size: 30,
+        ),
+      );
+    }
+
+    // Network URL (Firebase Storage)
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Image.network(
+          imageUrl,
+          height: 60,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              height: 60,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.book,
+                color: Theme.of(context).colorScheme.primary,
+                size: 30,
+              ),
+            );
+          },
+        ),
+      );
+    }
+
+    // Asset image
+    if (imageUrl.startsWith('assets/')) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(10),
+        child: Image.asset(
+          imageUrl,
+          height: 60,
+          width: double.infinity,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              height: 60,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(
+                Icons.book,
+                color: Theme.of(context).colorScheme.primary,
+                size: 30,
+              ),
+            );
+          },
+        ),
+      );
+    }
+
+    // Local file
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(10),
+      child: Image.file(
+        File(imageUrl),
+        height: 60,
+        width: double.infinity,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          return Container(
+            height: 60,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(
+              Icons.book,
+              color: Theme.of(context).colorScheme.primary,
+              size: 30,
+            ),
+          );
+        },
       ),
     );
   }

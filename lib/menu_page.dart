@@ -121,7 +121,7 @@ class MenuPage extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Menu'),
         backgroundColor: AppColors.primary,
-        foregroundColor: Colors.white,
+        foregroundColor: Theme.of(context).colorScheme.onPrimary,
         elevation: 0,
       ),
       body: ListView.builder(
@@ -226,13 +226,13 @@ class _MenuItemWidget extends StatelessWidget {
       subtitle: Text(
         item.description,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: Colors.grey[600],
+          color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
         ),
       ),
-      trailing: const Icon(
+      trailing: Icon(
         Icons.arrow_forward_ios,
         size: 16,
-        color: Colors.grey,
+        color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
       ),
       onTap: item.onTap,
       shape: RoundedRectangleBorder(

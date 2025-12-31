@@ -372,7 +372,7 @@ class _LoginPageState extends State<LoginPage> {
                                 style: TextStyle(
                                   letterSpacing: 2.0,
                                   fontFamily: 'Kahfi',
-                                  color: Colors.red.shade900,
+                                  color: Theme.of(context).colorScheme.primary,
                                   fontSize: 50,
                                   fontWeight: FontWeight.bold,
                                 ),
@@ -414,8 +414,8 @@ class _LoginPageState extends State<LoginPage> {
                                 width: double.infinity,
                                 child: ElevatedButton(
                                   style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.red.shade900,
-                                    foregroundColor: Colors.white,
+                                    backgroundColor: Theme.of(context).colorScheme.primary,
+                                    foregroundColor: Theme.of(context).colorScheme.onPrimary,
                                   ),
                                   onPressed:
                                       (state.status == UserStatus.loading)
@@ -435,7 +435,7 @@ class _LoginPageState extends State<LoginPage> {
                                 child: OutlinedButton.icon(
                                   style: OutlinedButton.styleFrom(
                                     side: BorderSide(
-                                      color: Colors.grey.shade400,
+                                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.4),
                                     ),
                                     padding: const EdgeInsets.symmetric(
                                       vertical: 12,
@@ -454,13 +454,13 @@ class _LoginPageState extends State<LoginPage> {
                                         },
                                   icon: Icon(
                                     Icons.g_mobiledata,
-                                    color: Colors.red.shade700,
+                                    color: Theme.of(context).colorScheme.primary,
                                     size: 24,
                                   ),
                                   label: Text(
                                     'Log masuk dengan Google',
                                     style: TextStyle(
-                                      color: Colors.grey.shade700,
+                                      color: Theme.of(context).textTheme.bodyLarge?.color,
                                       fontSize: 16,
                                     ),
                                   ),
@@ -492,8 +492,8 @@ class _LoginPageState extends State<LoginPage> {
                                   width: double.infinity,
                                   child: ElevatedButton.icon(
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: Colors.green.shade700,
-                                      foregroundColor: Colors.white,
+                                      backgroundColor: Theme.of(context).colorScheme.primary,
+                                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
                                       padding: const EdgeInsets.symmetric(
                                         vertical: 12,
                                       ),

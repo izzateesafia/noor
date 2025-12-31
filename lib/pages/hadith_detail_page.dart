@@ -54,13 +54,13 @@ class HadithDetailPage extends StatelessWidget {
                             Icon(
                               Icons.calendar_today,
                               size: 16,
-                              color: Theme.of(context).iconTheme.color?.withOpacity(0.6) ?? Colors.grey,
+                              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                             ),
                             const SizedBox(width: 4),
                             Text(
                               DateFormat('dd MMMM yyyy', 'ms').format(hadith.uploaded!),
                               style: TextStyle(
-                                color: Theme.of(context).iconTheme.color?.withOpacity(0.6) ?? Colors.grey,
+                                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                                 fontSize: 14,
                               ),
                             ),
@@ -251,7 +251,7 @@ class HadithDetailPage extends StatelessWidget {
                         label: const Text('Buka Pautan'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: AppColors.primary,
-                          foregroundColor: Colors.white,
+                          foregroundColor: Theme.of(context).colorScheme.onPrimary,
                           padding: const EdgeInsets.symmetric(vertical: 16),
                         ),
                       ),
