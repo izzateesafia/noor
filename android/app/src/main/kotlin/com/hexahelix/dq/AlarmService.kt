@@ -208,8 +208,8 @@ class AdhanAlarmReceiver : BroadcastReceiver() {
             // Create notification
             val notification = NotificationCompat.Builder(context, channelId)
                 .setSmallIcon(android.R.drawable.ic_dialog_info) // You can use a custom icon
-                .setContentTitle("Waktu $prayerDisplayName")
-                .setContentText("Azan akan dimainkan sekarang")
+                .setContentTitle("Telah masuk waktu solat $prayerDisplayName")
+//                .setContentText("Azan akan dimainkan sekarang")
                 .setPriority(NotificationCompat.PRIORITY_HIGH)
                 .setCategory(NotificationCompat.CATEGORY_ALARM)
                 .setAutoCancel(true)

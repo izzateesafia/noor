@@ -1,8 +1,6 @@
 import 'package:daily_quran/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_credit_card/flutter_credit_card.dart';
-import 'package:flutter_stripe/flutter_stripe.dart' as stripe;
 import 'package:url_launcher/url_launcher.dart';
 import 'models/class_model.dart';
 import 'models/payment/order_request.dart';
@@ -596,41 +594,7 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
       paymentMethod: _selectedIndex == 0 ? 'apple_pay' : 'card',
     );
 
-    // Check if using saved payment method
-    // final userState = context.read<UserCubit>().state;
-    final savedPaymentMethodId = userState.currentUser?.stripePaymentMethodId;
-    final useSavedCard = _selectedIndex == 2 && savedPaymentMethodId != null && savedPaymentMethodId.isNotEmpty;
-
-    // Create card details if using new card payment
-    stripe.CardDetails? cardDetails;
-    String? paymentMethodId;
-    
-    if (useSavedCard) {
-      // Use saved payment method
-      paymentMethodId = savedPaymentMethodId;
-    } else if (_selectedIndex == 1) {
-      // Use new card details
-      final expiryParts = _expiryDate.split('/');
-      if (expiryParts.length == 2) {
-        cardDetails = stripe.CardDetails(
-          number: _cardNumber.replaceAll(' ', ''),
-          expirationMonth: int.parse(expiryParts[0]),
-          expirationYear: int.parse('20${expiryParts[1]}'),
-          cvc: _cvvCode,
-        );
-      }
-    }
-
-    // Process payment
-    context.read<PaymentBloc>().add(
-      InitPayment(
-        cardDetails: cardDetails,
-        savedPaymentMethodId: paymentMethodId,
-        orderRequest: orderRequest,
-        totalAmount: widget.classModel.price.toStringAsFixed(2),
-        planId: 'class_${widget.classModel.id}',
-      ),
-    );
+    // Note: Payment processing removed - now redirects to paymentUrl
   }
 
   bool _validateForm() {

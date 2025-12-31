@@ -54,7 +54,6 @@ dependencies:
   firebase_messaging: ^15.2.10
   equatable: ^2.0.7
   app_links: ^3.5.1
-  flutter_stripe: ^11.1.0
   google_sign_in: ^6.2.1
   flutter_svg: ^2.0.10+1
   shimmer: ^3.0.0

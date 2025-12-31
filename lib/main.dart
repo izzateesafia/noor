@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
 import 'blocs/payment/payment_bloc.dart';
@@ -101,10 +100,6 @@ void main() async {
   
   // Initialize lock screen notification service
   await LockScreenNotificationService().initialize();
-  
-  // Initialize Stripe from environment variables
-  Stripe.publishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'] ?? '';
-  Stripe.merchantIdentifier = dotenv.env['STRIPE_MERCHANT_IDENTIFIER'] ?? 'merchant.com.hexahelix.dq';
   
   runApp(const MyApp());
 }
