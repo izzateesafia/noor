@@ -9,7 +9,7 @@ service cloud.firestore {
              exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles != null &&
              get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles is list &&
-             'admin' in get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles;
+             get(/databases/$(database)/documents/users/$(request.auth.uid)).data.roles.hasAny(['admin']);
     }
     
     // Helper function to check if user is authenticated
@@ -73,10 +73,15 @@ service cloud.firestore {
     
     // Duas collection
     match /duas/{duaId} {
-      // Authenticated users can read duas
-      allow read: if isAuthenticated();
-      
-      // Only admins can write duas
+      // Allow anyone to read duas (make public); restrict writes to admins
+      allow read: if true;
+      allow create, update, delete: if isAdmin();
+    }
+
+    // Hadiths collection
+    match /hadiths/{hadithId} {
+      // Allow public read; only admins can create/update/delete
+      allow read: if true;
       allow create, update, delete: if isAdmin();
     }
     
@@ -86,6 +91,24 @@ service cloud.firestore {
       allow read: if true;
       
       // Only admins can write app settings
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Ads collection
+    match /ads/{adId} {
+      // Anyone can read active ads (for display in app)
+      allow read: if true;
+      
+      // Only admins can write ads
+      allow create, update, delete: if isAdmin();
+    }
+    
+    // Live streams collection
+    match /live_streams/{liveStreamId} {
+      // Authenticated users can read live streams
+      allow read: if isAuthenticated();
+      
+      // Only admins can write live streams
       allow create, update, delete: if isAdmin();
     }
     

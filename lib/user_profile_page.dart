@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
+import '../utils/photo_permission_helper.dart';
 import 'models/class_model.dart';
 import 'cubit/user_cubit.dart';
 import 'cubit/user_states.dart';
@@ -269,19 +270,13 @@ class _UserProfileViewState extends State<_UserProfileView> {
 
   Future<void> _pickAndUploadImage(ImageSource source, UserModel user) async {
     try {
-      // Check permission
-      if (source == ImageSource.camera) {
-        final status = await Permission.camera.request();
-        if (!status.isGranted) {
-          ToastUtil.showError(context, 'Kebenaran kamera diperlukan untuk mengambil gambar');
-          return;
-        }
-      } else {
-        final status = await Permission.photos.request();
-        if (!status.isGranted) {
-          ToastUtil.showError(context, 'Kebenaran galeri diperlukan untuk memilih gambar');
-          return;
-        }
+      // Check permission using helper
+      final hasPermission = await PhotoPermissionHelper.checkAndRequestPhotoPermission(
+        context,
+        source: source,
+      );
+      if (!hasPermission) {
+        return;
       }
 
       final pickedFile = await _imagePicker.pickImage(

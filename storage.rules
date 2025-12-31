@@ -1,6 +1,21 @@
 rules_version = '2';
 service firebase.storage {
   match /b/{bucket}/o {
+    // Helper function to check if user is admin
+    // Checks the user's document in Firestore for admin role
+    // Returns false gracefully if:
+    //   - User is not authenticated
+    //   - User document doesn't exist in Firestore
+    //   - roles field is null or not a list
+    //   - 'admin' is not in the roles array
+    function isAdmin() {
+      return request.auth != null 
+             && firestore.exists(/databases/(default)/documents/users/$(request.auth.uid))
+             && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.roles != null
+             && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.roles is list
+             && firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data.roles.hasAny(['admin']);
+    }
+    
     // Profile pictures: Users can read, write, and delete their own profile pictures
     // Files are stored as: profile_pictures/{userId}.{extension}
     match /profile_pictures/{fileName} {
@@ -12,70 +27,136 @@ service firebase.storage {
       // 2. The filename starts with the authenticated user's UID followed by a dot
       // 3. File size is less than 5MB
       // 4. Content type is an image
+      // OR if user is admin (admins can upload any profile picture)
       allow write: if request.auth != null 
-                   && fileName.matches(request.auth.uid + '\\..*')
-                   && request.resource.size < 5 * 1024 * 1024  // 5MB limit
-                   && request.resource.contentType.matches('image/.*');
+                   && (
+                     (fileName.matches(request.auth.uid + '\\..*')
+                      && request.resource.size < 5 * 1024 * 1024  // 5MB limit
+                      && request.resource.contentType.matches('image/.*'))
+                     || isAdmin()
+                   );
       
-      // Allow delete only if the user owns the file
+      // Allow delete only if the user owns the file or is admin
       allow delete: if request.auth != null 
-                    && fileName.matches(request.auth.uid + '\\..*');
+                    && (fileName.matches(request.auth.uid + '\\..*') || isAdmin());
     }
     
-    // Mushaf PDFs: Allow read for all authenticated users
+    // Mushaf PDFs: Allow read for all authenticated users, write for admins only
     match /mushafs/{fileName} {
       // Allow read for authenticated users
       allow read: if request.auth != null;
       
-      // Allow write for authenticated users
-      // Note: For admin-only uploads, handle this in your app code or Cloud Functions
-      allow write: if request.auth != null;
+      // Only admins can write
+      allow write: if isAdmin();
     }
     
-    // Class thumbnails: Allow read for all authenticated users, write for authenticated users
+    // Class thumbnails: Allow read for all authenticated users, write for admins only
     match /Image_class/{fileName} {
       // Allow read for authenticated users
       allow read: if request.auth != null;
       
-      // Allow write for authenticated users
-      // Note: For admin-only uploads, handle this in your app code or Cloud Functions
+      // Only admins can write
       // File size limit: 5MB
       // Content type: images only
-      allow write: if request.auth != null
+      allow write: if isAdmin()
                    && request.resource.size < 5 * 1024 * 1024  // 5MB limit
                    && request.resource.contentType.matches('image/.*');
     }
     
-    // Video thumbnails: Allow read for all authenticated users, write for authenticated users
+    // Video thumbnails: Allow read for all authenticated users, write for admins only
     match /video_thumbnails/{fileName} {
       // Allow read for authenticated users
       allow read: if request.auth != null;
       
-      // Allow write for authenticated users
+      // Only admins can write
       // File size limit: 5MB
       // Content type: images only
-      allow write: if request.auth != null
+      allow write: if isAdmin()
                    && request.resource.size < 5 * 1024 * 1024  // 5MB limit
                    && request.resource.contentType.matches('image/.*');
     }
     
-    // Video files: Allow read for all authenticated users, write for authenticated users
+    // Video files: Allow read for all authenticated users, write for admins only
     match /videos/{fileName} {
       // Allow read for authenticated users
       allow read: if request.auth != null;
       
-      // Allow write for authenticated users
+      // Only admins can write
       // File size limit: 500MB for video files
       // Content type: video files
-      allow write: if request.auth != null
+      allow write: if isAdmin()
                    && request.resource.size < 500 * 1024 * 1024  // 500MB limit
                    && request.resource.contentType.matches('video/.*');
+    }
+    
+    // Hadith images: Allow read for all authenticated users, write for admins only
+    match /hadith_images/{fileName} {
+      // Allow read for authenticated users
+      allow read: if request.auth != null;
+      
+      // Only admins can write
+      // File size limit: 5MB
+      // Content type: images only
+      allow write: if isAdmin()
+                   && request.resource.size < 5 * 1024 * 1024  // 5MB limit
+                   && request.resource.contentType.matches('image/.*');
+      
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
+    
+    // News images: Allow read for all authenticated users, write for admins only
+    match /news_images/{fileName} {
+      // Allow read for authenticated users
+      allow read: if request.auth != null;
+      
+      // Only admins can write
+      // File size limit: 5MB
+      // Content type: images only
+      allow write: if isAdmin()
+                   && request.resource.size < 5 * 1024 * 1024  // 5MB limit
+                   && request.resource.contentType.matches('image/.*');
+      
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
+    
+    // Dua images: Allow read for all authenticated users, write for admins only
+    match /dua_images/{fileName} {
+      // Allow read for authenticated users
+      allow read: if request.auth != null;
+      
+      // Only admins can write
+      // File size limit: 5MB
+      // Content type: images only
+      allow write: if isAdmin()
+                   && request.resource.size < 5 * 1024 * 1024  // 5MB limit
+                   && request.resource.contentType.matches('image/.*');
+      
+      // Only admins can delete
+      allow delete: if isAdmin();
+    }
+    
+    // Ad images: Allow read for all authenticated users, write for admins only
+    match /ad_images/{fileName} {
+      // Allow read for authenticated users
+      allow read: if request.auth != null;
+      
+      // Only admins can write
+      // File size limit: 5MB
+      // Content type: images only
+      allow write: if isAdmin()
+                   && request.resource.size < 5 * 1024 * 1024  // 5MB limit
+                   && request.resource.contentType.matches('image/.*');
+      
+      // Only admins can delete
+      allow delete: if isAdmin();
     }
     
     // Deny all other paths by default
     match /{allPaths=**} {
       allow read, write: if false;
     }
-}
+  }
 }
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../models/news.dart';
 import '../theme_constants.dart';
+import '../pages/news_detail_page.dart';
 import 'dart:io';
 
 class TerkiniNewsFeed extends StatelessWidget {
@@ -74,13 +75,12 @@ class _NewsCard extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
-      onTap: () async {
-        if (news.link != null && news.link!.isNotEmpty) {
-          final uri = Uri.parse(news.link!);
-          if (await canLaunchUrl(uri)) {
-            await launchUrl(uri, mode: LaunchMode.externalApplication);
-          }
-        }
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => NewsDetailPage(news: news),
+          ),
+        );
       },
       child: Container(
         width: 280,

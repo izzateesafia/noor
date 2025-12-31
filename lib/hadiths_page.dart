@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'cubit/hadith_cubit.dart';
 import 'cubit/hadith_states.dart';
+import 'pages/hadith_detail_page.dart';
 
 class HadithsPage extends StatefulWidget {
   const HadithsPage({super.key});
@@ -109,7 +110,16 @@ class _HadithsPageState extends State<HadithsPage> {
                 itemCount: state.hadiths.length,
                 itemBuilder: (context, index) {
                   final hadith = state.hadiths[index];
-                  return Card(
+                  return InkWell(
+                    onTap: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (context) => HadithDetailPage(hadith: hadith),
+                        ),
+                      );
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Card(
                     elevation: 2,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                     color: Theme.of(context).cardColor,
@@ -232,6 +242,7 @@ class _HadithsPageState extends State<HadithsPage> {
                         ],
                       ),
                     ),
+                  ),
                   );
                 },
               ),

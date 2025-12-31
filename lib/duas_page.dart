@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import 'cubit/dua_cubit.dart';
 import 'cubit/dua_states.dart';
 import 'repository/dua_repository.dart';
+import 'pages/dua_detail_page.dart';
 
 class DuasPage extends StatelessWidget {
   const DuasPage({super.key});
@@ -42,7 +43,16 @@ class DuasPage extends StatelessWidget {
               itemCount: duas.length,
               itemBuilder: (context, i) {
                 final dua = duas[i];
-                return Card(
+                return InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => DuaDetailPage(dua: dua),
+                      ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(16),
+                  child: Card(
                   elevation: 2,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   color: Theme.of(context).cardColor,
@@ -57,12 +67,31 @@ class DuasPage extends StatelessWidget {
                             padding: const EdgeInsets.only(bottom: 12),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(12),
-                              child: dua.image!.startsWith('assets/')
-                                  ? Image.asset(
+                              child: dua.image!.startsWith('http://') || dua.image!.startsWith('https://')
+                                  ? Image.network(
                                       dua.image!,
                                       height: 120,
                                       width: double.infinity,
                                       fit: BoxFit.cover,
+                                      loadingBuilder: (context, child, loadingProgress) {
+                                        if (loadingProgress == null) return child;
+                                        return Container(
+                                          height: 120,
+                                          width: double.infinity,
+                                          decoration: BoxDecoration(
+                                            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(12),
+                                          ),
+                                          child: Center(
+                                            child: CircularProgressIndicator(
+                                              value: loadingProgress.expectedTotalBytes != null
+                                                  ? loadingProgress.cumulativeBytesLoaded /
+                                                      loadingProgress.expectedTotalBytes!
+                                                  : null,
+                                            ),
+                                          ),
+                                        );
+                                      },
                                       errorBuilder: (context, error, stackTrace) {
                                         return Container(
                                           height: 120,
@@ -79,27 +108,49 @@ class DuasPage extends StatelessWidget {
                                         );
                                       },
                                     )
-                                  : Image.file(
-                                      File(dua.image!),
-                                      height: 120,
-                                      width: double.infinity,
-                                      fit: BoxFit.cover,
-                                      errorBuilder: (context, error, stackTrace) {
-                                        return Container(
+                                  : dua.image!.startsWith('assets/')
+                                      ? Image.asset(
+                                          dua.image!,
                                           height: 120,
                                           width: double.infinity,
-                                          decoration: BoxDecoration(
-                                            color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
-                                            borderRadius: BorderRadius.circular(12),
-                                          ),
-                                          child: Icon(
-                                            Icons.image,
-                                            color: Theme.of(context).colorScheme.primary,
-                                            size: 40,
-                                          ),
-                                        );
-                                      },
-                                    ),
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return Container(
+                                              height: 120,
+                                              width: double.infinity,
+                                              decoration: BoxDecoration(
+                                                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Icon(
+                                                Icons.image,
+                                                color: Theme.of(context).colorScheme.primary,
+                                                size: 40,
+                                              ),
+                                            );
+                                          },
+                                        )
+                                      : Image.file(
+                                          File(dua.image!),
+                                          height: 120,
+                                          width: double.infinity,
+                                          fit: BoxFit.cover,
+                                          errorBuilder: (context, error, stackTrace) {
+                                            return Container(
+                                              height: 120,
+                                              width: double.infinity,
+                                              decoration: BoxDecoration(
+                                                color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                                                borderRadius: BorderRadius.circular(12),
+                                              ),
+                                              child: Icon(
+                                                Icons.image,
+                                                color: Theme.of(context).colorScheme.primary,
+                                                size: 40,
+                                              ),
+                                            );
+                                          },
+                                        ),
                             ),
                           ),
                         Text(
@@ -130,6 +181,7 @@ class DuasPage extends StatelessWidget {
                       ],
                     ),
                   ),
+                ),
                 );
               },
             ),

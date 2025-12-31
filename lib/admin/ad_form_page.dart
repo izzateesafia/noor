@@ -2,12 +2,12 @@ import 'dart:io';
 
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 
 import '../models/ad.dart';
 import '../theme_constants.dart';
+import '../utils/photo_permission_helper.dart';
 
 class AdFormPage extends StatefulWidget {
   final Ad? initialAd;
@@ -35,58 +35,10 @@ class _AdFormPageState extends State<AdFormPage> {
   }
 
   Future<bool> _checkAndRequestPermission(ImageSource source) async {
-    Permission permission;
-    if (source == ImageSource.camera) {
-      permission = Permission.camera;
-    } else {
-      // For gallery, handle both photos and storage for Android
-      if (Theme.of(context).platform == TargetPlatform.android) {
-        permission = Permission.storage;
-      } else {
-        permission = Permission.photos;
-      }
-    }
-    var status = await permission.status;
-    if (status.isGranted) return true;
-    if (status.isDenied) {
-      status = await permission.request();
-      if (status.isGranted) return true;
-    }
-    if (status.isPermanentlyDenied) {
-      final openSettings = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Kebenaran Diperlukan'),
-          content: Text(
-            source == ImageSource.camera
-              ? 'Kebenaran kamera telah ditolak secara kekal. Sila aktifkan dalam tetapan peranti anda.'
-              : 'Kebenaran galeri telah ditolak secara kekal. Sila aktifkan dalam tetapan peranti anda.'
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Batal'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Buka Tetapan'),
-            ),
-          ],
-        ),
-      );
-      if (openSettings == true) {
-        await openAppSettings();
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(
-          source == ImageSource.camera
-            ? 'Camera permission denied.'
-            : 'Gallery permission denied.'
-        )),
-      );
-    }
-    return false;
+    return await PhotoPermissionHelper.checkAndRequestPhotoPermission(
+      context,
+      source: source,
+    );
   }
 
   Future<void> _pickImage(ImageSource source) async {

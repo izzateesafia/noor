@@ -39,7 +39,10 @@
   "firestore": {
     "rules": "firestore.rules"
   },
-  "storage": {
-    "rules": "storage.rules"
-  }
+  "storage": [
+    {
+      "bucket": "uwais-manage.appspot.com",
+      "rules": "storage.rules"
+    }
+  ]
 }

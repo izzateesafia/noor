@@ -7,6 +7,7 @@ import '../theme_constants.dart';
 import '../cubit/class_cubit.dart';
 import '../cubit/class_states.dart';
 import '../services/image_upload_service.dart';
+import '../utils/photo_permission_helper.dart';
 import 'manage_classes_page.dart';
 
 class ClassFormPage extends StatefulWidget {
@@ -169,7 +170,18 @@ class _ClassFormPageState extends State<ClassFormPage> {
     );
   }
 
+  Future<bool> _checkAndRequestPermission(ImageSource source) async {
+    return await PhotoPermissionHelper.checkAndRequestPhotoPermission(
+      context,
+      source: source,
+    );
+  }
+
   Future<void> _pickImage(ImageSource source) async {
+    // Check and request permission first
+    final hasPermission = await _checkAndRequestPermission(source);
+    if (!hasPermission) return;
+
     try {
       final pickedFile = await _picker.pickImage(source: source, imageQuality: 80);
       if (pickedFile == null) return;

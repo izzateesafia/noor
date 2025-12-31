@@ -3,8 +3,11 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'dart:io';
 import '../theme_constants.dart';
 import '../models/dua.dart';
+import '../models/user_model.dart';
 import '../cubit/dua_cubit.dart';
 import '../cubit/dua_states.dart';
+import '../cubit/user_cubit.dart';
+import '../cubit/user_states.dart';
 import '../repository/dua_repository.dart';
 import 'dua_form_page.dart';
 
@@ -13,9 +16,52 @@ class ManageDuasPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // Get the existing UserCubit for admin check
+    final existingUserCubit = context.read<UserCubit>();
+    
     return BlocProvider(
-      create: (_) => DuaCubit(DuaRepository())..fetchDuas(),
-      child: const _ManageDuasView(),
+      create: (_) => DuaCubit(DuaRepository()),
+      child: BlocBuilder<UserCubit, UserState>(
+        bloc: existingUserCubit,
+        builder: (context, userState) {
+          // Check if current user is admin using the existing UserCubit
+          final currentUser = userState.currentUser;
+          final isAdmin = currentUser?.roles.contains(UserType.admin) ?? false;
+          
+          if (!isAdmin) {
+            // Non-admin users should not access this page
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              Navigator.of(context).pop();
+              ScaffoldMessenger.of(context).showSnackBar(
+                const SnackBar(
+                  content: Text('Akses ditolak: Hanya admin boleh mengakses halaman ini.'),
+                  backgroundColor: Colors.red,
+                ),
+              );
+            });
+            return Scaffold(
+              appBar: AppBar(
+                title: const Text('Urus Doa'),
+                backgroundColor: AppColors.appBar,
+                foregroundColor: AppColors.onAppBar,
+              ),
+              body: const Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+          
+          // User is admin, fetch duas and show the view
+          // Fetch duas only once when admin status is confirmed
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            final duaCubit = context.read<DuaCubit>();
+            if (duaCubit.state.status == DuaStatus.initial) {
+              duaCubit.fetchDuas();
+            }
+          });
+          return const _ManageDuasView();
+        },
+      ),
     );
   }
 }
@@ -147,19 +193,56 @@ class _ManageDuasView extends StatelessWidget {
           if (state.status == DuaStatus.loading) {
             return const Center(child: CircularProgressIndicator());
           } else if (state.status == DuaStatus.error) {
+            // Check if it's a permission error
+            final errorMessage = state.error ?? 'An error occurred';
+            final isPermissionError = errorMessage.toLowerCase().contains('permission denied') ||
+                                     errorMessage.toLowerCase().contains('permission-denied');
+            
             return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  const Icon(Icons.error, color: Colors.red, size: 48),
-                  const SizedBox(height: 16),
-                  Text(state.error ?? 'An error occurred'),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => context.read<DuaCubit>().fetchDuas(),
-                    child: const Text('Retry'),
-                  ),
-                ],
+              child: Padding(
+                padding: const EdgeInsets.all(24.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      isPermissionError ? Icons.lock : Icons.error,
+                      color: Colors.red,
+                      size: 48,
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      isPermissionError
+                          ? 'Akses Ditolak'
+                          : 'Ralat Memuatkan Doa',
+                      style: const TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.red,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      isPermissionError
+                          ? 'Anda tidak mempunyai kebenaran untuk mengakses halaman ini. Sila pastikan anda log masuk sebagai admin.'
+                          : errorMessage,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.grey[700],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    if (!isPermissionError)
+                      ElevatedButton.icon(
+                        onPressed: () => context.read<DuaCubit>().fetchDuas(),
+                        icon: const Icon(Icons.refresh),
+                        label: const Text('Cuba Lagi'),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        ),
+                      ),
+                  ],
+                ),
               ),
             );
           } else if (state.duas.isEmpty) {

@@ -6,10 +6,22 @@ class HadithRepository {
   final String _collection = 'hadiths';
 
   Future<List<Hadith>> getHadiths() async {
-    final snapshot = await _db.collection(_collection).get();
-    return snapshot.docs
-        .map((doc) => Hadith.fromJson({...doc.data(), 'id': doc.id}))
-        .toList();
+    try {
+      final snapshot = await _db
+          .collection(_collection)
+          .orderBy('uploaded', descending: true)
+          .get();
+      return snapshot.docs.map((doc) => Hadith.fromJson({
+        ..._normalizeTimestamp(doc.data()),
+        'id': doc.id,
+      })).toList();
+    } catch (_) {
+      final snapshot = await _db.collection(_collection).get();
+      return snapshot.docs.map((doc) => Hadith.fromJson({
+        ..._normalizeTimestamp(doc.data()),
+        'id': doc.id,
+      })).toList();
+    }
   }
 
   Future<Hadith?> getHadithById(String id) async {
@@ -33,5 +45,14 @@ class HadithRepository {
 
   Future<void> deleteHadith(String id) async {
     await _db.collection(_collection).doc(id).delete();
+  }
+
+  Map<String, dynamic> _normalizeTimestamp(Map<String, dynamic> data) {
+    final copy = {...data};
+    final uploaded = copy['uploaded'];
+    if (uploaded != null && uploaded is Timestamp) {
+      copy['uploaded'] = uploaded.toDate().toIso8601String();
+    }
+    return copy;
   }
 } 

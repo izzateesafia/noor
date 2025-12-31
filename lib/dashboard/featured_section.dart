@@ -8,6 +8,8 @@ import '../models/user_model.dart';
 import '../class_payment_page.dart';
 import '../models/dua.dart';
 import '../models/hadith.dart';
+import '../pages/dua_detail_page.dart';
+import '../pages/hadith_detail_page.dart';
 
 class FeaturedSection extends StatelessWidget {
   final UserModel user;
@@ -70,12 +72,14 @@ class FeaturedSection extends StatelessWidget {
                 } else if (duas!.isEmpty) {
                   duaSection = Center(child: Text('Tiada doa tersedia', style: Theme.of(context).textTheme.bodyMedium));
                 } else {
+                  // Show up to 4 latest duas
+                  final latestDuas = duas!.take(4).toList();
                   duaSection = SizedBox(
                     height: 160,
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.only(left: 0, right: 0),
-                      children: duas!.take(5).map((d) => _buildFeaturedDuaCard(context, d)).toList(),
+                      children: latestDuas.map((d) => _buildFeaturedDuaCard(context, d)).toList(),
                     ),
                   );
                 }
@@ -108,7 +112,7 @@ class FeaturedSection extends StatelessWidget {
                         context, 
                         h.title, 
                         h.content, 
-                        h.narrator!,
+                        h.narrator ?? h.source ?? h.book ?? 'Unknown',
                         h.image ?? 'assets/images/hadith_default.png'
                       )).toList(),
                     ),
@@ -312,10 +316,18 @@ class FeaturedSection extends StatelessWidget {
   }
 
   Widget _buildFeaturedDuaCard(BuildContext context, Dua dua) {
-    return Container(
-      width: 220,
-      margin: const EdgeInsets.only(right: 16),
-      child: Card(
+    return GestureDetector(
+      onTap: () {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => DuaDetailPage(dua: dua),
+          ),
+        );
+      },
+      child: Container(
+        width: 220,
+        margin: const EdgeInsets.only(right: 16),
+        child: Card(
         elevation: 4,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         color: Theme.of(context).cardColor,
@@ -378,7 +390,7 @@ class FeaturedSection extends StatelessWidget {
           ),
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildFeaturedHadithCard(BuildContext context, String title, String content, String source, String? image) {

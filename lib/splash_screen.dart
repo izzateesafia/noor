@@ -89,9 +89,14 @@ class _SplashScreenState extends State<SplashScreen> {
               ),
             ),
             const SizedBox(height: 16),
-            const Text(
-              'Teman harian untuk menjadi Muslim yang lebih baik',
-              style: TextStyle(color: Colors.white, fontSize: 18),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Center(
+                child: const Text(
+                  'Teman harian untuk menjadi Muslim yang lebih baik',
+                  style: TextStyle(color: Colors.white, fontSize: 18),
+                ),
+              ),
             ),
           ],
         ),

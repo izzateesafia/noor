@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:permission_handler/permission_handler.dart';
-import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
 import '../models/dua.dart';
 import '../theme_constants.dart';
+import '../utils/photo_permission_helper.dart';
+import '../services/image_upload_service.dart';
 import 'dart:io';
 import 'manage_duas_page.dart';
 
@@ -24,6 +23,8 @@ class _DuaFormPageState extends State<DuaFormPage> {
   late TextEditingController _notesController;
   File? _imageFile;
   String? _imagePath;
+  bool _isUploading = false;
+  final ImageUploadService _imageUploadService = ImageUploadService();
 
   @override
   void initState() {
@@ -36,57 +37,10 @@ class _DuaFormPageState extends State<DuaFormPage> {
   }
 
   Future<bool> _checkAndRequestPermission(ImageSource source) async {
-    Permission permission;
-    if (source == ImageSource.camera) {
-      permission = Permission.camera;
-    } else {
-      if (Theme.of(context).platform == TargetPlatform.android) {
-        permission = Permission.storage;
-      } else {
-        permission = Permission.photos;
-      }
-    }
-    var status = await permission.status;
-    if (status.isGranted) return true;
-    if (status.isDenied) {
-      status = await permission.request();
-      if (status.isGranted) return true;
-    }
-    if (status.isPermanentlyDenied) {
-      final openSettings = await showDialog<bool>(
-        context: context,
-        builder: (ctx) => AlertDialog(
-          title: const Text('Kebenaran Diperlukan'),
-          content: Text(
-            source == ImageSource.camera
-              ? 'Kebenaran kamera telah ditolak secara kekal. Sila aktifkan dalam tetapan peranti anda.'
-              : 'Gallery permission is permanently denied. Please enable it in your device settings.'
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.of(ctx).pop(true),
-              child: const Text('Open Settings'),
-            ),
-          ],
-        ),
-      );
-      if (openSettings == true) {
-        await openAppSettings();
-      }
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(
-          source == ImageSource.camera
-            ? 'Camera permission denied.'
-            : 'Gallery permission denied.'
-        )),
-      );
-    }
-    return false;
+    return await PhotoPermissionHelper.checkAndRequestPhotoPermission(
+      context,
+      source: source,
+    );
   }
 
   Future<void> _pickImage(ImageSource source) async {
@@ -95,57 +49,61 @@ class _DuaFormPageState extends State<DuaFormPage> {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: source, imageQuality: 80);
     if (picked != null) {
-      try {
-        // Copy the temporary file to a permanent location
-        final permanentPath = await _copyImageToPermanentLocation(picked.path);
+      setState(() {
+        _imageFile = File(picked.path);
+        _imagePath = null; // Clear old path when new image is selected
+      });
+    }
+  }
+
+  Future<void> _submit() async {
+    if (_formKey.currentState?.validate() != true) return;
+    
+    setState(() {
+      _isUploading = true;
+    });
+
+    try {
+      String? imageUrl = widget.initialDua?.image;
+      
+      // Upload new image if selected
+      if (_imageFile != null) {
+        imageUrl = await _imageUploadService.uploadDuaImage(
+          _imageFile!,
+          existingUrl: widget.initialDua?.image,
+        );
+      }
+      
+      final isEdit = widget.initialDua != null;
+      final dua = Dua(
+        id: isEdit ? widget.initialDua!.id : '', // empty string for new, repo will assign
+        title: _titleController.text.trim(),
+        content: _contentController.text.trim(),
+        image: imageUrl,
+        link: _linkController.text.trim().isEmpty ? null : _linkController.text.trim(),
+        notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
+        uploaded: isEdit ? widget.initialDua!.uploaded : DateTime.now(),
+      );
+      
+      if (mounted) {
+        Navigator.of(context).pop(dua);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error uploading image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) {
         setState(() {
-          _imageFile = File(permanentPath);
-          _imagePath = permanentPath;
-        });
-      } catch (e) {
-        print('Error copying image: $e');
-        // Fallback to temporary path if copying fails
-        setState(() {
-          _imageFile = File(picked.path);
-          _imagePath = picked.path;
+          _isUploading = false;
         });
       }
     }
-  }
-
-  Future<String> _copyImageToPermanentLocation(String tempPath) async {
-    final tempFile = File(tempPath);
-    final appDir = await getApplicationDocumentsDirectory();
-    final imagesDir = Directory(path.join(appDir.path, 'images'));
-    
-    // Create images directory if it doesn't exist
-    if (!await imagesDir.exists()) {
-      await imagesDir.create(recursive: true);
-    }
-    
-    // Generate a unique filename
-    final fileName = 'dua_${DateTime.now().millisecondsSinceEpoch}${path.extension(tempPath)}';
-    final permanentPath = path.join(imagesDir.path, fileName);
-    
-    // Copy the file
-    await tempFile.copy(permanentPath);
-    
-    return permanentPath;
-  }
-
-  void _submit() {
-    if (_formKey.currentState?.validate() != true) return;
-    final isEdit = widget.initialDua != null;
-    final dua = Dua(
-      id: isEdit ? widget.initialDua!.id : '', // empty string for new, repo will assign
-      title: _titleController.text.trim(),
-      content: _contentController.text.trim(),
-      image: _imagePath,
-      link: _linkController.text.trim().isEmpty ? null : _linkController.text.trim(),
-      notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
-      uploaded: isEdit ? widget.initialDua!.uploaded : DateTime.now(),
-    );
-    Navigator.of(context).pop(dua);
   }
 
   @override
@@ -234,7 +192,7 @@ class _DuaFormPageState extends State<DuaFormPage> {
                     ),
                     icon: const Icon(Icons.photo_library),
                     label: const Text('Gallery'),
-                    onPressed: () => _pickImage(ImageSource.gallery),
+                    onPressed: _isUploading ? null : () => _pickImage(ImageSource.gallery),
                   ),
                   const SizedBox(width: 12),
                   ElevatedButton.icon(
@@ -244,19 +202,41 @@ class _DuaFormPageState extends State<DuaFormPage> {
                     ),
                     icon: const Icon(Icons.camera_alt),
                     label: const Text('Camera'),
-                    onPressed: () => _pickImage(ImageSource.camera),
+                    onPressed: _isUploading ? null : () => _pickImage(ImageSource.camera),
                   ),
                 ],
               ),
               const SizedBox(height: 14),
-              if (_imageFile != null || (_imagePath != null && File(_imagePath!).existsSync()))
+              if (_isUploading)
+                const Padding(
+                  padding: EdgeInsets.all(16.0),
+                  child: Center(child: CircularProgressIndicator()),
+                )
+              else if (_imageFile != null)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
                   child: Image.file(
-                    _imageFile ?? File(_imagePath!),
+                    _imageFile!,
                     height: 140,
                     width: double.infinity,
                     fit: BoxFit.cover,
+                  ),
+                )
+              else if (_imagePath != null && _imagePath!.startsWith('http'))
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(12),
+                  child: Image.network(
+                    _imagePath!,
+                    height: 140,
+                    width: double.infinity,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return Container(
+                        height: 140,
+                        color: Colors.grey[300],
+                        child: const Icon(Icons.error),
+                      );
+                    },
                   ),
                 )
               else if (_imagePath != null && _imagePath!.startsWith('assets/'))
@@ -277,8 +257,17 @@ class _DuaFormPageState extends State<DuaFormPage> {
                     backgroundColor: AppColors.primary,
                     foregroundColor: Colors.white,
                   ),
-                  onPressed: _submit,
-                  child: Text(widget.initialDua == null ? 'Add Dua' : 'Save Changes'),
+                  onPressed: _isUploading ? null : _submit,
+                  child: _isUploading
+                      ? const SizedBox(
+                          height: 20,
+                          width: 20,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                          ),
+                        )
+                      : Text(widget.initialDua == null ? 'Add Dua' : 'Save Changes'),
                 ),
               ),
             ],

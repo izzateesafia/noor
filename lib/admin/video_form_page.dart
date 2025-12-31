@@ -10,6 +10,7 @@ import '../cubit/video_cubit.dart';
 import '../cubit/video_states.dart';
 import '../repository/video_repository.dart';
 import '../services/image_upload_service.dart';
+import '../utils/photo_permission_helper.dart';
 
 class VideoFormPage extends StatefulWidget {
   final Video? initialVideo;
@@ -79,9 +80,20 @@ class _VideoFormPageState extends State<VideoFormPage> {
     super.dispose();
   }
 
-  Future<void> _pickThumbnail() async {
+  Future<bool> _checkAndRequestPermission(ImageSource source) async {
+    return await PhotoPermissionHelper.checkAndRequestPhotoPermission(
+      context,
+      source: source,
+    );
+  }
+
+  Future<void> _pickThumbnail(ImageSource source) async {
+    // Check and request permission first
+    final hasPermission = await _checkAndRequestPermission(source);
+    if (!hasPermission) return;
+
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery);
+    final picked = await picker.pickImage(source: source, imageQuality: 80);
     if (picked != null) {
       setState(() {
         _thumbnailFile = File(picked.path);
@@ -315,10 +327,20 @@ class _VideoFormPageState extends State<VideoFormPage> {
                               ],
                             ),
                           ),
-                        ElevatedButton.icon(
-                          onPressed: _pickThumbnail,
-                          icon: const Icon(Icons.image),
-                          label: const Text('Pick Thumbnail Image'),
+                        Row(
+                          children: [
+                            ElevatedButton.icon(
+                              onPressed: () => _pickThumbnail(ImageSource.gallery),
+                              icon: const Icon(Icons.photo_library),
+                              label: const Text('Gallery'),
+                            ),
+                            const SizedBox(width: 12),
+                            ElevatedButton.icon(
+                              onPressed: () => _pickThumbnail(ImageSource.camera),
+                              icon: const Icon(Icons.camera_alt),
+                              label: const Text('Camera'),
+                            ),
+                          ],
                         ),
                       ],
                     ],
