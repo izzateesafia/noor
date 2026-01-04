@@ -62,9 +62,7 @@ class AlarmService {
           ?.createNotificationChannel(adhanChannel);
       
       _isInitialized = true;
-      print('AlarmService initialized successfully');
     } catch (e) {
-      print('Error initializing AlarmService: $e');
     }
   }
 
@@ -74,16 +72,13 @@ class AlarmService {
       final androidPlugin = _notifications.resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
       if (androidPlugin != null) {
         final granted = await androidPlugin.requestNotificationsPermission();
-        print('Notification permission granted: $granted');
       }
     } catch (e) {
-      print('Error requesting notification permissions: $e');
     }
   }
 
   // Handle notification tap
   void _onNotificationTapped(NotificationResponse response) {
-    print('Notification tapped: ${response.payload}');
     // You can add logic here to handle notification taps
   }
 
@@ -93,28 +88,22 @@ class AlarmService {
     required String prayerName,
     required String prayerDisplayName,
   }) async {
-    print('AlarmService: scheduleAlarm called for $prayerDisplayName at $scheduledTime');
     
     if (!_isInitialized) {
-      print('AlarmService: Initializing...');
       await initialize();
     }
 
     try {
       // Cancel any existing alarms
-      print('AlarmService: Cancelling existing alarms...');
       await cancelAllAlarms();
 
       // Calculate alarm ID based on time
       final alarmId = scheduledTime.millisecondsSinceEpoch ~/ 1000;
-      print('AlarmService: Using alarm ID: $alarmId');
       
       // Convert to timezone-aware datetime
       final scheduledTz = tz.TZDateTime.from(scheduledTime, tz.local);
-      print('AlarmService: Scheduled time (TZ): $scheduledTz');
 
       // Schedule the notification
-      print('AlarmService: Scheduling notification...');
       await _notifications.zonedSchedule(
         alarmId,
         'Waktu $prayerDisplayName',
@@ -164,7 +153,6 @@ class AlarmService {
         payload: 'adhan_$prayerName',
       );
 
-      print('AlarmService: Notification scheduled successfully');
 
       // Save alarm info to preferences
       final prefs = await SharedPreferences.getInstance();
@@ -173,10 +161,7 @@ class AlarmService {
       await prefs.setString('scheduled_prayer_display', prayerDisplayName);
       await prefs.setInt('alarm_id', alarmId);
 
-      print('AlarmService: Alarm info saved to preferences');
-      print('AlarmService: Alarm scheduled for $prayerDisplayName at ${scheduledTime.toString()}');
     } catch (e) {
-      print('AlarmService: Error scheduling alarm: $e');
       rethrow;
     }
   }
@@ -194,9 +179,7 @@ class AlarmService {
       await prefs.remove('scheduled_prayer_display');
       await prefs.remove('alarm_id');
 
-      print('All alarms cancelled');
     } catch (e) {
-      print('Error cancelling alarms: $e');
     }
   }
 
@@ -214,7 +197,6 @@ class AlarmService {
         return scheduledDateTime.isAfter(now);
       }
     } catch (e) {
-      print('Error checking scheduled alarm: $e');
     }
     return false;
   }
@@ -241,7 +223,6 @@ class AlarmService {
         }
       }
     } catch (e) {
-      print('Error getting scheduled alarm info: $e');
     }
     return null;
   }
@@ -251,7 +232,6 @@ class AlarmService {
     try {
       return await _notifications.pendingNotificationRequests();
     } catch (e) {
-      print('Error getting pending notifications: $e');
       return [];
     }
   }
@@ -259,7 +239,6 @@ class AlarmService {
   // Test notification (for debugging)
   Future<void> showTestNotification() async {
     try {
-      print('AlarmService: Showing test notification...');
       await _notifications.show(
         999,
         'Test Notification',
@@ -285,9 +264,7 @@ class AlarmService {
           ),
         ),
       );
-      print('AlarmService: Test notification shown successfully');
     } catch (e) {
-      print('AlarmService: Error showing test notification: $e');
     }
   }
 

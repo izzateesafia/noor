@@ -27,7 +27,6 @@ class DailyTrackerRepository {
       }
       return null;
     } catch (e) {
-      print('Error getting today\'s tracker: $e');
       return null;
     }
   }
@@ -52,7 +51,6 @@ class DailyTrackerRepository {
       }
       return null;
     } catch (e) {
-      print('Error getting tracker by date: $e');
       return null;
     }
   }
@@ -84,7 +82,6 @@ class DailyTrackerRepository {
       
       return filteredData;
     } catch (e) {
-      print('Error getting tracker history: $e');
       return [];
     }
   }
@@ -126,7 +123,6 @@ class DailyTrackerRepository {
         await _db.collection(_collection).add(createData);
       }
     } catch (e) {
-      print('Error saving today\'s tracker: $e');
       rethrow;
     }
   }
@@ -187,7 +183,6 @@ class DailyTrackerRepository {
         });
       }
     } catch (e) {
-      print('Error updating prayer completion: $e');
       rethrow;
     }
   }
@@ -242,7 +237,6 @@ class DailyTrackerRepository {
         });
       }
     } catch (e) {
-      print('Error updating Quran recitation: $e');
       rethrow;
     }
   }
@@ -291,7 +285,6 @@ class DailyTrackerRepository {
         'quranCompletionRate': totalDays > 0 ? (daysWithQuran / totalDays) * 100.0 : 0.0,
       };
     } catch (e) {
-      print('Error getting user stats: $e');
       return {};
     }
   }

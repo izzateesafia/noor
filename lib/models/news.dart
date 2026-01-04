@@ -52,5 +52,31 @@ class News {
       if (order != null) 'order': order,
     };
   }
+
+  News copyWith({
+    String? id,
+    String? title,
+    String? description,
+    String? image,
+    String? link,
+    DateTime? uploaded,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    bool? isActive,
+    int? order,
+  }) {
+    return News(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      image: image ?? this.image,
+      link: link ?? this.link,
+      uploaded: uploaded ?? this.uploaded,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      isActive: isActive ?? this.isActive,
+      order: order ?? this.order,
+    );
+  }
 }
 

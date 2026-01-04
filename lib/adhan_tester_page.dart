@@ -68,7 +68,6 @@ class _AdhanTesterPageState extends State<AdhanTesterPage> {
         });
       }
     } catch (e) {
-      print('Error checking scheduled adhan: $e');
     }
   }
 
@@ -96,19 +95,16 @@ class _AdhanTesterPageState extends State<AdhanTesterPage> {
     final hourText = _hourController.text;
     final minuteText = _minuteController.text;
     
-    print('Hour text: "$hourText", Minute text: "$minuteText"');
     
     final hour = int.tryParse(hourText) ?? 0;
     final minute = int.tryParse(minuteText) ?? 0;
     
-    print('Parsed hour: $hour, Parsed minute: $minute');
     
     setState(() {
       _selectedHour = hour.clamp(0, 23);
       _selectedMinute = minute.clamp(0, 59);
     });
     
-    print('Updated _selectedHour: $_selectedHour, _selectedMinute: $_selectedMinute');
   }
 
   String _getTimeString() {
@@ -196,12 +192,10 @@ class _AdhanTesterPageState extends State<AdhanTesterPage> {
         _status = 'Azan dijadualkan untuk ${_getPrayerDisplayName(_selectedPrayer)} pada ${_getTimeString()} (akan berbunyi walaupun app ditutup)';
       });
       
-      print('Adhan alarm scheduled for ${_getPrayerDisplayName(_selectedPrayer)} at ${_getTimeString()}');
     } catch (e) {
       setState(() {
         _status = 'Ralat menjadualkan azan: $e';
       });
-      print('Error scheduling adhan alarm: $e');
     }
   }
 
@@ -214,26 +208,21 @@ class _AdhanTesterPageState extends State<AdhanTesterPage> {
         _status = 'Jadual azan dibatalkan';
       });
       
-      print('Scheduled adhan alarm cancelled');
     } catch (e) {
       setState(() {
         _status = 'Ralat membatalkan jadual azan: $e';
       });
-      print('Error cancelling scheduled adhan alarm: $e');
     }
   }
 
   Future<void> _quickTestAdhan() async {
-    print('Quick test adhan started for ${_selectedPrayer}');
     setState(() {
       _isPlaying = true;
       _status = 'Menguji azan untuk ${_getPrayerDisplayName(_selectedPrayer)}...';
     });
 
     try {
-      print('Calling playAdhanForPrayer with ${_selectedPrayer}');
       await _adhanAudioService.playAdhanForPrayer(_selectedPrayer);
-      print('playAdhanForPrayer completed successfully');
       
       // Auto-stop after 15 seconds
       Future.delayed(const Duration(seconds: 15), () {
@@ -245,7 +234,6 @@ class _AdhanTesterPageState extends State<AdhanTesterPage> {
         }
       });
     } catch (e) {
-      print('Error in quick test adhan: $e');
       setState(() {
         _isPlaying = false;
         _status = 'Ralat menguji azan: $e';
@@ -256,15 +244,12 @@ class _AdhanTesterPageState extends State<AdhanTesterPage> {
   Future<void> _debugNotifications() async {
     try {
       final pendingNotifications = await _alarmService.getPendingNotifications();
-      print('Pending notifications: ${pendingNotifications.length}');
       
       for (var notification in pendingNotifications) {
-        print('Notification ID: ${notification.id}, Title: ${notification.title}');
       }
       
       final alarmInfo = await _alarmService.getScheduledAlarmInfo();
       if (alarmInfo != null) {
-        print('Scheduled alarm: ${alarmInfo['prayerDisplayName']} at ${alarmInfo['scheduledTime']}');
         setState(() {
           _status = 'Debug: ${pendingNotifications.length} notifications pending. Alarm: ${alarmInfo['prayerDisplayName']} at ${alarmInfo['scheduledTime']}';
         });
@@ -274,7 +259,6 @@ class _AdhanTesterPageState extends State<AdhanTesterPage> {
         });
       }
     } catch (e) {
-      print('Error debugging notifications: $e');
       setState(() {
         _status = 'Debug error: $e';
       });
@@ -297,12 +281,10 @@ class _AdhanTesterPageState extends State<AdhanTesterPage> {
         _status = 'Azan dijadualkan untuk ${_getPrayerDisplayName(_selectedPrayer)} dalam 30 saat (tutup app untuk test)';
       });
       
-      print('30-second test alarm scheduled for ${_getPrayerDisplayName(_selectedPrayer)} at $targetTime');
     } catch (e) {
       setState(() {
         _status = 'Ralat menjadualkan ujian 30 saat: $e';
       });
-      print('Error scheduling 30-second test: $e');
     }
   }
 
@@ -312,12 +294,10 @@ class _AdhanTesterPageState extends State<AdhanTesterPage> {
       setState(() {
         _status = 'Notifikasi ujian dihantar - periksa status bar';
       });
-      print('Test notification sent');
     } catch (e) {
       setState(() {
         _status = 'Ralat menghantar notifikasi ujian: $e';
       });
-      print('Error sending test notification: $e');
     }
   }
 

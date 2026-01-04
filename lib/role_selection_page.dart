@@ -34,7 +34,6 @@ class _RoleSelectionPageState extends State<RoleSelectionPage> {
       // Fetch current user from Firebase
       context.read<UserCubit>().fetchCurrentUser();
     } catch (e) {
-      print('Error fetching user info: $e');
       if (mounted) {
         setState(() {
           _isLoadingUser = false;

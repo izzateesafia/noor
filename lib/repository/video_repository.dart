@@ -21,7 +21,6 @@ class VideoRepository {
         usedOrderBy = true;
       } catch (e) {
         // If orderBy fails (e.g., missing index), try without orderBy
-        print('OrderBy failed, falling back to simple query: $e');
         snapshot = await query.get();
         usedOrderBy = false;
       }
@@ -54,11 +53,8 @@ class VideoRepository {
         });
       }
       
-      print('VideoRepository: Fetched ${videos.length} videos');
       return videos;
     } catch (e) {
-      print('Error getting videos: $e');
-      print('Stack trace: ${StackTrace.current}');
       rethrow; // Rethrow instead of returning empty list to surface errors
     }
   }
@@ -67,7 +63,6 @@ class VideoRepository {
     try {
       final doc = await _firestore.collection(_collection).doc(id).get();
       if (!doc.exists) {
-        print('VideoRepository: Video with ID $id does not exist');
         return null;
       }
       
@@ -87,8 +82,6 @@ class VideoRepository {
         ...data,
       });
     } catch (e) {
-      print('Error getting video by ID: $e');
-      print('Stack trace: ${StackTrace.current}');
       rethrow;
     }
   }
@@ -107,7 +100,6 @@ class VideoRepository {
       
       return categories.toList()..sort();
     } catch (e) {
-      print('Error getting categories: $e');
       return [];
     }
   }
@@ -119,7 +111,6 @@ class VideoRepository {
       data['uploadedAt'] = FieldValue.serverTimestamp();
       
       await _firestore.collection(_collection).add(data);
-      print('VideoRepository: Successfully added video "${video.title}"');
     } on FirebaseException catch (e) {
       String errorMessage = 'Failed to add video';
       if (e.code == 'permission-denied') {
@@ -129,11 +120,8 @@ class VideoRepository {
       } else {
         errorMessage = 'Failed to add video: ${e.message ?? e.code}';
       }
-      print('VideoRepository: Firebase error adding video - ${e.code}: ${e.message}');
       throw Exception(errorMessage);
     } catch (e) {
-      print('VideoRepository: Error adding video: $e');
-      print('VideoRepository: Stack trace: ${StackTrace.current}');
       throw Exception('Failed to add video: ${e.toString()}');
     }
   }
@@ -145,7 +133,6 @@ class VideoRepository {
       data['updatedAt'] = FieldValue.serverTimestamp();
       
       await _firestore.collection(_collection).doc(video.id).update(data);
-      print('VideoRepository: Successfully updated video "${video.title}" (ID: ${video.id})');
     } on FirebaseException catch (e) {
       String errorMessage = 'Failed to update video';
       if (e.code == 'permission-denied') {
@@ -157,11 +144,8 @@ class VideoRepository {
       } else {
         errorMessage = 'Failed to update video: ${e.message ?? e.code}';
       }
-      print('VideoRepository: Firebase error updating video - ${e.code}: ${e.message}');
       throw Exception(errorMessage);
     } catch (e) {
-      print('VideoRepository: Error updating video: $e');
-      print('VideoRepository: Stack trace: ${StackTrace.current}');
       throw Exception('Failed to update video: ${e.toString()}');
     }
   }
@@ -169,7 +153,6 @@ class VideoRepository {
   Future<void> deleteVideo(String id) async {
     try {
       await _firestore.collection(_collection).doc(id).delete();
-      print('VideoRepository: Successfully deleted video (ID: $id)');
     } on FirebaseException catch (e) {
       String errorMessage = 'Failed to delete video';
       if (e.code == 'permission-denied') {
@@ -181,11 +164,8 @@ class VideoRepository {
       } else {
         errorMessage = 'Failed to delete video: ${e.message ?? e.code}';
       }
-      print('VideoRepository: Firebase error deleting video - ${e.code}: ${e.message}');
       throw Exception(errorMessage);
     } catch (e) {
-      print('VideoRepository: Error deleting video: $e');
-      print('VideoRepository: Stack trace: ${StackTrace.current}');
       throw Exception('Failed to delete video: ${e.toString()}');
     }
   }

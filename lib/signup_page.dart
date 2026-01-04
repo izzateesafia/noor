@@ -248,9 +248,7 @@ class _SignupPageState extends State<SignupPage> {
       
       // Send email verification in background (don't block user flow)
       cred.user?.sendEmailVerification().then((_) {
-        print('Email verification sent');
       }).catchError((e) {
-        print('Error sending email verification: $e');
       });
       
       if (mounted) {

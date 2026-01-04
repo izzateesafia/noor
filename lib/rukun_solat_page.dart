@@ -32,10 +32,6 @@ class _RukunSolatPageState extends State<RukunSolatPage> {
         final isPremium = userState.currentUser?.isPremium ?? widget.isPremium;
         
         // Debug logging
-        print('Rukun Solat: UserState: $userState');
-        print('Rukun Solat: CurrentUser: ${userState.currentUser}');
-        print('Rukun Solat: isPremium: $isPremium');
-        print('Rukun Solat: widget.isPremium: ${widget.isPremium}');
         
         final List<RukunSolat> rukunList = [
       RukunSolat(

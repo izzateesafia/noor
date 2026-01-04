@@ -225,7 +225,6 @@ class _JurulatihDashboardPageState extends State<JurulatihDashboardPage> {
                     BlocBuilder<NewsCubit, NewsState>(
                       builder: (context, newsState) {
                         // Debug logging
-                        print('JurulatihDashboard - News count: ${newsState.news.length}, Loading: ${newsState.isLoading}, Error: ${newsState.error}');
                         
                         // Show loading state
                         if (newsState.isLoading) {
@@ -234,18 +233,15 @@ class _JurulatihDashboardPageState extends State<JurulatihDashboardPage> {
                         
                         // Show error state
                         if (newsState.error != null) {
-                          print('NewsState error: ${newsState.error}');
                           return const SizedBox.shrink();
                         }
                         
                         // Show news feed if there are news items
                         if (newsState.news.isNotEmpty) {
-                          print('JurulatihDashboard - Showing ${newsState.news.length} news items');
                           return TerkiniNewsFeed(news: newsState.news);
                         }
                         
                         // Hide if no news items
-                        print('JurulatihDashboard - No news items, hiding widget');
                         return const SizedBox.shrink();
                       },
                     ),

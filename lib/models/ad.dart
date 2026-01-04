@@ -56,4 +56,32 @@ class Ad {
       'isActive': isActive,
     };
   }
+
+  Ad copyWith({
+    String? id,
+    String? title,
+    String? description,
+    String? image,
+    String? link,
+    String? notes,
+    DateTime? uploaded,
+    DateTime? deadline,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    bool? isActive,
+  }) {
+    return Ad(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      image: image ?? this.image,
+      link: link ?? this.link,
+      notes: notes ?? this.notes,
+      uploaded: uploaded ?? this.uploaded,
+      deadline: deadline ?? this.deadline,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      isActive: isActive ?? this.isActive,
+    );
+  }
 } 

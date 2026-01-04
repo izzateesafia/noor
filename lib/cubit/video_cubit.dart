@@ -12,17 +12,13 @@ class VideoCubit extends Cubit<VideoState> {
     emit(state.copyWith(status: VideoStatus.loading));
     try {
       final videos = await _repository.getVideos(category: category);
-      print('VideoCubit: Fetched ${videos.length} videos');
       if (videos.isEmpty) {
-        print('VideoCubit: Warning - No videos found in Firestore');
       }
       emit(state.copyWith(
         status: VideoStatus.loaded,
         videos: videos,
       ));
     } catch (e, stackTrace) {
-      print('VideoCubit: Error fetching videos: $e');
-      print('VideoCubit: Stack trace: $stackTrace');
       emit(state.copyWith(
         status: VideoStatus.error,
         error: e.toString(),

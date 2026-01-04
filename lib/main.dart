@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_stripe/flutter_stripe.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'firebase_options.dart';
 import 'blocs/payment/payment_bloc.dart';
@@ -76,7 +77,6 @@ final themeModeNotifier = ValueNotifier<ThemeMode>(ThemeMode.dark);
 // Background message handler
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  print('Handling a background message: ${message.messageId}');
 }
 
 void main() async {
@@ -100,6 +100,10 @@ void main() async {
   
   // Initialize lock screen notification service
   await LockScreenNotificationService().initialize();
+  
+  // Initialize Stripe from environment variables
+  Stripe.publishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'] ?? '';
+  Stripe.merchantIdentifier = dotenv.env['STRIPE_MERCHANT_IDENTIFIER'] ?? 'merchant.com.hexahelix.dq';
   
   runApp(const MyApp());
 }
@@ -147,14 +151,12 @@ Future<void> saveUserToken() async {
         await _saveFCMToken(user);
       } else {
         // APNS token not available yet, wait and retry
-        print('APNS token not available, waiting 3 seconds and retrying...');
         await Future.delayed(const Duration(seconds: 3));
         
         apnsToken = await FirebaseMessaging.instance.getAPNSToken();
         if (apnsToken != null) {
           await _saveFCMToken(user);
         } else {
-          print('APNS token still not available after retry');
         }
       }
     } else {
@@ -162,7 +164,6 @@ Future<void> saveUserToken() async {
       await _saveFCMToken(user);
     }
   } catch (e) {
-    print('Could not get FCM token: $e');
   }
   
   // Listen for token refreshes
@@ -176,10 +177,8 @@ Future<void> saveUserToken() async {
           'token': newToken,
           'updatedAt': DateTime.now().toUtc().toIso8601String(),
         });
-        print('FCM token refreshed and saved');
       }
     } catch (e) {
-      print('Could not update FCM token: $e');
     }
   });
 }
@@ -194,7 +193,6 @@ Future<void> _saveFCMToken(firebase_auth.User user) async {
       'token': token,
       'updatedAt': DateTime.now().toUtc().toIso8601String(),
     });
-    print('FCM token saved successfully');
   }
 }
 

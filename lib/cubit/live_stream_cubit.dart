@@ -10,15 +10,11 @@ class LiveStreamCubit extends Cubit<LiveStreamState> {
 
   // Get current live stream
   Future<void> getCurrentLiveStream() async {
-    print('LiveStreamCubit: Getting current live stream...');
     emit(LiveStreamLoading());
     try {
       final liveStream = await _repository.getCurrentLiveStream();
-      print('LiveStreamCubit: Repository returned: $liveStream');
       emit(LiveStreamLoaded(currentLiveStream: liveStream));
-      print('LiveStreamCubit: Emitted LiveStreamLoaded state');
     } catch (e) {
-      print('LiveStreamCubit: Error occurred: $e');
       emit(LiveStreamError('Failed to get current live stream: $e'));
     }
   }
@@ -73,21 +69,16 @@ class LiveStreamCubit extends Cubit<LiveStreamState> {
   Future<void> updateLiveStream(LiveStream liveStream) async {
     emit(LiveStreamLoading());
     try {
-      print('Updating live stream: ${liveStream.id}');
-      print('Update data: ${liveStream.toJson()}');
       
       final success = await _repository.updateLiveStream(liveStream);
       if (success) {
-        print('Live stream updated successfully');
         emit(LiveStreamSuccess('Live stream updated successfully'));
         await getCurrentLiveStream();
         await getAllLiveStreams();
       } else {
-        print('Failed to update live stream');
         emit(LiveStreamError('Failed to update live stream'));
       }
     } catch (e) {
-      print('Error updating live stream: $e');
       emit(LiveStreamError('Failed to update live stream: $e'));
     }
   }

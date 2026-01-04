@@ -21,7 +21,6 @@ class WhatsNewRepository {
         });
       }).toList();
     } catch (e) {
-      print('Error getting what\'s new: $e');
       return [];
     }
   }
@@ -36,7 +35,6 @@ class WhatsNewRepository {
         ...doc.data()!,
       });
     } catch (e) {
-      print('Error getting what\'s new by ID: $e');
       return null;
     }
   }
@@ -50,7 +48,6 @@ class WhatsNewRepository {
       
       await _firestore.collection(_collection).add(data);
     } catch (e) {
-      print('Error adding what\'s new: $e');
       rethrow;
     }
   }
@@ -66,7 +63,6 @@ class WhatsNewRepository {
           .doc(item.id)
           .update(data);
     } catch (e) {
-      print('Error updating what\'s new: $e');
       rethrow;
     }
   }
@@ -75,7 +71,6 @@ class WhatsNewRepository {
     try {
       await _firestore.collection(_collection).doc(id).delete();
     } catch (e) {
-      print('Error deleting what\'s new: $e');
       rethrow;
     }
   }

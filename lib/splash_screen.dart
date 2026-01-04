@@ -32,7 +32,6 @@ class _SplashScreenState extends State<SplashScreen> {
       
       if (currentUser != null) {
         // User is authenticated, fetch user data and navigate to appropriate page
-        print('User already authenticated: ${currentUser.uid}');
         
         // Create a temporary UserCubit to fetch user data
         final userCubit = UserCubit(UserRepository());
@@ -56,13 +55,11 @@ class _SplashScreenState extends State<SplashScreen> {
         }
       } else {
         // No authenticated user, go to login
-        print('No authenticated user found');
         if (mounted) {
           Navigator.pushReplacementNamed(context, '/login');
         }
       }
     } catch (e) {
-      print('Error checking auth status: $e');
       // On error, go to login
       if (mounted) {
         Navigator.pushReplacementNamed(context, '/login');

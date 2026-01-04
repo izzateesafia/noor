@@ -34,7 +34,7 @@ class DuasPage extends StatelessWidget {
               body: Center(child: Text('Tiada doa tersedia.')),
             );
           }
-          final duas = List<Dua>.from(state.duas)
+          final duas = List<Dua>.from(state.duas.where((d) => !d.isHidden))
             ..sort((a, b) => (b.uploaded ?? DateTime(0)).compareTo(a.uploaded ?? DateTime(0)));
           return Scaffold(
             appBar: const _DuasAppBar(),

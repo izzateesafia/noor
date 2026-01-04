@@ -130,7 +130,6 @@ class _BiodataPageState extends State<BiodataPage> {
         });
       }
     } catch (e) {
-      print('Error loading user: $e');
       setState(() => _isLoading = false);
     }
   }
@@ -272,7 +271,6 @@ class _BiodataPageState extends State<BiodataPage> {
         try {
           await _imageUploadService.deleteProfilePicture(_uploadedImageUrl!);
         } catch (e) {
-          print('Error deleting old profile picture: $e');
         }
       }
 
@@ -336,7 +334,6 @@ class _BiodataPageState extends State<BiodataPage> {
         try {
           finalImageUrl = await _imageUploadService.uploadProfilePicture(_selectedImageFile!);
         } catch (e) {
-          print('Error uploading profile picture: $e');
           // Continue without profile picture if upload fails
         }
       }

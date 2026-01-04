@@ -1,7 +1,6 @@
 import 'package:daily_quran/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:flutter_slidable/flutter_slidable.dart';
 import '../cubit/user_cubit.dart';
 import '../cubit/user_states.dart';
 import '../repository/user_repository.dart';
@@ -464,177 +463,146 @@ class _ManageUsersViewState extends State<_ManageUsersView> {
                     final user = filteredUsers[index];
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 8),
-                      child: Slidable(
-                        endActionPane: ActionPane(
-                          motion: const ScrollMotion(),
-                          extentRatio: 0.75,
-                          children: [
-                            // Assign as Jurulatih
-                            SlidableAction(
-                              onPressed: (_) => _assignAsJurulatih(user),
-                              backgroundColor: Colors.blue,
-                              foregroundColor: Colors.white,
-                              icon: Icons.person_add,
-                              label: user.roles.contains(UserType.trainer) 
-                                  ? 'Already Jurulatih' 
-                                  : 'Assign Jurulatih',
-                              flex: 2,
-                            ),
-                            // Assign as Master Trainer
-                            SlidableAction(
-                              onPressed: (_) => _assignAsMasterTrainer(user),
-                              backgroundColor: Colors.purple,
-                              foregroundColor: Colors.white,
-                              icon: Icons.star,
-                              label: user.roles.contains(UserType.masterTrainer)
-                                  ? 'Already Master'
-                                  : 'Assign Master',
-                              flex: 2,
-                            ),
-                            // Delete user
-                            SlidableAction(
-                              onPressed: (_) => _deleteUser(user),
-                              backgroundColor: Theme.of(context).colorScheme.error,
-                              foregroundColor: Colors.white,
-                              icon: Icons.delete,
-                              label: 'Delete',
-                              flex: 1,
-                            ),
-                          ],
+                      child: Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        child: Card(
-                          elevation: 2,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
+                        child: ListTile(
+                          contentPadding: const EdgeInsets.all(16),
+                          leading: CircleAvatar(
+                            radius: 25,
+                            backgroundColor: user.roles.contains(UserType.admin)
+                                ? Colors.red.shade100
+                                : Colors.blue.shade100,
+                            child: Icon(
+                              user.roles.contains(UserType.admin)
+                                  ? Icons.admin_panel_settings
+                                  : Icons.person,
+                              color: user.roles.contains(UserType.admin)
+                                  ? Colors.red
+                                  : Colors.blue,
+                              size: 28,
+                            ),
                           ),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.all(16),
-                            leading: CircleAvatar(
-                              radius: 25,
-                              backgroundColor: user.roles.contains(UserType.admin)
-                                  ? Colors.red.shade100
-                                  : Colors.blue.shade100,
-                              child: Icon(
-                                user.roles.contains(UserType.admin)
-                                    ? Icons.admin_panel_settings
-                                    : Icons.person,
-                                color: user.roles.contains(UserType.admin)
-                                    ? Colors.red
-                                    : Colors.blue,
-                                size: 28,
+                          title: Row(
+                            children: [
+                              Expanded(
+                                child: Text(
+                                  user.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 16,
+                                  ),
+                                ),
                               ),
-                            ),
-                            title: Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    user.name,
-                                    style: const TextStyle(
+                              if (user.isPremium)
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.amber,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: const Text(
+                                    'Premium',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12,
                                       fontWeight: FontWeight.bold,
-                                      fontSize: 16,
                                     ),
                                   ),
                                 ),
-                                if (user.isPremium)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 4,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.amber,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: const Text(
-                                      'Premium',
+                            ],
+                          ),
+                          subtitle: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const SizedBox(height: 4),
+                              // Role badges
+                              Wrap(
+                                spacing: 6,
+                                runSpacing: 4,
+                                children: _getRoleBadges(user),
+                              ),
+                              const SizedBox(height: 6),
+                              Row(
+                                children: [
+                                  const Icon(Icons.email, size: 16),
+                                  const SizedBox(width: 4),
+                                  Expanded(
+                                    child: Text(
+                                      user.email,
                                       style: TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
+                                        color: Colors.grey[600],
                                       ),
                                     ),
                                   ),
-                              ],
-                            ),
-                            subtitle: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const SizedBox(height: 4),
-                                // Role badges
-                                Wrap(
-                                  spacing: 6,
-                                  runSpacing: 4,
-                                  children: _getRoleBadges(user),
-                                ),
-                                const SizedBox(height: 6),
-                                Row(
-                                  children: [
-                                    const Icon(Icons.email, size: 16),
-                                    const SizedBox(width: 4),
-                                    Expanded(
-                                      child: Text(
-                                        user.email,
-                                        style: TextStyle(
-                                          color: Colors.grey[600],
-                                        ),
-                                      ),
+                                ],
+                              ),
+                              const SizedBox(height: 2),
+                              Row(
+                                children: [
+                                  const Icon(Icons.phone, size: 16),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    user.phone,
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
                                     ),
-                                  ],
-                                ),
+                                  ),
+                                ],
+                              ),
+                              if (user.address != null) ...[
                                 const SizedBox(height: 2),
                                 Row(
                                   children: [
-                                    const Icon(Icons.phone, size: 16),
+                                    const Icon(Icons.location_on, size: 16),
                                     const SizedBox(width: 4),
-                                    Text(
-                                      user.phone,
-                                      style: TextStyle(
-                                        color: Colors.grey[600],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                if (user.address != null) ...[
-                                  const SizedBox(height: 2),
-                                  Row(
-                                    children: [
-                                      const Icon(Icons.location_on, size: 16),
-                                      const SizedBox(width: 4),
-                                      Expanded(
-                                        child: Text(
-                                          _formatAddressForDisplay(user.address),
-                                          style: TextStyle(
-                                            color: Colors.grey[600],
-                                          ),
-                                          maxLines: 1,
-                                          overflow: TextOverflow.ellipsis,
+                                    Expanded(
+                                      child: Text(
+                                        _formatAddressForDisplay(user.address),
+                                        style: TextStyle(
+                                          color: Colors.grey[600],
                                         ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.class_,
-                                      size: 16,
-                                      color: Colors.grey[600],
-                                    ),
-                                    const SizedBox(width: 4),
-                                    Text(
-                                      '${user.enrolledClassIds.length} classes enrolled',
-                                      style: TextStyle(
-                                        color: Colors.grey[600],
-                                        fontSize: 12,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
                                   ],
                                 ),
                               ],
-                            ),
-                            onTap: () => _viewUserDetails(user),
+                              const SizedBox(height: 4),
+                              Row(
+                                children: [
+                                  Icon(
+                                    Icons.class_,
+                                    size: 16,
+                                    color: Colors.grey[600],
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${user.enrolledClassIds.length} classes enrolled',
+                                    style: TextStyle(
+                                      color: Colors.grey[600],
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
                           ),
+                          trailing: IconButton(
+                            icon: Icon(
+                              Icons.person_remove,
+                              color: Theme.of(context).colorScheme.error,
+                            ),
+                            onPressed: () => _deleteUser(user),
+                            tooltip: 'Padam Pengguna',
+                          ),
+                          onTap: () => _viewUserDetails(user),
                         ),
                       ),
                     );

@@ -64,7 +64,6 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
         // Check if using saved payment method
         if (event.savedPaymentMethodId != null) {
           // Use saved payment method - payment intent was created with the payment method attached
-          print('pay via saved payment method: ${event.savedPaymentMethodId}');
           
           // The payment intent was created with the payment method and confirm=true
           // Check the status to see if it requires action (3D Secure) or succeeded
@@ -81,21 +80,18 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
                 await Stripe.instance.handleNextAction(order.secretKey!);
               } else if (status == 'succeeded') {
                 // Payment already succeeded
-                print('Payment succeeded with saved payment method');
               } else if (status == 'requires_payment_method') {
                 // Payment method was declined, need to retry
                 throw Exception('Payment method was declined. Please try a different card.');
               }
             }
           } catch (e) {
-            print('Error checking payment intent status: $e');
             // If we can't check status, try to handle next action anyway
             // This will work if 3D Secure is required
             try {
               await Stripe.instance.handleNextAction(order.secretKey!);
             } catch (handleError) {
               // If no action needed, payment might have already succeeded
-              print('No action needed or payment already processed: $handleError');
             }
           }
         } else if (event.cardDetails != null) {
@@ -108,7 +104,6 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
             name: orderRequest.fullName,
           );
           
-          print('pay via new card');
           final paymentMethodParams = PaymentMethodParams.card(
             paymentMethodData: PaymentMethodData(
               billingDetails: billingDetails,
@@ -146,13 +141,10 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
 
         emit(PaymentSuccess(order: order));
       } catch (e) {
-        print(e);
-        print("=====1");
 
         if (e is StripeException) {
           Map<String, dynamic> error = e.toJson();
           debugPrint(order.toJson().toString());
-          print("stripe exception: ${error.toString()}");
 
           final errorMsg = error["error"];
           if (errorMsg is LocalizedErrorMessage) {
@@ -255,12 +247,10 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
       if (planId.startsWith('class_')) {
         // Handle class enrollment - extract class ID from plan ID
         final classId = planId.replaceFirst('class_', '');
-        print('PaymentBloc: Processing class enrollment - planId: $planId, extracted classId: $classId');
         await repository.updateUserClassEnrollment(
           userId: userId,
           classId: classId,
         );
-        print('PaymentBloc: Class enrollment successful for user: $userId, class: $classId');
         return;
       }
       
@@ -284,9 +274,7 @@ class PaymentBloc extends Bloc<PaymentEvent, PaymentState> {
         planId: planId,
       );
       
-      print('PaymentBloc: Premium status updated successfully for user: $userId');
     } catch (e) {
-      print('Error updating user premium status: $e');
     }
   }
 }

@@ -43,7 +43,132 @@ class _ManageHadithsPageState extends State<ManageHadithsPage> {
   }
 
   Future<void> _deleteHadith(BuildContext context, Hadith hadith) async {
-    await context.read<HadithCubit>().deleteHadith(hadith.id);
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Padam Hadis'),
+        content: Text('Adakah anda pasti mahu memadam "${hadith.title}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.error,
+            ),
+            child: const Text('Padam'),
+          ),
+        ],
+      ),
+    );
+    if (confirm == true) {
+      await context.read<HadithCubit>().deleteHadith(hadith.id);
+    }
+  }
+
+  void _duplicateHadith(BuildContext context, Hadith hadith) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Salin Hadis'),
+        content: Text('Adakah anda pasti mahu menyalin "${hadith.title}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+            ),
+            child: const Text('Salin'),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirm == true) {
+      final duplicatedHadith = Hadith(
+        id: '', // Empty ID - Firestore will generate a new one
+        title: '${hadith.title} (Copy)',
+        content: hadith.content,
+        image: hadith.image,
+        source: hadith.source,
+        book: hadith.book,
+        narrator: hadith.narrator,
+        link: hadith.link,
+        notes: hadith.notes,
+        uploaded: DateTime.now(),
+        isHidden: hadith.isHidden,
+      );
+      
+      try {
+        await context.read<HadithCubit>().addHadith(duplicatedHadith);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Hadis "${hadith.title}" telah disalin'),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Ralat menyalin hadis: $e'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  void _toggleHideHadith(BuildContext context, Hadith hadith) async {
+    try {
+      await context.read<HadithCubit>().updateHadith(
+        hadith.copyWith(isHidden: !hadith.isHidden),
+      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(hadith.isHidden 
+              ? 'Hadis telah ditunjukkan kepada pengguna'
+              : 'Hadis telah disembunyikan daripada pengguna'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ralat mengemas kini hadis: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    }
   }
 
   Widget _buildHadithImage(String imageUrl) {
@@ -192,85 +317,171 @@ class _ManageHadithsPageState extends State<ManageHadithsPage> {
             itemCount: state.hadiths.length,
             itemBuilder: (context, i) {
               final hadith = state.hadiths[i];
-              return Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                color: Theme.of(context).cardColor,
-                margin: const EdgeInsets.only(bottom: 16),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (hadith.image != null && hadith.image!.isNotEmpty)
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: _buildHadithImage(hadith.image!),
+              return Opacity(
+                opacity: hadith.isHidden ? 0.6 : 1.0,
+                child: Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  color: Theme.of(context).cardColor,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (hadith.image != null && hadith.image!.isNotEmpty)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: _buildHadithImage(hadith.image!),
+                          ),
+                        const SizedBox(width: 18),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      hadith.title,
+                                      style: TextStyle(
+                                        color: Theme.of(context).textTheme.bodyLarge?.color,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ),
+                                  if (hadith.isHidden)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Text(
+                                        'Disembunyikan',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                hadith.content,
+                                style: TextStyle(
+                                  color: Theme.of(context).textTheme.bodyLarge?.color,
+                                  fontSize: 14,
+                                ),
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                              if (hadith.link != null && hadith.link!.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                Text(
+                                  hadith.link!,
+                                  style: TextStyle(
+                                    color: AppColors.primary,
+                                    fontSize: 13,
+                                    decoration: TextDecoration.underline,
+                                  ),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                              if (hadith.notes != null && hadith.notes!.isNotEmpty) ...[
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Notes: ${hadith.notes!}',
+                                  style: TextStyle(
+                                    color: AppColors.disabled,
+                                    fontSize: 12,
+                                    fontStyle: FontStyle.italic,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ],
+                          ),
                         ),
-                      const SizedBox(width: 18),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              hadith.title,
-                              style: TextStyle(
-                                color: Theme.of(context).textTheme.bodyLarge?.color,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
+                        PopupMenuButton<String>(
+                          icon: Icon(
+                            Icons.more_vert,
+                            color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+                          ),
+                          onSelected: (value) {
+                            switch (value) {
+                              case 'edit':
+                                _editHadith(context, hadith);
+                                break;
+                              case 'duplicate':
+                                _duplicateHadith(context, hadith);
+                                break;
+                              case 'hide':
+                                _toggleHideHadith(context, hadith);
+                                break;
+                              case 'delete':
+                                _deleteHadith(context, hadith);
+                                break;
+                            }
+                          },
+                          itemBuilder: (context) => [
+                            PopupMenuItem(
+                              value: 'edit',
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.edit, color: Colors.orange, size: 20),
+                                  const SizedBox(width: 12),
+                                  const Text('Edit'),
+                                ],
                               ),
                             ),
-                            const SizedBox(height: 8),
-                            Text(
-                              hadith.content,
-                              style: TextStyle(
-                                color: Theme.of(context).textTheme.bodyLarge?.color,
-                                fontSize: 14,
+                            PopupMenuItem(
+                              value: 'duplicate',
+                              child: Row(
+                                children: [
+                                  const Icon(Icons.copy, color: Colors.blue, size: 20),
+                                  const SizedBox(width: 12),
+                                  const Text('Duplicate'),
+                                ],
                               ),
                             ),
-                            if (hadith.link != null && hadith.link!.isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              Text(
-                                hadith.link!,
-                                style: TextStyle(
-                                  color: AppColors.primary,
-                                  fontSize: 13,
-                                  decoration: TextDecoration.underline,
-                                ),
+                            PopupMenuItem(
+                              value: 'hide',
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    hadith.isHidden ? Icons.visibility : Icons.visibility_off,
+                                    color: Colors.grey,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(hadith.isHidden ? 'Tunjukkan' : 'Sembunyikan'),
+                                ],
                               ),
-                            ],
-                            if (hadith.notes != null && hadith.notes!.isNotEmpty) ...[
-                              const SizedBox(height: 8),
-                              Text(
-                                'Notes: ${hadith.notes!}',
-                                style: TextStyle(
-                                  color: AppColors.disabled,
-                                  fontSize: 12,
-                                  fontStyle: FontStyle.italic,
-                                ),
+                            ),
+                            PopupMenuItem(
+                              value: 'delete',
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.delete,
+                                    color: Theme.of(context).colorScheme.error,
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Text('Padam'),
+                                ],
                               ),
-                            ],
+                            ),
                           ],
                         ),
-                      ),
-                      Column(
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.orange),
-                            tooltip: 'Edit',
-                            onPressed: () => _editHadith(context, hadith),
-                          ),
-                          IconButton(
-                            icon: Icon(
-                              Icons.delete,
-                              color: Theme.of(context).colorScheme.error,
-                            ),
-                            tooltip: 'Delete',
-                            onPressed: () => _deleteHadith(context, hadith),
-                          ),
-                        ],
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               );

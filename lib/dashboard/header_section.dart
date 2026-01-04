@@ -22,8 +22,6 @@ class HeaderSection extends StatelessWidget {
     final String formattedDate = DateFormat('EEEE, d MMMM yyyy').format(DateTime.now());
     
     // Debug logging
-    print('HeaderSection: Building with user: ${user.name} (${user.email})');
-    print('HeaderSection: Greeting: $greeting');
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(24, 32, 24, 16),
@@ -55,10 +53,6 @@ class HeaderSection extends StatelessWidget {
               final locationName = currentUser?.locationName;
               
               // Debug logging
-              print('HeaderSection: Building location display');
-              print('HeaderSection: Current user: ${currentUser?.name}');
-              print('HeaderSection: Location name: $locationName');
-              print('HeaderSection: Latitude: ${currentUser?.latitude}, Longitude: ${currentUser?.longitude}');
               
               if (locationName != null && locationName.isNotEmpty) {
                 return Row(

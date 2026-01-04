@@ -77,11 +77,9 @@ class SimpleAlarmService {
       _isInitialized = true;
 
       if (kDebugMode) {
-        print('SimpleAlarmService initialized successfully');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error initializing SimpleAlarmService: $e');
       }
     }
   }
@@ -98,11 +96,9 @@ class SimpleAlarmService {
       }
       
       if (kDebugMode) {
-        print('Loaded preferences - Enabled: $_alarmEnabled, Prayers: $_enabledPrayers');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error loading preferences: $e');
       }
     }
   }
@@ -115,11 +111,9 @@ class SimpleAlarmService {
       await prefs.setStringList('prayer_alarm_prayers', _enabledPrayers.toList());
       
       if (kDebugMode) {
-        print('Preferences saved successfully');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error saving preferences: $e');
       }
     }
   }
@@ -134,7 +128,6 @@ class SimpleAlarmService {
       if (androidPlugin != null) {
         final granted = await androidPlugin.requestNotificationsPermission();
         if (kDebugMode) {
-          print('Android notification permission granted: $granted');
         }
       }
       
@@ -149,12 +142,10 @@ class SimpleAlarmService {
           sound: true,
         );
         if (kDebugMode) {
-          print('iOS notification permission granted: $granted');
         }
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error requesting permissions: $e');
       }
     }
   }
@@ -170,7 +161,6 @@ class SimpleAlarmService {
     _checkPrayerTimes();
     
     if (kDebugMode) {
-      print('Prayer monitoring started');
     }
   }
 
@@ -202,7 +192,6 @@ class SimpleAlarmService {
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error checking prayer times: $e');
       }
     }
   }
@@ -231,7 +220,6 @@ class SimpleAlarmService {
       return false;
     } catch (e) {
       if (kDebugMode) {
-        print('Error parsing time: $e');
       }
       return false;
     }
@@ -266,12 +254,10 @@ class SimpleAlarmService {
       await _showPrayerNotification(prayerName);
       
       if (kDebugMode) {
-        print('Adhan played for $prayerName at ${DateTime.now()}');
       }
       
     } catch (e) {
       if (kDebugMode) {
-        print('Error playing adhan for $prayerName: $e');
       }
     }
   }
@@ -285,7 +271,6 @@ class SimpleAlarmService {
       final notificationId = DateTime.now().millisecondsSinceEpoch ~/ 1000;
       
       if (kDebugMode) {
-        print('Creating notification for $prayerName with ID: $notificationId');
       }
       
       await _notifications.show(
@@ -333,11 +318,9 @@ class SimpleAlarmService {
       );
       
       if (kDebugMode) {
-        print('Notification created successfully for $prayerName');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error showing notification: $e');
       }
     }
   }
@@ -363,7 +346,6 @@ class SimpleAlarmService {
   // Handle notification tap
   void _onNotificationTapped(NotificationResponse response) {
     if (kDebugMode) {
-      print('Notification tapped: ${response.payload}');
     }
   }
 
@@ -373,7 +355,6 @@ class SimpleAlarmService {
     await _savePreferences();
     
     if (kDebugMode) {
-      print('Prayer alarm ${enabled ? 'enabled' : 'disabled'}');
     }
   }
 
@@ -387,7 +368,6 @@ class SimpleAlarmService {
     await _savePreferences();
     
     if (kDebugMode) {
-      print('Prayer $prayerName ${enabled ? 'enabled' : 'disabled'}');
     }
   }
 

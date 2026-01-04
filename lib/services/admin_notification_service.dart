@@ -44,9 +44,7 @@ class AdminNotificationService {
         'type': 'immediate',
       });
 
-      print('AdminNotificationService: Notification queued for ${tokens.length} users');
     } catch (e) {
-      print('AdminNotificationService: Error sending notification: $e');
       rethrow;
     }
   }
@@ -84,9 +82,7 @@ class AdminNotificationService {
         'type': 'scheduled',
       });
 
-      print('AdminNotificationService: Notification scheduled for ${scheduledTime.toLocal()}');
     } catch (e) {
-      print('AdminNotificationService: Error scheduling notification: $e');
       rethrow;
     }
   }
@@ -105,7 +101,6 @@ class AdminNotificationService {
         ...doc.data(),
       }).toList();
     } catch (e) {
-      print('AdminNotificationService: Error getting notification history: $e');
       return [];
     }
   }
@@ -114,9 +109,7 @@ class AdminNotificationService {
   Future<void> deleteNotification(String notificationId) async {
     try {
       await _firestore.collection('admin_notifications').doc(notificationId).delete();
-      print('AdminNotificationService: Notification deleted: $notificationId');
     } catch (e) {
-      print('AdminNotificationService: Error deleting notification: $e');
       rethrow;
     }
   }

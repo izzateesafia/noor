@@ -93,15 +93,12 @@ class PrayerTimesRepository {
       
       final coordinates = _getCoordinatesForLocation(state, district);
       if (coordinates == null) {
-        print('PrayerTimesRepository: No coordinates found for $state, $district, using fallback');
         return _getFallbackPrayerTimes();
       }
       
-      print('PrayerTimesRepository: Using coordinates $coordinates for $state, $district');
       
       // First get the zone from coordinates
       final zoneInfo = await getZoneFromCoordinates(coordinates['lat']!, coordinates['lng']!);
-      print('PrayerTimesRepository: Got zone ${zoneInfo.zone} for coordinates $coordinates');
       
       // Then get today's prayer times for that zone
       final today = DateTime.now().day;
@@ -118,16 +115,13 @@ class PrayerTimesRepository {
 
       if (response.statusCode == 200) {
         final data = json.decode(response.body);
-        print('PrayerTimesRepository: Successfully got prayer times from API: $data');
         
         // Convert the API response to our PrayerTimes model
         return _convertApiResponseToPrayerTimes(data);
       } else {
-        print('PrayerTimesRepository: API returned status ${response.statusCode}, using fallback');
         return _getFallbackPrayerTimes();
       }
     } catch (e) {
-      print('PrayerTimesRepository: Error in getPrayerTimes: $e, using fallback');
       return _getFallbackPrayerTimes();
     }
   }
@@ -178,7 +172,6 @@ class PrayerTimesRepository {
       
       final prayerTime = data['prayerTime'] as Map<String, dynamic>?;
       if (prayerTime == null) {
-        print('PrayerTimesRepository: No prayerTime field in API response');
         return _getFallbackPrayerTimes();
       }
       
@@ -203,7 +196,6 @@ class PrayerTimesRepository {
         isha: formatTime(prayerTime['isha'] ?? '18:43'),
       );
     } catch (e) {
-      print('PrayerTimesRepository: Error converting API response: $e');
       return _getFallbackPrayerTimes();
     }
   }
@@ -356,12 +348,9 @@ class PrayerTimesRepository {
   }
 
   Future<PrayerTimesData> getCurrentPrayerTimes(String state, String district) async {
-    print('PrayerTimesRepository: Starting getCurrentPrayerTimes for $state, $district');
     try {
       // Get prayer times - this method now uses the correct API endpoints
-      print('PrayerTimesRepository: Getting prayer times...');
       final prayerTimes = await getPrayerTimes(state, district);
-      print('PrayerTimesRepository: Got prayer times: ${prayerTimes.fajr}');
       
       // Create location
       final location = Location(state: state, district: district);
@@ -381,7 +370,6 @@ class PrayerTimesRepository {
       // In the future, we could extract it from the prayer times API response
       final hijriDate = _getFallbackHijriDate();
 
-      print('PrayerTimesRepository: Returning PrayerTimesData successfully');
       return PrayerTimesData(
         prayerTimes: prayerTimes,
         hijriDate: hijriDate,
@@ -389,9 +377,7 @@ class PrayerTimesRepository {
         qiblaDirection: qiblaDirection,
       );
     } catch (e) {
-      print('PrayerTimesRepository: Error in getCurrentPrayerTimes: $e');
       // Ultimate fallback - return complete fallback data
-      print('PrayerTimesRepository: Returning fallback data');
       return PrayerTimesData(
         prayerTimes: _getFallbackPrayerTimes(),
         hijriDate: _getFallbackHijriDate(),
@@ -403,11 +389,9 @@ class PrayerTimesRepository {
 
   // New method to get prayer times using coordinates
   Future<PrayerTimesData> getCurrentPrayerTimesByCoordinates(double latitude, double longitude) async {
-    print('PrayerTimesRepository: Starting getCurrentPrayerTimesByCoordinates for $latitude, $longitude');
     try {
       // Get zone-based prayer times
       final zonePrayerTimes = await getTodayPrayerTimesByCoordinates(latitude, longitude);
-      print('PrayerTimesRepository: Got zone prayer times: ${zonePrayerTimes.fajr}');
       
       // Convert to existing format for compatibility
       final prayerTimes = zonePrayerTimes.toPrayerTimes();
@@ -429,7 +413,6 @@ class PrayerTimesRepository {
         qiblaDirection = 0.0;
       }
 
-      print('PrayerTimesRepository: Returning PrayerTimesData from coordinates successfully');
       return PrayerTimesData(
         prayerTimes: prayerTimes,
         hijriDate: hijriDate,
@@ -437,7 +420,6 @@ class PrayerTimesRepository {
         qiblaDirection: qiblaDirection,
       );
     } catch (e) {
-      print('PrayerTimesRepository: Error in getCurrentPrayerTimesByCoordinates: $e');
       // Fallback to state/district method
       return getCurrentPrayerTimes('Kuala Lumpur', 'Kuala Lumpur');
     }

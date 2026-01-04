@@ -113,24 +113,48 @@ class _ManageLiveStreamsView extends StatelessWidget {
       itemCount: liveStreams.length,
       itemBuilder: (context, index) {
         final liveStream = liveStreams[index];
-        return Card(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: ListTile(
-            leading: CircleAvatar(
-              backgroundColor: liveStream.isActive 
-                  ? Colors.green.withOpacity(0.1)
-                  : Colors.grey.withOpacity(0.1),
-              child: Icon(
-                liveStream.isActive ? Icons.live_tv : Icons.tv_off,
-                color: liveStream.isActive ? Colors.green : Colors.grey,
+        return Opacity(
+          opacity: !liveStream.isActive ? 0.6 : 1.0,
+          child: Card(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: ListTile(
+              leading: CircleAvatar(
+                backgroundColor: liveStream.isActive 
+                    ? Colors.green.withOpacity(0.1)
+                    : Colors.grey.withOpacity(0.1),
+                child: Icon(
+                  liveStream.isActive ? Icons.live_tv : Icons.tv_off,
+                  color: liveStream.isActive ? Colors.green : Colors.grey,
+                ),
               ),
-            ),
-            title: Text(
-              liveStream.title,
-              style: TextStyle(
-                fontWeight: liveStream.isActive ? FontWeight.bold : FontWeight.normal,
+              title: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      liveStream.title,
+                      style: TextStyle(
+                        fontWeight: liveStream.isActive ? FontWeight.bold : FontWeight.normal,
+                      ),
+                    ),
+                  ),
+                  if (!liveStream.isActive)
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.grey,
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: const Text(
+                        'Disembunyikan',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                ],
               ),
-            ),
             subtitle: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -150,47 +174,57 @@ class _ManageLiveStreamsView extends StatelessWidget {
               ],
             ),
             trailing: PopupMenuButton<String>(
+              icon: Icon(
+                Icons.more_vert,
+                color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
+              ),
               onSelected: (value) => _handleMenuAction(context, value, liveStream),
               itemBuilder: (context) => [
-                const PopupMenuItem(
+                PopupMenuItem(
                   value: 'edit',
                   child: Row(
                     children: [
-                      Icon(Icons.edit),
-                      SizedBox(width: 8),
-                      Text('Edit'),
+                      const Icon(Icons.edit, color: Colors.orange, size: 20),
+                      const SizedBox(width: 12),
+                      const Text('Edit'),
                     ],
                   ),
                 ),
-                if (!liveStream.isActive)
-                  const PopupMenuItem(
-                    value: 'activate',
-                    child: Row(
-                      children: [
-                        Icon(Icons.play_arrow, color: Colors.green),
-                        SizedBox(width: 8),
-                        Text('Activate'),
-                      ],
-                    ),
+                PopupMenuItem(
+                  value: 'duplicate',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.copy, color: Colors.blue, size: 20),
+                      const SizedBox(width: 12),
+                      const Text('Duplicate'),
+                    ],
                   ),
-                if (liveStream.isActive)
-                  const PopupMenuItem(
-                    value: 'deactivate',
-                    child: Row(
-                      children: [
-                        Icon(Icons.stop, color: Colors.orange),
-                        SizedBox(width: 8),
-                        Text('Deactivate'),
-                      ],
-                    ),
+                ),
+                PopupMenuItem(
+                  value: liveStream.isActive ? 'deactivate' : 'activate',
+                  child: Row(
+                    children: [
+                      Icon(
+                        liveStream.isActive ? Icons.visibility_off : Icons.visibility,
+                        color: Colors.grey,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      Text(liveStream.isActive ? 'Sembunyikan' : 'Tunjukkan'),
+                    ],
                   ),
-                const PopupMenuItem(
+                ),
+                PopupMenuItem(
                   value: 'delete',
                   child: Row(
                     children: [
-                      Icon(Icons.delete, color: Colors.red),
-                      SizedBox(width: 8),
-                      Text('Delete'),
+                      Icon(
+                        Icons.delete,
+                        color: Theme.of(context).colorScheme.error,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 12),
+                      const Text('Padam'),
                     ],
                   ),
                 ),
@@ -204,9 +238,76 @@ class _ManageLiveStreamsView extends StatelessWidget {
               );
             },
           ),
-        );
+        ));
       },
     );
+  }
+
+  void _duplicateLiveStream(BuildContext context, LiveStream liveStream) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Salin Siaran Langsung'),
+        content: Text('Adakah anda pasti mahu menyalin "${liveStream.title}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(false),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(ctx).pop(true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Theme.of(context).colorScheme.primary,
+            ),
+            child: const Text('Salin'),
+          ),
+        ],
+      ),
+    );
+    
+    if (confirm == true) {
+      final duplicatedLiveStream = LiveStream(
+        id: DateTime.now().millisecondsSinceEpoch.toString(), // New ID
+        title: '${liveStream.title} (Copy)',
+        description: liveStream.description,
+        tiktokLiveLink: liveStream.tiktokLiveLink,
+        isActive: false, // Start as inactive
+        createdAt: DateTime.now(),
+      );
+      
+      try {
+        context.read<LiveStreamCubit>().addLiveStream(
+          title: duplicatedLiveStream.title,
+          description: duplicatedLiveStream.description,
+          tiktokLiveLink: duplicatedLiveStream.tiktokLiveLink,
+        );
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Siaran langsung "${liveStream.title}" telah disalin'),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Ralat menyalin siaran langsung: $e'),
+              backgroundColor: Theme.of(context).colorScheme.error,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+          );
+        }
+      }
+    }
   }
 
   void _handleMenuAction(BuildContext context, String action, LiveStream liveStream) {
@@ -217,6 +318,9 @@ class _ManageLiveStreamsView extends StatelessWidget {
             builder: (context) => LiveStreamFormPage(liveStream: liveStream),
           ),
         );
+        break;
+      case 'duplicate':
+        _duplicateLiveStream(context, liveStream);
         break;
       case 'activate':
         context.read<LiveStreamCubit>().activateLiveStream(liveStream.id);

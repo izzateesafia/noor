@@ -63,7 +63,6 @@ class _WelcomeMessageScreenState extends State<WelcomeMessageScreen>
         });
       }
     } catch (e) {
-      print('Error loading welcome message: $e');
       if (mounted) {
         setState(() {
           _isLoading = false;

@@ -296,7 +296,6 @@ class _QuranSearchPageState extends State<QuranSearchPage> {
         }
       } catch (e) {
         // Handle any errors
-        print('Search error: $e');
       }
       
       if (mounted) {

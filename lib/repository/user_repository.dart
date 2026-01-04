@@ -16,17 +16,13 @@ class UserRepository {
 
     Future<UserModel?> getUserById(String id) async {
     try {
-      print('UserRepository: Getting user by ID: $id');
       final doc = await _db.collection(_collection).doc(id).get();
-      print('UserRepository: Document exists: ${doc.exists}');
       
       if (!doc.exists) {
-        print('UserRepository: Document does not exist for ID: $id');
         return null;
       }
       
       final data = doc.data()!;
-      print('UserRepository: Document data keys: ${data.keys.join(', ')}');
       
       // Ensure required fields have fallback values
       final safeData = {
@@ -49,14 +45,13 @@ class UserRepository {
         'latitude': data['latitude'],
         'longitude': data['longitude'],
         'locationName': data['locationName'],
+        'mushafBookmarks': data['mushafBookmarks'],
+        'pendingClassPayments': data['pendingClassPayments'],
       };
       
-      print('UserRepository: Safe data prepared, creating UserModel...');
       final user = UserModel.fromJson(safeData);
-      print('UserRepository: UserModel created successfully: ${user.name}');
       return user;
     } catch (e) {
-      print('UserRepository: Error getting user by ID: $e');
       return null;
     }
   }
@@ -64,15 +59,11 @@ class UserRepository {
   // For admin or backend use only. Normal users should be created via signupUser
   Future<void> addUser(UserModel user) async {
     try {
-      print('UserRepository: Adding user with ID: ${user.id}');
       final data = user.toJson();
       data.remove('id');
-      print('UserRepository: User data prepared: ${data.keys.join(', ')}');
       // Use the user's ID as the document ID to match Firebase Auth UID
       await _db.collection(_collection).doc(user.id).set(data);
-      print('UserRepository: User added successfully to Firestore');
     } catch (e) {
-      print('UserRepository: Error adding user: $e');
       rethrow;
     }
   }
@@ -131,22 +122,17 @@ class UserRepository {
     try {
       final currentAuthUser = _auth.currentUser;
       if (currentAuthUser == null) {
-        print('No authenticated user found');
         return null;
       }
       
-      print('Fetching user data for UID: ${currentAuthUser.uid}');
       final user = await getUserById(currentAuthUser.uid);
       
       if (user != null) {
-        print('Successfully loaded user: ${user.name} (${user.email})');
       } else {
-        print('Failed to load user data from Firestore');
       }
       
       return user;
     } catch (e) {
-      print('Error getting current user: $e');
       return null;
     }
   }
@@ -154,11 +140,8 @@ class UserRepository {
   // Sign out from Firebase Auth
   Future<void> signOut() async {
     try {
-      print('UserRepository: Signing out from Firebase Auth...');
       await _auth.signOut();
-      print('UserRepository: Successfully signed out from Firebase Auth');
     } catch (e) {
-      print('UserRepository: Error signing out from Firebase Auth: $e');
       rethrow;
     }
   }

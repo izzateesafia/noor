@@ -36,9 +36,7 @@ class MushafBookmarkService {
         });
       }
 
-      print('MushafBookmarkService: Saved bookmark for $mushafId at page $pageNumber');
     } catch (e) {
-      print('MushafBookmarkService: Error saving bookmark: $e');
       rethrow;
     }
   }
@@ -74,7 +72,6 @@ class MushafBookmarkService {
 
       return pageNumber as int;
     } catch (e) {
-      print('MushafBookmarkService: Error getting bookmark: $e');
       return null;
     }
   }
@@ -92,9 +89,7 @@ class MushafBookmarkService {
         'mushafBookmarks.$mushafId': FieldValue.delete(),
       });
 
-      print('MushafBookmarkService: Deleted bookmark for $mushafId');
     } catch (e) {
-      print('MushafBookmarkService: Error deleting bookmark: $e');
       rethrow;
     }
   }
@@ -126,7 +121,6 @@ class MushafBookmarkService {
       // Convert to Map<String, int>
       return bookmarks.map((key, value) => MapEntry(key, value as int));
     } catch (e) {
-      print('MushafBookmarkService: Error getting all bookmarks: $e');
       return {};
     }
   }

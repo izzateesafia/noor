@@ -92,9 +92,6 @@ class _PremiumPageState extends State<PremiumPage> {
     return BlocBuilder<UserCubit, UserState>(
       builder: (context, userState) {
         // Debug logging
-        print('Premium Page BlocBuilder: UserState: $userState');
-        print('Premium Page BlocBuilder: Status: ${userState.status}');
-        print('Premium Page BlocBuilder: CurrentUser: ${userState.currentUser}');
         
         // Ensure user data is loaded if needed
         if (userState.status == UserStatus.initial) {
@@ -634,10 +631,6 @@ class _PremiumPageState extends State<PremiumPage> {
     final userId = userState.currentUser?.id;
     
     // Debug logging
-    print('Premium Page: UserState: $userState');
-    print('Premium Page: CurrentUser: ${userState.currentUser}');
-    print('Premium Page: UserId: $userId');
-    print('Premium Page: UserStatus: ${userState.status}');
     
     if (userId == null) {
       ScaffoldMessenger.of(context).showSnackBar(

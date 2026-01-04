@@ -12,15 +12,11 @@ class MushafCubit extends Cubit<MushafState> {
   Future<void> fetchMushafs() async {
     emit(state.copyWith(status: MushafStatus.loading));
     try {
-      print('MushafCubit: Fetching mushafs...');
       final mushafs = await _repository.getAllMushafs();
-      print('MushafCubit: Fetched ${mushafs.length} mushafs');
       
       final riwayahs = await _repository.getAllRiwayahs();
-      print('MushafCubit: Found ${riwayahs.length} unique riwayahs');
       
       if (mushafs.isEmpty) {
-        print('MushafCubit: Warning - No mushafs found in Firestore');
       }
       
       emit(state.copyWith(
@@ -30,8 +26,6 @@ class MushafCubit extends Cubit<MushafState> {
         error: null,
       ));
     } catch (e, stackTrace) {
-      print('MushafCubit: Error fetching mushafs: $e');
-      print('MushafCubit: Stack trace: $stackTrace');
       emit(state.copyWith(
         status: MushafStatus.error,
         error: e.toString(),
@@ -71,7 +65,6 @@ class MushafCubit extends Cubit<MushafState> {
     try {
       return await _repository.getMushafById(id);
     } catch (e) {
-      print('Error getting mushaf by ID: $e');
       return null;
     }
   }

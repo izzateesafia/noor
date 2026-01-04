@@ -8,30 +8,51 @@ class LiveStreamRepository {
   // Get current live stream
   Future<LiveStream?> getCurrentLiveStream() async {
     try {
-      print('Fetching current live stream from Firestore...');
-      final querySnapshot = await _firestore
-          .collection(_collection)
-          .where('isActive', isEqualTo: true)
-          .orderBy('createdAt', descending: true)
-          .limit(1)
-          .get();
-
-      print('Query result: ${querySnapshot.docs.length} documents found');
-      
-      if (querySnapshot.docs.isNotEmpty) {
-        final doc = querySnapshot.docs.first;
-        print('Found live stream document: ${doc.id}');
-        print('Document data: ${doc.data()}');
-        return LiveStream.fromJson({
-          'id': doc.id,
-          ...doc.data(),
-        });
+      // Try query with orderBy first (requires composite index)
+      try {
+        final querySnapshot = await _firestore
+            .collection(_collection)
+            .where('isActive', isEqualTo: true)
+            .orderBy('createdAt', descending: true)
+            .limit(1)
+            .get();
+        
+        if (querySnapshot.docs.isNotEmpty) {
+          final doc = querySnapshot.docs.first;
+          return LiveStream.fromJson({
+            'id': doc.id,
+            ...doc.data(),
+          });
+        }
+      } catch (e) {
+        // If orderBy fails (likely missing composite index), try without orderBy
+        final fallbackSnapshot = await _firestore
+            .collection(_collection)
+            .where('isActive', isEqualTo: true)
+            .get();
+        
+        if (fallbackSnapshot.docs.isNotEmpty) {
+          // Sort manually by createdAt and get the most recent
+          final sortedDocs = fallbackSnapshot.docs.toList()
+            ..sort((a, b) {
+              final aCreated = a.data()['createdAt'] as String?;
+              final bCreated = b.data()['createdAt'] as String?;
+              if (aCreated == null && bCreated == null) return 0;
+              if (aCreated == null) return 1;
+              if (bCreated == null) return -1;
+              return bCreated.compareTo(aCreated); // descending
+            });
+          
+          final doc = sortedDocs.first;
+          return LiveStream.fromJson({
+            'id': doc.id,
+            ...doc.data(),
+          });
+        }
       }
       
-      print('No active live streams found');
       return null;
     } catch (e) {
-      print('Error getting current live stream: $e');
       return null;
     }
   }
@@ -51,7 +72,6 @@ class LiveStreamRepository {
         });
       }).toList();
     } catch (e) {
-      print('Error getting all live streams: $e');
       return [];
     }
   }
@@ -65,7 +85,6 @@ class LiveStreamRepository {
       final docRef = await _firestore.collection(_collection).add(liveStream.toJson());
       return docRef.id;
     } catch (e) {
-      print('Error adding live stream: $e');
       return null;
     }
   }
@@ -82,7 +101,6 @@ class LiveStreamRepository {
           .update(updateData);
       return true;
     } catch (e) {
-      print('Error updating live stream: $e');
       return false;
     }
   }
@@ -93,7 +111,6 @@ class LiveStreamRepository {
       await _firestore.collection(_collection).doc(id).delete();
       return true;
     } catch (e) {
-      print('Error deleting live stream: $e');
       return false;
     }
   }
@@ -115,7 +132,7 @@ class LiveStreamRepository {
       }
       await batch.commit();
     } catch (e) {
-      print('Error deactivating live streams: $e');
+      // Ignore errors
     }
   }
 
@@ -132,7 +149,6 @@ class LiveStreamRepository {
       });
       return true;
     } catch (e) {
-      print('Error activating live stream: $e');
       return false;
     }
   }

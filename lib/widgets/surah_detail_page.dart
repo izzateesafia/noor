@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:quran/quran.dart' as quran;
+import 'package:share_plus/share_plus.dart';
 import '../theme_constants.dart';
 
 class SurahDetailPage extends StatefulWidget {
@@ -175,7 +176,7 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
         Text(
           label,
           style: TextStyle(
-            color: Colors.white.withOpacity(0.8),
+            color: Colors.white.withOpacity(0.9),
             fontSize: 12,
           ),
         ),
@@ -234,15 +235,6 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
                   ),
                 ],
                 const Spacer(),
-                IconButton(
-                  onPressed: () => _playVerseAudio(verseNumber),
-                  icon: Icon(
-                    Icons.play_arrow,
-                    color: AppColors.primary,
-                    size: 20,
-                  ),
-                  tooltip: 'Play Audio',
-                ),
                 IconButton(
                   onPressed: () => _shareVerse(verseNumber),
                   icon: Icon(
@@ -343,30 +335,13 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
     }
   }
 
-  void _playVerseAudio(int verseNumber) {
-    final audioUrl = quran.getAudioURLByVerse(
-      widget.surahNumber,
-      verseNumber,
-      reciter: quran.Reciter.arAlafasy,
-    );
-    
-    // TODO: Implement audio playback using audioplayers
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Memainkan audio ayat $verseNumber...'),
-      ),
-    );
-  }
-
   void _shareVerse(int verseNumber) {
-    final arabicVerse = quran.getVerse(widget.surahNumber, verseNumber);
+    final arabicVerse = quran.getVerse(widget.surahNumber, verseNumber, verseEndSymbol: true);
     final translation = _getTranslation(widget.surahNumber, verseNumber);
     
-    // TODO: Implement sharing functionality
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('Berkongsi ayat $verseNumber...'),
-      ),
-    );
+    // Format share text with Arabic verse, translation, and reference
+    final shareText = '$arabicVerse\n\n$translation\n\n— ${widget.surahName}, Ayat $verseNumber';
+    
+    Share.share(shareText);
   }
 }

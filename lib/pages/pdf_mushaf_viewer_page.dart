@@ -55,7 +55,6 @@ class _PDFMushafViewerPageState extends State<PDFMushafViewerPage> {
         });
       }
     } catch (e) {
-      print('Error loading bookmark: $e');
     }
   }
 

@@ -43,6 +43,7 @@ class _ClassFormPageState extends State<ClassFormPage> {
   final ImageUploadService _imageUploadService = ImageUploadService();
   String? _uploadedImageUrl; // Store the Firebase Storage URL
   bool _isUploadingImage = false;
+  bool _isHidden = false;
 
   @override
   void initState() {
@@ -57,43 +58,47 @@ class _ClassFormPageState extends State<ClassFormPage> {
     paymentUrlController = TextEditingController(text: c?.paymentUrl ?? '');
     // Parse time and days from initialClass
     if (c != null && c.time.isNotEmpty) {
+      final timeString = c.time;
+      
       // First, extract days by finding day names in the string
-      selectedDays = allDays.where((d) => c.time.contains(d)).toList();
+      selectedDays = allDays.where((day) => timeString.contains(day)).toList();
       
       // Remove days from the string to get the time portion
-      String timePortion = c.time;
+      String timePortion = timeString;
       for (final day in allDays) {
         timePortion = timePortion.replaceAll(day, '');
       }
-      // Remove separators and clean up
+      // Remove separators (both new format "|" and old format just spaces) and clean up
       timePortion = timePortion.replaceAll('|', '').replaceAll(',', '').trim();
       
       // Parse time from the remaining string
-      if (timePortion.isNotEmpty && timePortion.contains(':')) {
-        // Handle 24-hour format (HH:MM) or 12-hour format (H:MM AM/PM)
-        final timePattern = RegExp(r'(\d{1,2}):(\d{2})\s*(AM|PM)?', caseSensitive: false);
-        final match = timePattern.firstMatch(timePortion);
-        
-        if (match != null) {
-          int hour = int.tryParse(match.group(1) ?? '') ?? 0;
-          int minute = int.tryParse(match.group(2) ?? '') ?? 0;
-          final period = match.group(3)?.toUpperCase();
-          
-          // Convert 12-hour to 24-hour format if needed
-          if (period == 'PM' && hour != 12) {
-            hour += 12;
-          } else if (period == 'AM' && hour == 12) {
-            hour = 0;
-          }
-          
-          selectedTime = TimeOfDay(hour: hour, minute: minute);
-        } else {
-          // Fallback: try simple HH:MM format
-          final parts = timePortion.split(':');
-          if (parts.length >= 2) {
-            final hour = int.tryParse(parts[0].trim()) ?? 0;
-            final minute = int.tryParse(parts[1].trim().split(' ')[0]) ?? 0;
+      if (timePortion.isNotEmpty) {
+        // Try to parse time in various formats
+        // Format 1: "HH:MM" (24-hour)
+        final time24Regex = RegExp(r'(\d{1,2}):(\d{2})');
+        final time24Match = time24Regex.firstMatch(timePortion);
+        if (time24Match != null) {
+          final hour = int.tryParse(time24Match.group(1) ?? '');
+          final minute = int.tryParse(time24Match.group(2) ?? '');
+          if (hour != null && minute != null && hour >= 0 && hour < 24 && minute >= 0 && minute < 60) {
             selectedTime = TimeOfDay(hour: hour, minute: minute);
+          }
+        } else {
+          // Format 2: "H:MM AM/PM" (12-hour)
+          final time12Regex = RegExp(r'(\d{1,2}):(\d{2})\s*(AM|PM|am|pm)', caseSensitive: false);
+          final time12Match = time12Regex.firstMatch(timePortion);
+          if (time12Match != null) {
+            var hour = int.tryParse(time12Match.group(1) ?? '');
+            final minute = int.tryParse(time12Match.group(2) ?? '');
+            final period = time12Match.group(3)?.toUpperCase();
+            if (hour != null && minute != null && hour >= 1 && hour <= 12 && minute >= 0 && minute < 60) {
+              if (period == 'PM' && hour != 12) {
+                hour += 12;
+              } else if (period == 'AM' && hour == 12) {
+                hour = 0;
+              }
+              selectedTime = TimeOfDay(hour: hour, minute: minute);
+            }
           }
         }
       }
@@ -118,6 +123,7 @@ class _ClassFormPageState extends State<ClassFormPage> {
     } else {
       selectedLevel = levelChoices.first;
     }
+    _isHidden = widget.initialClass?.isHidden ?? false;
   }
 
   @override
@@ -285,10 +291,8 @@ class _ClassFormPageState extends State<ClassFormPage> {
       return;
     }
 
-    // Format time consistently using 24-hour format
-    final timeStr = selectedTime != null 
-        ? '${selectedTime!.hour.toString().padLeft(2, '0')}:${selectedTime!.minute.toString().padLeft(2, '0')}'
-        : '';
+    // Format time consistently (use format method which produces parseable format)
+    final timeStr = selectedTime != null ? selectedTime!.format(context) : '';
     
     // Format days with proper spacing
     final daysStr = selectedDays.join(', ');
@@ -318,6 +322,7 @@ class _ClassFormPageState extends State<ClassFormPage> {
       description: descriptionController.text.trim(),
       image: imageUrl.isNotEmpty ? imageUrl : null,
       paymentUrl: paymentUrlController.text.trim().isEmpty ? null : paymentUrlController.text.trim(),
+      isHidden: _isHidden,
     );
     
     if (widget.initialClass == null) {
@@ -820,6 +825,18 @@ class _ClassFormPageState extends State<ClassFormPage> {
                           },
                         ),
                       ),
+                    const SizedBox(height: 32),
+                    SwitchListTile(
+                      title: const Text('Sembunyikan daripada pengguna'),
+                      subtitle: const Text('Jika diaktifkan, kelas ini tidak akan kelihatan di halaman pengguna'),
+                      value: _isHidden,
+                      onChanged: (value) {
+                        setState(() {
+                          _isHidden = value;
+                        });
+                      },
+                      activeColor: Theme.of(context).colorScheme.primary,
+                    ),
                     const SizedBox(height: 32),
                     SizedBox(
                       width: double.infinity,

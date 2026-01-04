@@ -208,7 +208,6 @@ class _CardInfoPageState extends State<CardInfoPage> {
           }
         } else {
           // Show more detailed error for debugging (but user-friendly)
-          print('Card save error: $e');
           errorMessage = 'Unable to save card. Please verify your card details and try again.';
         }
         ToastUtil.showError(context, errorMessage);

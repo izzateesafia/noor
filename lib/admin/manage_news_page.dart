@@ -146,6 +146,41 @@ class _ManageNewsPageState extends State<ManageNewsPage> {
     }
   }
 
+  void _toggleHideNews(News news) async {
+    try {
+      context.read<NewsCubit>().updateNews(
+        news.copyWith(isActive: !news.isActive),
+      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(news.isActive 
+              ? 'Berita telah disembunyikan daripada pengguna'
+              : 'Berita telah ditunjukkan kepada pengguna'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ralat mengemas kini berita: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<NewsCubit, NewsState>(
@@ -258,42 +293,66 @@ class _ManageNewsPageState extends State<ManageNewsPage> {
       itemCount: state.news.length,
       itemBuilder: (context, index) {
         final news = state.news[index];
-        return Card(
-          key: ValueKey(news.id),
-          elevation: 2,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          color: Theme.of(context).cardColor,
-          margin: const EdgeInsets.only(bottom: 18),
-          child: InkWell(
-            onTap: () => _addOrEditNews(news: news),
-            borderRadius: BorderRadius.circular(16),
-            child: ListTile(
-              contentPadding: const EdgeInsets.all(16),
-              leading: news.image != null && news.image!.isNotEmpty
-                  ? ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: _buildNewsImage(news.image!),
-                    )
-                  : Container(
-                      width: 60,
-                      height: 60,
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+        return Opacity(
+          opacity: !news.isActive ? 0.6 : 1.0,
+          child: Card(
+            key: ValueKey(news.id),
+            elevation: 2,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            color: Theme.of(context).cardColor,
+            margin: const EdgeInsets.only(bottom: 18),
+            child: InkWell(
+              onTap: () => _addOrEditNews(news: news),
+              borderRadius: BorderRadius.circular(16),
+              child: ListTile(
+                contentPadding: const EdgeInsets.all(16),
+                leading: news.image != null && news.image!.isNotEmpty
+                    ? ClipRRect(
                         borderRadius: BorderRadius.circular(8),
+                        child: _buildNewsImage(news.image!),
+                      )
+                    : Container(
+                        width: 60,
+                        height: 60,
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Icon(
+                          Icons.article,
+                          color: Theme.of(context).colorScheme.primary,
+                          size: 30,
+                        ),
                       ),
-                      child: Icon(
-                        Icons.article,
-                        color: Theme.of(context).colorScheme.primary,
-                        size: 30,
+                title: Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        news.title,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
                       ),
                     ),
-              title: Text(
-                news.title,
-                style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-              ),
+                    if (!news.isActive)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.grey,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Text(
+                          'Disembunyikan',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
               subtitle: news.description != null
                   ? Text(
                       news.description!,
@@ -318,6 +377,9 @@ class _ManageNewsPageState extends State<ManageNewsPage> {
                     case 'duplicate':
                       _duplicateNews(news);
                       break;
+                    case 'hide':
+                      _toggleHideNews(news);
+                      break;
                     case 'delete':
                       _deleteNews(news);
                       break;
@@ -328,7 +390,7 @@ class _ManageNewsPageState extends State<ManageNewsPage> {
                     value: 'edit',
                     child: Row(
                       children: [
-                        Icon(Icons.edit, color: Colors.orange, size: 20),
+                        const Icon(Icons.edit, color: Colors.orange, size: 20),
                         const SizedBox(width: 12),
                         const Text('Edit'),
                       ],
@@ -338,13 +400,27 @@ class _ManageNewsPageState extends State<ManageNewsPage> {
                     value: 'duplicate',
                     child: Row(
                       children: [
-                        Icon(
+                        const Icon(
                           Icons.copy,
-                          color: Theme.of(context).colorScheme.primary,
+                          color: Colors.blue,
                           size: 20,
                         ),
                         const SizedBox(width: 12),
                         const Text('Duplicate'),
+                      ],
+                    ),
+                  ),
+                  PopupMenuItem(
+                    value: 'hide',
+                    child: Row(
+                      children: [
+                        Icon(
+                          news.isActive ? Icons.visibility_off : Icons.visibility,
+                          color: Colors.grey,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 12),
+                        Text(news.isActive ? 'Sembunyikan' : 'Tunjukkan'),
                       ],
                     ),
                   ),
@@ -366,6 +442,7 @@ class _ManageNewsPageState extends State<ManageNewsPage> {
               ),
             ),
           ),
+        ),
         );
       },
     );

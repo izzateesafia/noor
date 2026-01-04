@@ -25,12 +25,9 @@ class MushafStorageHelper {
       // Get download URL
       final downloadUrl = await ref.getDownloadURL();
       
-      print('Download URL for $fileName:');
-      print(downloadUrl);
       
       return downloadUrl;
     } catch (e) {
-      print('Error getting download URL: $e');
       rethrow;
     }
   }
@@ -44,7 +41,6 @@ class MushafStorageHelper {
         final url = await getMushafDownloadUrl(fileName);
         urls[fileName] = url;
       } catch (e) {
-        print('Failed to get URL for $fileName: $e');
       }
     }
     

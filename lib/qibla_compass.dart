@@ -149,7 +149,6 @@ class QiblahCompassWidget extends StatelessWidget {
         final qiblahDirection = snapshot.data!;
         var angle = ((qiblahDirection.qiblah) * (pi / 180) * -1);
 
-        // if (_angle < 5 && _angle > -5) print('IN RANGE');
 
         return Stack(
           alignment: Alignment.center,

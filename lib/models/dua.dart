@@ -6,6 +6,7 @@ class Dua {
   final String? link;
   final String? notes;
   final DateTime? uploaded;
+  final bool isHidden;
 
   Dua({
     required this.id,
@@ -15,6 +16,7 @@ class Dua {
     this.link,
     this.notes,
     this.uploaded,
+    this.isHidden = false,
   });
 
   factory Dua.fromJson(Map<String, dynamic> json) {
@@ -52,6 +54,7 @@ class Dua {
       link: json['link'] as String?,
       notes: json['notes'] as String?,
       uploaded: parseUploaded(json['uploaded']),
+      isHidden: json['isHidden'] as bool? ?? false,
     );
   }
 
@@ -64,6 +67,29 @@ class Dua {
       'link': link,
       'notes': notes,
       'uploaded': uploaded?.toIso8601String(),
+      'isHidden': isHidden,
     };
+  }
+
+  Dua copyWith({
+    String? id,
+    String? title,
+    String? content,
+    String? image,
+    String? link,
+    String? notes,
+    DateTime? uploaded,
+    bool? isHidden,
+  }) {
+    return Dua(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      content: content ?? this.content,
+      image: image ?? this.image,
+      link: link ?? this.link,
+      notes: notes ?? this.notes,
+      uploaded: uploaded ?? this.uploaded,
+      isHidden: isHidden ?? this.isHidden,
+    );
   }
 } 

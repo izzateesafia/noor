@@ -79,25 +79,20 @@ class UserCubit extends Cubit<UserState> {
   Future<void> fetchCurrentUser() async {
     emit(state.copyWith(status: UserStatus.loading));
     try {
-      print('UserCubit: Fetching current user...');
       final currentUser = await repository.getCurrentUser();
       
       if (currentUser != null) {
-        print('UserCubit: Successfully loaded user: ${currentUser.name}');
-        print('UserCubit: User enrolled classes: ${currentUser.enrolledClassIds}');
         emit(state.copyWith(
           status: UserStatus.loaded, 
           currentUser: currentUser,
         ));
       } else {
-        print('UserCubit: No user data found');
         emit(state.copyWith(
           status: UserStatus.error, 
           error: 'No user data found. Please try logging in again.',
         ));
       }
     } catch (e) {
-      print('UserCubit: Error fetching current user: $e');
       emit(state.copyWith(
         status: UserStatus.error, 
         error: 'Failed to load user data: $e'
@@ -109,30 +104,25 @@ class UserCubit extends Cubit<UserState> {
   Future<void> signInWithGoogle() async {
     emit(state.copyWith(status: UserStatus.loading));
     try {
-      print('UserCubit: Signing in with Google...');
       final user = await _googleAuthService.signInWithGoogle().timeout(
         const Duration(seconds: 70),
         onTimeout: () {
-          print('UserCubit: Google sign-in timed out');
           throw Exception('Google Sign-In timed out - sila pastikan sambungan internet anda stabil dan cuba lagi');
         },
       );
       
       if (user != null) {
-        print('UserCubit: Successfully signed in with Google: ${user.name}');
         emit(state.copyWith(
           status: UserStatus.loaded,
           currentUser: user,
         ));
       } else {
-        print('UserCubit: Google sign-in cancelled or failed');
         emit(state.copyWith(
           status: UserStatus.error,
           error: 'Google sign-in was cancelled or failed.',
         ));
       }
     } catch (e) {
-      print('UserCubit: Error signing in with Google: $e');
       emit(state.copyWith(
         status: UserStatus.error,
         error: 'Failed to sign in with Google: $e',
@@ -149,7 +139,6 @@ class UserCubit extends Cubit<UserState> {
   Future<void> signOut() async {
     emit(state.copyWith(status: UserStatus.loading));
     try {
-      print('UserCubit: Signing out...');
       
       // Sign out from Firebase Auth
       await repository.signOut();
@@ -163,9 +152,7 @@ class UserCubit extends Cubit<UserState> {
         users: [],
       ));
       
-      print('UserCubit: Successfully signed out');
     } catch (e) {
-      print('UserCubit: Error signing out: $e');
       emit(state.copyWith(
         status: UserStatus.error,
         error: 'Failed to sign out: $e',

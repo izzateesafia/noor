@@ -4,6 +4,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'theme_constants.dart';
 import 'models/class_model.dart';
 import 'class_payment_page.dart';
+import 'pages/class_detail_page.dart';
 import 'cubit/class_cubit.dart';
 import 'cubit/class_states.dart';
 import 'cubit/user_cubit.dart';
@@ -34,7 +35,9 @@ class _ClassesPageState extends State<ClassesPage> {
       );
       // Refresh user data after returning from payment page
       if (mounted) {
-        context.read<UserCubit>().fetchCurrentUser();
+        await context.read<UserCubit>().fetchCurrentUser();
+        // Also refresh classes to ensure UI updates
+        context.read<ClassCubit>().fetchClasses();
       }
       return;
     }
@@ -45,7 +48,7 @@ class _ClassesPageState extends State<ClassesPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Pendaftaran Berjaya'),
-        content: Text('Anda telah mendaftar dalam ${classModel.title}.'),
+        content: Text('Anda telah mendaftar Kelas ${classModel.title}.'),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(context).pop(),
@@ -59,24 +62,24 @@ class _ClassesPageState extends State<ClassesPage> {
   @override
   Widget build(BuildContext context) {
     return BlocBuilder<UserCubit, UserState>(
-      builder: (context, userState) {
-        // Ensure user data is loaded if needed
-        if (userState.status == UserStatus.initial) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            context.read<UserCubit>().fetchCurrentUser();
-          });
-        }
-        
-        final user = userState.currentUser;
-        if (user == null) {
-          return const Scaffold(
-            body: Center(
-              child: CircularProgressIndicator(),
-            ),
-          );
-        }
-        
-        return Scaffold(
+        builder: (context, userState) {
+          // Ensure user data is loaded if needed
+          if (userState.status == UserStatus.initial) {
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              context.read<UserCubit>().fetchCurrentUser();
+            });
+          }
+          
+          final user = userState.currentUser;
+          if (user == null) {
+            return const Scaffold(
+              body: Center(
+                child: CircularProgressIndicator(),
+              ),
+            );
+          }
+          
+          return Scaffold(
       appBar: AppBar(
         title: const Text('Kelas'),
         backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
@@ -90,22 +93,128 @@ class _ClassesPageState extends State<ClassesPage> {
           } else if (state.status == ClassStatus.error) {
             return Center(child: Text('Gagal memuatkan kelas', style: TextStyle(color: Theme.of(context).colorScheme.error)));
           } else if (state.status == ClassStatus.loaded && state.classes.isNotEmpty) {
-            return ListView.builder(
-              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-              itemCount: state.classes.length,
-              itemBuilder: (context, index) {
-                final classItem = state.classes[index];
+            final visibleClasses = state.classes.where((c) => !c.isHidden).toList();
+            if (visibleClasses.isEmpty) {
+              return Center(
+                child: Text(
+                  'Tiada kelas tersedia',
+                  style: TextStyle(color: Theme.of(context).textTheme.bodyLarge?.color),
+                ),
+              );
+            }
+            return RefreshIndicator(
+              onRefresh: () async {
+                // Refresh both user data and classes
+                await context.read<UserCubit>().fetchCurrentUser();
+                await context.read<ClassCubit>().fetchClasses();
+              },
+              child: ListView.builder(
+                padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+                itemCount: visibleClasses.length,
+                itemBuilder: (context, index) {
+                final classItem = visibleClasses[index];
                 final enrolled = user.enrolledClassIds.contains(classItem.id);
+                final isPaymentPending = user.isPaymentPendingForClass(classItem.id);
                 return Card(
                   elevation: 2,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                   color: Theme.of(context).cardColor,
                   margin: const EdgeInsets.only(bottom: 16),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
+                  child: InkWell(
+                    onTap: () {
+                      if (enrolled) {
+                        // Navigate to class detail page if enrolled
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => ClassDetailPage(
+                              classModel: classItem,
+                              user: user,
+                            ),
+                          ),
+                        );
+                      } else {
+                        // Navigate to payment page if not enrolled
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (context) => ClassPaymentPage(
+                              classModel: classItem,
+                              user: user,
+                            ),
+                          ),
+                        );
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
+                        // Badge at top if enrolled or pending
+                        if (enrolled)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              // color: Theme.of(context).colorScheme.primaryContainer,
+                              color: Colors.green,
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(16),
+                                topRight: Radius.circular(16),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.check_circle,
+                                  size: 18,
+                                  color: Theme.of(context).colorScheme.secondary,
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Berdaftar',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Theme.of(context).colorScheme.secondary,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          )
+                        else if (isPaymentPending)
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Colors.orange.withOpacity(0.15),
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(16),
+                                topRight: Radius.circular(16),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Icon(
+                                  Icons.hourglass_empty,
+                                  size: 18,
+                                  color: Colors.orange[700],
+                                ),
+                                const SizedBox(width: 6),
+                                Text(
+                                  'Menunggu pengesahan',
+                                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                    color: Colors.orange[700],
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Row(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
                         // Image on the left
                         if (classItem.image != null && classItem.image!.isNotEmpty)
                           ClipRRect(
@@ -230,21 +339,28 @@ class _ClassesPageState extends State<ClassesPage> {
                                       fontSize: 15,
                                     ),
                                   ),
-                                  const Spacer(),
-                                  ElevatedButton(
-                                    onPressed: enrolled ? null : () => _enroll(classItem, user),
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: enrolled
-                                          ? Theme.of(context).disabledColor
-                                          : Theme.of(context).colorScheme.primary,
-                                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
-                                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                                      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 10),
+                                  if (!enrolled && !isPaymentPending) ...[
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: ElevatedButton(
+                                        onPressed: () => _enroll(classItem, user),
+                                        style: ElevatedButton.styleFrom(
+                                          backgroundColor: Theme.of(context).colorScheme.primary,
+                                          foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                                          shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(10),
+                                          ),
+                                          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                                        ),
+                                        child: const Text('Daftar'),
+                                      ),
                                     ),
-                                    child: Text(enrolled ? 'Didaftar' : 'Info'),
-                                  ),
+                                  ],
                                 ],
                               ),
+                            ],
+                          ),
+                        ),
                             ],
                           ),
                         ),
@@ -253,6 +369,7 @@ class _ClassesPageState extends State<ClassesPage> {
                   ),
                 );
               },
+              ),
             );
           } else {
             return Center(child: Text('No classes available', style: Theme.of(context).textTheme.bodyMedium));
@@ -260,7 +377,7 @@ class _ClassesPageState extends State<ClassesPage> {
         },
       ),
     );
-      },
-    );
+        },
+      );
   }
 } 

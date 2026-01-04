@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../theme_constants.dart';
 import '../cubit/user_cubit.dart';
@@ -38,9 +39,6 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
     // Get roles from Firestore - this is the single source of truth
     final roles = user.roles;
     final isAdmin = roles.contains(UserType.admin);
-    print('MainNavigationPage: User roles from Firestore: ${roles.map((r) => r.toString()).join(', ')}');
-    print('MainNavigationPage: User primary role (userType): ${user.userType}');
-    print('MainNavigationPage: Is Admin: $isAdmin');
     
     // Determine effective dashboard STRICTLY from roles (highest priority)
     // Admins can access any dashboard if they have the role in their roles array
@@ -53,7 +51,6 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
       effectiveType = UserType.student;
     }
     
-    print('MainNavigationPage: Effective dashboard type: $effectiveType');
 
     // Route to dashboard based on effective type
     // Admins can access all dashboards based on their selected role
@@ -92,7 +89,6 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
           final hasMasterAccess = roles.contains(UserType.masterTrainer);
           
           // This will be checked in _getPages, but we log it here for debugging
-          print('MainNavigationPage: Has trainer access: $hasTrainerAccess, Has master access: $hasMasterAccess');
         }
       },
       child: BlocBuilder<UserCubit, UserState>(
@@ -100,57 +96,78 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
           final user = userState.currentUser;
           final pages = _getPages(user);
           
-          return Scaffold(
-            body: IndexedStack(
-              index: _currentIndex,
-              children: pages,
-            ),
-            bottomNavigationBar: Container(
-              decoration: BoxDecoration(
-                boxShadow: [
-                  BoxShadow(
-                    color: Theme.of(context).colorScheme.shadow.withOpacity(0.1),
-                    blurRadius: 10,
-                    offset: const Offset(0, -2),
-                  ),
-                ],
+          return PopScope(
+            canPop: false, // Prevent automatic pop on all tabs
+            onPopInvoked: (bool didPop) async {
+              if (!didPop) {
+                if (_currentIndex == 0) {
+                  // On dashboard: Show exit confirmation dialog
+                  final shouldExit = await _showExitConfirmationDialog(context);
+                  if (shouldExit == true && mounted) {
+                    SystemNavigator.pop(); // Exit the app
+                  }
+                } else {
+                  // On Menu (index 1) or Quran (index 2): Navigate to dashboard
+                  if (mounted) {
+                    setState(() {
+                      _currentIndex = 0;
+                    });
+                  }
+                }
+              }
+            },
+            child: Scaffold(
+              body: IndexedStack(
+                index: _currentIndex,
+                children: pages,
               ),
-              child: BottomNavigationBar(
-                currentIndex: _currentIndex,
-                onTap: (index) {
-                  setState(() {
-                    _currentIndex = index;
-                  });
-                },
-                type: BottomNavigationBarType.fixed,
-                backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-                selectedItemColor: AppColors.primary,
-                unselectedItemColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
-                selectedLabelStyle: const TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 12,
+              bottomNavigationBar: Container(
+                decoration: BoxDecoration(
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).colorScheme.shadow.withOpacity(0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
                 ),
-                unselectedLabelStyle: const TextStyle(
-                  fontWeight: FontWeight.w500,
-                  fontSize: 12,
+                child: BottomNavigationBar(
+                  currentIndex: _currentIndex,
+                  onTap: (index) {
+                    setState(() {
+                      _currentIndex = index;
+                    });
+                  },
+                  type: BottomNavigationBarType.fixed,
+                  backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                  selectedItemColor: AppColors.primary,
+                  unselectedItemColor: Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
+                  selectedLabelStyle: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 12,
+                  ),
+                  unselectedLabelStyle: const TextStyle(
+                    fontWeight: FontWeight.w500,
+                    fontSize: 12,
+                  ),
+                  items: const [
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.home_outlined),
+                      activeIcon: Icon(Icons.home),
+                      label: 'Home',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.menu_outlined),
+                      activeIcon: Icon(Icons.menu),
+                      label: 'Menu',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(Icons.menu_book_outlined),
+                      activeIcon: Icon(Icons.menu_book),
+                      label: 'Quran',
+                    ),
+                  ],
                 ),
-                items: const [
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.home_outlined),
-                    activeIcon: Icon(Icons.home),
-                    label: 'Home',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.menu_outlined),
-                    activeIcon: Icon(Icons.menu),
-                    label: 'Menu',
-                  ),
-                  BottomNavigationBarItem(
-                    icon: Icon(Icons.menu_book_outlined),
-                    activeIcon: Icon(Icons.menu_book),
-                    label: 'Quran',
-                  ),
-                ],
               ),
             ),
           );
@@ -170,6 +187,33 @@ class _MainNavigationPageState extends State<MainNavigationPage> {
       case UserType.admin:
         return 'Admin';
     }
+  }
+
+  /// Show exit confirmation dialog
+  Future<bool?> _showExitConfirmationDialog(BuildContext context) async {
+    return showDialog<bool>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Keluar Aplikasi?'),
+          content: const Text('Adakah anda pasti mahu keluar dari aplikasi?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false), // Stay in app
+              child: const Text('Kekal'),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.of(context).pop(true), // Exit app
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
+              ),
+              child: const Text('Keluar'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 

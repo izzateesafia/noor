@@ -66,9 +66,7 @@ class LockScreenNotificationService {
       await _createLockScreenChannel();
 
       _isInitialized = true;
-      print('LockScreenNotificationService initialized');
     } catch (e) {
-      print('Error initializing LockScreenNotificationService: $e');
       rethrow;
     }
   }
@@ -79,7 +77,6 @@ class LockScreenNotificationService {
     if (await Permission.notification.isDenied) {
       final status = await Permission.notification.request();
       if (status.isDenied) {
-        print('Notification permission denied. Lock screen notification may not work.');
       }
     }
 
@@ -89,7 +86,6 @@ class LockScreenNotificationService {
             AndroidFlutterLocalNotificationsPlugin>();
     if (androidPlugin != null) {
       final granted = await androidPlugin.requestNotificationsPermission();
-      print('Android notification permission: $granted');
     }
   }
 
@@ -188,9 +184,7 @@ class LockScreenNotificationService {
         payload: payload,
       );
 
-      print('Lock screen notification shown: $title');
     } catch (e) {
-      print('Error showing lock screen notification: $e');
       rethrow;
     }
   }
@@ -213,9 +207,7 @@ class LockScreenNotificationService {
   Future<void> dismissLockScreenNotification() async {
     try {
       await _notifications.cancel(_notificationId);
-      print('Lock screen notification dismissed');
     } catch (e) {
-      print('Error dismissing lock screen notification: $e');
     }
   }
 
@@ -225,19 +217,16 @@ class LockScreenNotificationService {
       final activeNotifications = await _notifications.getActiveNotifications();
       return activeNotifications.any((n) => n.id == _notificationId);
     } catch (e) {
-      print('Error checking notification status: $e');
       return false;
     }
   }
 
   /// Handle notification tap
   void _onNotificationTapped(NotificationResponse response) {
-    print('Lock screen notification tapped: ${response.payload}');
     
     if (response.payload == 'open_app') {
       // The app will automatically open when notification is tapped
       // You can add custom navigation logic here if needed
-      print('Opening app from lock screen notification');
     }
   }
 }

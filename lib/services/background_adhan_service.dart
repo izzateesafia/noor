@@ -62,9 +62,7 @@ class BackgroundAdhanService {
           ?.createNotificationChannel(adhanChannel);
 
       _isInitialized = true;
-      print('BackgroundAdhanService initialized successfully');
     } catch (e) {
-      print('Error initializing BackgroundAdhanService: $e');
     }
   }
 
@@ -124,9 +122,7 @@ class BackgroundAdhanService {
       await prefs.setString('scheduled_prayer', prayerName);
       await prefs.setString('scheduled_prayer_display', prayerDisplayName);
 
-      print('Adhan scheduled for $prayerDisplayName at ${scheduledTime.toString()}');
     } catch (e) {
-      print('Error scheduling adhan: $e');
     }
   }
 
@@ -145,20 +141,17 @@ class BackgroundAdhanService {
       // Play the azan audio
       await _audioPlayer.play(AssetSource(audioFile));
       
-      print('Playing adhan audio for $prayerName in background');
       
       // Auto-stop after 15 seconds
       Timer(const Duration(seconds: 15), () {
         _audioPlayer.stop();
       });
     } catch (e) {
-      print('Error playing adhan audio in background: $e');
     }
   }
 
   // Handle notification tap
   void _onNotificationTapped(NotificationResponse response) {
-    print('Adhan notification tapped: ${response.payload}');
     
     // Get the scheduled prayer info
     _getScheduledPrayerInfo().then((info) {
@@ -170,7 +163,6 @@ class BackgroundAdhanService {
 
   // This method will be called when the notification fires (like an alarm)
   static Future<void> onNotificationReceived() async {
-    print('Adhan notification received - playing audio automatically');
     
     try {
       final service = BackgroundAdhanService();
@@ -178,10 +170,8 @@ class BackgroundAdhanService {
       
       if (info != null && info['prayerName'] != null) {
         await service.playAdhanAudio(info['prayerName']!);
-        print('Adhan audio started automatically for ${info['prayerDisplayName'] ?? 'Unknown'}');
       }
     } catch (e) {
-      print('Error playing adhan audio automatically: $e');
     }
   }
 
@@ -199,7 +189,6 @@ class BackgroundAdhanService {
         };
       }
     } catch (e) {
-      print('Error getting scheduled prayer info: $e');
     }
     return null;
   }
@@ -215,9 +204,7 @@ class BackgroundAdhanService {
       await prefs.remove('scheduled_prayer');
       await prefs.remove('scheduled_prayer_display');
       
-      print('All adhan notifications cancelled');
     } catch (e) {
-      print('Error cancelling adhan notifications: $e');
     }
   }
 
@@ -235,7 +222,6 @@ class BackgroundAdhanService {
         return scheduledDateTime.isAfter(now);
       }
     } catch (e) {
-      print('Error checking scheduled adhan: $e');
     }
     return false;
   }
@@ -262,7 +248,6 @@ class BackgroundAdhanService {
         }
       }
     } catch (e) {
-      print('Error getting scheduled adhan info: $e');
     }
     return null;
   }

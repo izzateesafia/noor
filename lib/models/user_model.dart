@@ -19,6 +19,7 @@ class UserModel {
   final double? longitude; // user's current location longitude
   final String? locationName; // formatted location name (e.g., "Kuala Lumpur, Malaysia")
   final Map<String, int>? mushafBookmarks; // {mushafId: pageNumber} - bookmarks for PDF mushafs
+  final Map<String, String>? pendingClassPayments; // {classId: status} - tracks pending payment confirmations
 
   /// Computed getter: Returns the primary role (first role in roles array)
   /// Falls back to student if roles is empty
@@ -43,6 +44,7 @@ class UserModel {
     this.longitude,
     this.locationName,
     this.mushafBookmarks,
+    this.pendingClassPayments,
   });
 
   UserModel copyWith({
@@ -64,6 +66,7 @@ class UserModel {
     double? longitude,
     String? locationName,
     Map<String, int>? mushafBookmarks,
+    Map<String, String>? pendingClassPayments,
   }) {
     return UserModel(
       id: id ?? this.id,
@@ -84,6 +87,7 @@ class UserModel {
       longitude: longitude ?? this.longitude,
       locationName: locationName ?? this.locationName,
       mushafBookmarks: mushafBookmarks ?? this.mushafBookmarks,
+      pendingClassPayments: pendingClassPayments ?? this.pendingClassPayments,
     );
   }
 
@@ -91,6 +95,11 @@ class UserModel {
   UserModel enrollInClass(String classId) {
     if (enrolledClassIds.contains(classId)) return this;
     return copyWith(enrolledClassIds: [...enrolledClassIds, classId]);
+  }
+
+  /// Check if payment is pending for a specific class
+  bool isPaymentPendingForClass(String classId) {
+    return pendingClassPayments?[classId] == 'pending_confirmation';
   }
 
   /// Check if user has completed their biodata profile
@@ -141,6 +150,13 @@ class UserModel {
               ),
             )
           : null,
+      pendingClassPayments: json['pendingClassPayments'] != null
+          ? Map<String, String>.from(
+              (json['pendingClassPayments'] as Map).map(
+                (key, value) => MapEntry(key as String, value as String),
+              ),
+            )
+          : null,
     );
   }
 
@@ -166,6 +182,7 @@ class UserModel {
       'longitude': longitude,
       'locationName': locationName,
       'mushafBookmarks': mushafBookmarks,
+      'pendingClassPayments': pendingClassPayments,
     };
   }
 

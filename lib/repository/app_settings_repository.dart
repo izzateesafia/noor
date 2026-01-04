@@ -15,7 +15,6 @@ class AppSettingsRepository {
       }
       return 'Ready to level up your Quran recitation?';
     } catch (e) {
-      print('Error fetching welcome message: $e');
       return 'Ready to level up your Quran recitation?';
     }
   }

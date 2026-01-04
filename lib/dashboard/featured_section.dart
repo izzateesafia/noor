@@ -7,6 +7,7 @@ import '../cubit/class_states.dart';
 import '../models/class_model.dart';
 import '../models/user_model.dart';
 import '../class_payment_page.dart';
+import '../pages/class_detail_page.dart';
 import '../models/dua.dart';
 import '../models/hadith.dart';
 import '../pages/dua_post_page.dart';
@@ -73,8 +74,8 @@ class FeaturedSection extends StatelessWidget {
                 } else if (duas!.isEmpty) {
                   duaSection = Center(child: Text('Tiada doa tersedia', style: Theme.of(context).textTheme.bodyMedium));
                 } else {
-                  // Show up to 4 latest duas
-                  final latestDuas = duas!.take(4).toList();
+                  // Show up to 4 latest duas (excluding hidden ones)
+                  final latestDuas = duas!.where((d) => !d.isHidden).take(4).toList();
                   duaSection = SizedBox(
                     height: 200,
                     child: ListView(
@@ -109,7 +110,7 @@ class FeaturedSection extends StatelessWidget {
                     child: ListView(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.only(left: 0, right: 0),
-                      children: hadiths!.take(5).map((h) => _buildFeaturedHadithCard(context, h)).toList(),
+                      children: hadiths!.where((h) => !h.isHidden).take(5).map((h) => _buildFeaturedHadithCard(context, h)).toList(),
                     ),
                   );
                 }
@@ -158,7 +159,7 @@ class FeaturedSection extends StatelessWidget {
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
               child: Text(
-                'View All',
+                'Lihat Semua',
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   color: Theme.of(context).colorScheme.onPrimary,
                   fontWeight: FontWeight.w600,
@@ -173,13 +174,31 @@ class FeaturedSection extends StatelessWidget {
   }
 
   Widget _buildFeaturedClassCard(BuildContext context, ClassModel classModel, UserModel user) {
+    final isEnrolled = user.enrolledClassIds.contains(classModel.id);
+    
     return GestureDetector(
       onTap: () {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => ClassPaymentPage(user: user, classModel: classModel),
-          ),
-        );
+        if (isEnrolled) {
+          // Navigate to class detail page if enrolled
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => ClassDetailPage(
+                classModel: classModel,
+                user: user,
+              ),
+            ),
+          );
+        } else {
+          // Navigate to payment page if not enrolled
+          Navigator.of(context).push(
+            MaterialPageRoute(
+              builder: (context) => ClassPaymentPage(
+                user: user,
+                classModel: classModel,
+              ),
+            ),
+          );
+        }
       },
       child: Container(
         width: 180,

@@ -7,7 +7,6 @@ class NewsRepository {
 
   Future<List<News>> getNews() async {
     try {
-      print('NewsRepository: Fetching news from Firestore...');
       
       // Try with orderBy first, fallback to without if index missing
       QuerySnapshot querySnapshot;
@@ -18,7 +17,6 @@ class NewsRepository {
             .orderBy('createdAt', descending: true)
             .get();
       } catch (e) {
-        print('NewsRepository: OrderBy failed, trying without orderBy: $e');
         // Fallback: get all active news without ordering
         querySnapshot = await _firestore
             .collection(_collection)
@@ -34,16 +32,12 @@ class NewsRepository {
             if (data != null) ...data,
           });
         } catch (e) {
-          print('NewsRepository: Error parsing news doc ${doc.id}: $e');
           return null;
         }
       }).whereType<News>().toList();
 
-      print('NewsRepository: Successfully fetched ${newsList.length} news items');
       return newsList;
     } catch (e) {
-      print('NewsRepository: Error getting news: $e');
-      print('NewsRepository: Error type: ${e.runtimeType}');
       return [];
     }
   }
@@ -58,7 +52,6 @@ class NewsRepository {
         ...doc.data()!,
       });
     } catch (e) {
-      print('Error getting news by ID: $e');
       return null;
     }
   }
@@ -72,7 +65,6 @@ class NewsRepository {
       
       await _firestore.collection(_collection).add(data);
     } catch (e) {
-      print('Error adding news: $e');
       rethrow;
     }
   }
@@ -88,7 +80,6 @@ class NewsRepository {
           .doc(news.id)
           .update(data);
     } catch (e) {
-      print('Error updating news: $e');
       rethrow;
     }
   }
@@ -97,7 +88,6 @@ class NewsRepository {
     try {
       await _firestore.collection(_collection).doc(id).delete();
     } catch (e) {
-      print('Error deleting news: $e');
       rethrow;
     }
   }

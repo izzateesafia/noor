@@ -41,6 +41,7 @@ import '../cubit/video_states.dart';
 import '../repository/video_repository.dart';
 import '../models/video.dart';
 import '../videos_page.dart';
+import '../all_videos_page.dart';
 import '../user_profile_page.dart';
 
 class DashboardPage extends StatefulWidget {
@@ -89,16 +90,12 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
-    print('Dashboard: App lifecycle state changed: $state');
     if (state == AppLifecycleState.resumed) {
-      print('Dashboard: App resumed, checking location in 1 second...');
       // Add a delay to ensure settings have been saved and app is fully resumed
       Future.delayed(const Duration(seconds: 1), () async {
         if (!mounted) {
-          print('Dashboard: Widget not mounted, skipping location check');
           return;
         }
-        print('Dashboard: Triggering location fetch after resume...');
         // When app resumes, check if location permission was granted
         // and location is still missing, then re-fetch
         await _requestAndUpdateLocation(forceRefresh: true);
@@ -110,51 +107,39 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
   /// [forceRefresh] - If true, will fetch location even if user already has location data
   Future<void> _requestAndUpdateLocation({bool forceRefresh = false}) async {
     try {
-      print('_requestAndUpdateLocation called, forceRefresh: $forceRefresh');
       final userCubit = context.read<UserCubit>();
       final user = userCubit.state.currentUser;
       
       // Skip if user already has location data (unless force refresh)
       if (!forceRefresh && user?.latitude != null && user?.longitude != null && user?.locationName != null) {
-        print('Location already exists, skipping');
         return;
       }
       
       // Check if location services are enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      print('Location services enabled: $serviceEnabled');
       if (!serviceEnabled) {
-        print('Location services are disabled');
         return;
       }
       
       // Check permission
       LocationPermission permission = await Geolocator.checkPermission();
-      print('Current location permission: $permission');
       
       if (permission == LocationPermission.denied) {
         // Request permission - this will show the iOS permission dialog if needed
-        print('Requesting location permission...');
         permission = await Geolocator.requestPermission();
-        print('Permission request result: $permission');
         if (permission == LocationPermission.denied) {
-          print('Location permission denied');
           return;
         }
       }
       
       if (permission == LocationPermission.deniedForever) {
-        print('Location permission permanently denied');
         return;
       }
       
       // Only proceed if permission is granted
       if (permission != LocationPermission.always && permission != LocationPermission.whileInUse) {
-        print('Location permission not granted: $permission');
         return;
       }
-      
-      print('Permission granted, fetching location...');
       
       // Get current location directly (bypass LocationService to avoid double permission check)
       Position position;
@@ -163,9 +148,7 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
           desiredAccuracy: LocationAccuracy.high,
           timeLimit: const Duration(seconds: 10),
         );
-        print('Location fetched: ${position.latitude}, ${position.longitude}');
       } catch (e) {
-        print('Error getting position: $e');
         return;
       }
       
@@ -175,18 +158,14 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
         position.latitude,
         position.longitude,
       );
-      print('Location name: $locationName');
       
       // Update user with location
       // IMPORTANT: Fetch latest user from Firestore first to ensure we have current roles
       // This prevents overwriting manually set roles when updating location
-      print('Fetching latest user from Firestore to preserve roles...');
       await userCubit.fetchCurrentUser();
       final latestUser = userCubit.state.currentUser;
       
       if (latestUser != null && mounted) {
-        print('Latest user roles from Firestore: ${latestUser.roles.map((r) => r.toString()).join(', ')}');
-        
         // Use latestUser (with current roles from Firestore) instead of stale user from state
         final updatedUser = latestUser.copyWith(
           latitude: position.latitude,
@@ -195,9 +174,7 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
               '${position.latitude.toStringAsFixed(4)}, ${position.longitude.toStringAsFixed(4)}',
         );
         
-        print('Updating user with location (preserving roles: ${updatedUser.roles.map((r) => r.toString()).join(', ')})...');
         await userCubit.updateUser(updatedUser);
-        print('User updated successfully');
         
         // Update prayer times with new location
         final prayerTimesCubit = context.read<PrayerTimesCubit>();
@@ -205,12 +182,8 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
           position.latitude,
           position.longitude,
         );
-      } else {
-        print('User is null or widget not mounted');
       }
     } catch (e, stackTrace) {
-      print('Error requesting and updating location: $e');
-      print('Stack trace: $stackTrace');
       // Don't block dashboard if location fails
     }
   }
@@ -243,6 +216,34 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
                     ),
                   ),
                 ],
+              ),
+              Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary,
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (context) => const AllVideosPage(),
+                      ),
+                    );
+                  },
+                  style: TextButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    minimumSize: Size.zero,
+                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                  ),
+                  child: Text(
+                    'Lihat Semua',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: Theme.of(context).colorScheme.onPrimary,
+                      fontWeight: FontWeight.w600,
+                      fontSize: 13,
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
@@ -439,13 +440,9 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
               // Use real user data if available
               if (userState.status == UserStatus.loaded && userState.currentUser != null) {
                 user = userState.currentUser!;
-                print('Dashboard: Using real user data: ${user.name} (${user.email})');
               } else if (userState.status == UserStatus.error) {
                 // Handle error state
-                print('Dashboard: Error loading user: ${userState.error}');
-                print('Dashboard: Using fallback user data');
               } else {
-                print('Dashboard: Using fallback user data (status: ${userState.status})');
               }
 
               // Get current live stream
@@ -454,19 +451,6 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
                 currentLiveStream = liveStreamState.currentLiveStream;
               }
 
-              // Debug logging
-              print('LiveStreamState: $liveStreamState');
-              print('CurrentLiveStream: $currentLiveStream');
-              if (currentLiveStream != null) {
-                print('LiveStream isActive: ${currentLiveStream.isActive}');
-                print('LiveStream title: ${currentLiveStream.title}');
-                print('LiveStream link: ${currentLiveStream.tiktokLiveLink}');
-              } else {
-                print('No current live stream found - this could mean:');
-                print('1. No live streams exist in the database');
-                print('2. No live streams have isActive: true');
-                print('3. There was an error fetching from Firestore');
-              }
 
               // Check if there's an active live stream
               final bool isLive = currentLiveStream != null && currentLiveStream.isActive;
@@ -594,11 +578,48 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
                                 children: [
                                   // Watch Live button
                                   ElevatedButton.icon(
-                                    onPressed: isLoading ? null : () {
-                                      // Refresh live stream data first
-                                      context.read<LiveStreamCubit>().getCurrentLiveStream();
-                                      // Then show the sheet
-                                      _showLiveSheet();
+                                    onPressed: isLoading ? null : () async {
+                                      // Refresh live stream data first and wait for it
+                                      await context.read<LiveStreamCubit>().getCurrentLiveStream();
+                                      
+                                      // Wait a bit for state to update
+                                      await Future.delayed(const Duration(milliseconds: 100));
+                                      
+                                      // Get updated state
+                                      final updatedState = context.read<LiveStreamCubit>().state;
+                                      LiveStream? currentLiveStream;
+                                      if (updatedState is LiveStreamLoaded) {
+                                        currentLiveStream = updatedState.currentLiveStream;
+                                      }
+                                      
+                                      // Check if there's an active live stream
+                                      if (currentLiveStream != null && currentLiveStream.isActive && currentLiveStream.tiktokLiveLink.isNotEmpty) {
+                                        // Directly navigate to the live stream link
+                                        final url = Uri.parse(currentLiveStream.tiktokLiveLink);
+                                        if (await canLaunchUrl(url)) {
+                                          await launchUrl(url, mode: LaunchMode.externalApplication);
+                                        } else {
+                                          if (mounted) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: const Text('Tidak dapat membuka pautan siaran langsung'),
+                                                backgroundColor: Theme.of(context).colorScheme.error,
+                                              ),
+                                            );
+                                          }
+                                        }
+                                      } else {
+                                        // No active live stream, show error message
+                                        if (mounted) {
+                                          ScaffoldMessenger.of(context).showSnackBar(
+                                            const SnackBar(
+                                              content: Text('Tiada siaran langsung tersedia pada masa ini. Sila periksa semula kemudian atau hubungi kami.'),
+                                              backgroundColor: Colors.orange,
+                                              duration: Duration(seconds: 3),
+                                            ),
+                                          );
+                                        }
+                                      }
                                     },
                                     style: ElevatedButton.styleFrom(
                                       backgroundColor: Theme.of(context).colorScheme.primary,
@@ -691,6 +712,8 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
                             ),
                             _buildHijriDateDisplay(),
                             PrayerTimesCard(),
+                            QuickAccessGrid(),
+
                             const DailyVerseWidget(),
                             // Featured Videos Section
                             BlocBuilder<VideoCubit, VideoState>(
@@ -713,9 +736,6 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
                             ),
                             BlocBuilder<NewsCubit, NewsState>(
                               builder: (context, newsState) {
-                                // Debug logging
-                                print('TerkiniNewsFeed - News count: ${newsState.news.length}, Loading: ${newsState.isLoading}, Error: ${newsState.error}');
-                                
                                 // Show loading state
                                 if (newsState.isLoading) {
                                   return const SizedBox.shrink(); // Hide during loading
@@ -723,33 +743,41 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
                                 
                                 // Show error state
                                 if (newsState.error != null) {
-                                  print('NewsState error: ${newsState.error}');
                                   return const SizedBox.shrink();
                                 }
                                 
                                 // Show news feed if there are news items
                                 if (newsState.news.isNotEmpty) {
-                                  print('TerkiniNewsFeed - Showing ${newsState.news.length} news items');
                                   return TerkiniNewsFeed(news: newsState.news);
                                 }
                                 
                                 // Hide if no news items
-                                print('TerkiniNewsFeed - No news items, hiding widget');
                                 return const SizedBox.shrink();
                               },
                             ),
-                            DailyTracker(user: user),
-                            QuickAccessGrid(),
+                            // DailyTracker(user: user),
                             if (!user.isPremium) BlocBuilder<AdCubit, AdState>(
                               builder: (context, adState) {
+                                if (adState.isLoading) {
+                                  return const SizedBox.shrink(); // Hide during loading
+                                }
+                                if (adState.error != null) {
+                                  return const SizedBox.shrink(); // Hide on error
+                                }
+                                if (adState.ads.isEmpty) {
+                                  return const SizedBox.shrink(); // Hide if no ads
+                                }
                                 return AdCarousel(ads: adState.ads);
                               },
                             ),
-                            if (!user.isPremium) BlocBuilder<AdCubit, AdState>(
-                              builder: (context, adState) {
-                                return AdPanel(ad: adState.ads.isNotEmpty ? adState.ads.first : null);
-                              },
-                            ),
+                            // if (!user.isPremium) BlocBuilder<AdCubit, AdState>(
+                            //   builder: (context, adState) {
+                            //     if (adState.isLoading || adState.error != null || adState.ads.isEmpty) {
+                            //       return const SizedBox.shrink();
+                            //     }
+                            //     return AdPanel(ad: adState.ads.first);
+                            //   },
+                            // ),
                             FeaturedSection(
                               user: user,
                               duas: context.read<DuaCubit>().state.duas,

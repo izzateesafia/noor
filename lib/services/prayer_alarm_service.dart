@@ -49,11 +49,9 @@ class PrayerAlarmService {
       _isInitialized = true;
       
       if (kDebugMode) {
-        print('PrayerAlarmService initialized successfully');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error initializing PrayerAlarmService: $e');
       }
     }
   }
@@ -71,11 +69,9 @@ class PrayerAlarmService {
       }
       
       if (kDebugMode) {
-        print('Loaded preferences - Enabled: $_alarmEnabled, Volume: $_alarmVolume, Prayers: $_enabledPrayers');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error loading preferences: $e');
       }
     }
   }
@@ -89,11 +85,9 @@ class PrayerAlarmService {
       await prefs.setStringList(_alarmPrayersKey, _enabledPrayers.toList());
       
       if (kDebugMode) {
-        print('Preferences saved successfully');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error saving preferences: $e');
       }
     }
   }
@@ -110,7 +104,6 @@ class PrayerAlarmService {
     
     if (kDebugMode) {
       final timestamp = DateTime.now().toIso8601String();
-      print('[$timestamp] PrayerAlarmService: Prayer monitoring started (checks every 30 seconds)');
     }
   }
 
@@ -119,7 +112,6 @@ class PrayerAlarmService {
     if (!_alarmEnabled) {
       if (kDebugMode) {
         final timestamp = DateTime.now().toIso8601String();
-        print('[$timestamp] PrayerAlarmService: Alarm is disabled, skipping check');
       }
       return;
     }
@@ -127,7 +119,6 @@ class PrayerAlarmService {
     try {
       final timestamp = DateTime.now().toIso8601String();
       if (kDebugMode) {
-        print('[$timestamp] PrayerAlarmService: Checking prayer times...');
       }
       
       // Get current prayer times
@@ -138,8 +129,6 @@ class PrayerAlarmService {
       final currentTime = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
       
       if (kDebugMode) {
-        print('[$timestamp] PrayerAlarmService: Current time: $currentTime');
-        print('[$timestamp] PrayerAlarmService: Prayer times - Fajr: ${prayerTimes.fajr}, Dhuhr: ${prayerTimes.dhuhr}, Asr: ${prayerTimes.asr}, Maghrib: ${prayerTimes.maghrib}, Isha: ${prayerTimes.isha}');
       }
       
       // Check each prayer time
@@ -158,7 +147,6 @@ class PrayerAlarmService {
         // Check if this prayer is enabled and it's time for it
         if (_enabledPrayers.contains(prayerName) && _isPrayerTime(currentTime, prayerTime)) {
           if (kDebugMode) {
-            print('[$timestamp] PrayerAlarmService: 🕌 It is time for $prayerName ($prayerTime), playing azan...');
           }
           await _playAdhanForPrayer(prayerName);
         }
@@ -166,8 +154,6 @@ class PrayerAlarmService {
     } catch (e, stackTrace) {
       final errorTimestamp = DateTime.now().toIso8601String();
       if (kDebugMode) {
-        print('[$errorTimestamp] PrayerAlarmService: ❌ Error checking prayer times: $e');
-        print('[$errorTimestamp] PrayerAlarmService: Stack trace: $stackTrace');
       }
     }
   }
@@ -197,7 +183,6 @@ class PrayerAlarmService {
       return false;
     } catch (e) {
       if (kDebugMode) {
-        print('Error parsing time: $e');
       }
       return false;
     }
@@ -236,29 +221,24 @@ class PrayerAlarmService {
         _lastPlayedTime = now;
         
         if (kDebugMode) {
-          print('[$timestamp] PrayerAlarmService: 🕌 Playing azan for $prayerName');
         }
         
         // Play the adhan
         await _adhanAudioService.playAdhanForPrayer(prayerName);
         
         if (kDebugMode) {
-          print('[$timestamp] PrayerAlarmService: ✅ Adhan played for $prayerName at ${now.toString()}');
         }
         
         // Show notification (optional)
         await _showPrayerNotification(prayerName);
       } else {
         if (kDebugMode) {
-          print('[$timestamp] PrayerAlarmService: ⏭️ Skipping azan for $prayerName (already played today)');
         }
       }
       
     } catch (e, stackTrace) {
       final errorTimestamp = DateTime.now().toIso8601String();
       if (kDebugMode) {
-        print('[$errorTimestamp] PrayerAlarmService: ❌ Error playing adhan for $prayerName: $e');
-        print('[$errorTimestamp] PrayerAlarmService: Stack trace: $stackTrace');
       }
     }
   }
@@ -269,11 +249,9 @@ class PrayerAlarmService {
       // This would typically use flutter_local_notifications
       // For now, just log it
       if (kDebugMode) {
-        print('Prayer notification: $prayerName time has arrived');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error showing prayer notification: $e');
       }
     }
   }
@@ -284,7 +262,6 @@ class PrayerAlarmService {
     await _savePreferences();
     
     if (kDebugMode) {
-      print('Prayer alarm ${enabled ? 'enabled' : 'disabled'}');
     }
   }
 
@@ -294,7 +271,6 @@ class PrayerAlarmService {
     await _savePreferences();
     
     if (kDebugMode) {
-      print('Prayer alarm volume set to $_alarmVolume');
     }
   }
 
@@ -308,7 +284,6 @@ class PrayerAlarmService {
     await _savePreferences();
     
     if (kDebugMode) {
-      print('Prayer $prayerName ${enabled ? 'enabled' : 'disabled'}');
     }
   }
 
@@ -343,7 +318,6 @@ void callbackDispatcher() {
       return Future.value(false);
     } catch (e) {
       if (kDebugMode) {
-        print('Background task error: $e');
       }
       return Future.value(false);
     }

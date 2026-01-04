@@ -82,11 +82,9 @@ class ScheduledAlarmService {
       _isInitialized = true;
 
       if (kDebugMode) {
-        print('ScheduledAlarmService initialized successfully');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error initializing ScheduledAlarmService: $e');
       }
     }
   }
@@ -103,11 +101,9 @@ class ScheduledAlarmService {
       }
       
       if (kDebugMode) {
-        print('Loaded preferences - Enabled: $_alarmEnabled, Prayers: $_enabledPrayers');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error loading preferences: $e');
       }
     }
   }
@@ -120,11 +116,9 @@ class ScheduledAlarmService {
       await prefs.setStringList('prayer_alarm_prayers', _enabledPrayers.toList());
       
       if (kDebugMode) {
-        print('Preferences saved successfully');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error saving preferences: $e');
       }
     }
   }
@@ -139,7 +133,6 @@ class ScheduledAlarmService {
       if (androidPlugin != null) {
         final granted = await androidPlugin.requestNotificationsPermission();
         if (kDebugMode) {
-          print('Android notification permission granted: $granted');
         }
       }
       
@@ -154,12 +147,10 @@ class ScheduledAlarmService {
           sound: true,
         );
         if (kDebugMode) {
-          print('iOS notification permission granted: $granted');
         }
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error requesting permissions: $e');
       }
     }
   }
@@ -178,19 +169,12 @@ class ScheduledAlarmService {
       // Get real prayer times from API
       final timestamp = DateTime.now().toIso8601String();
       if (kDebugMode) {
-        print('[$timestamp] ScheduledAlarmService: Fetching prayer times from API...');
       }
       
       final prayerTimesData = await _prayerTimesRepository.getCurrentPrayerTimes('Kuala Lumpur', 'Kuala Lumpur');
       final prayerTimes = prayerTimesData.prayerTimes;
 
       if (kDebugMode) {
-        print('[$timestamp] ScheduledAlarmService: ✅ Got prayer times from API:');
-        print('[$timestamp]   Fajr: ${prayerTimes.fajr}');
-        print('[$timestamp]   Dhuhr: ${prayerTimes.dhuhr}');
-        print('[$timestamp]   Asr: ${prayerTimes.asr}');
-        print('[$timestamp]   Maghrib: ${prayerTimes.maghrib}');
-        print('[$timestamp]   Isha: ${prayerTimes.isha}');
       }
 
       // Convert prayer time strings to DateTime objects
@@ -235,13 +219,10 @@ class ScheduledAlarmService {
 
       final endTimestamp = DateTime.now().toIso8601String();
       if (kDebugMode) {
-        print('[$endTimestamp] ScheduledAlarmService: ✅ Scheduled ${_enabledPrayers.length} prayer notifications for today');
       }
     } catch (e, stackTrace) {
       final errorTimestamp = DateTime.now().toIso8601String();
       if (kDebugMode) {
-        print('[$errorTimestamp] ScheduledAlarmService: ❌ Error scheduling prayers: $e');
-        print('[$errorTimestamp] ScheduledAlarmService: Stack trace: $stackTrace');
       }
     }
   }
@@ -259,7 +240,6 @@ class ScheduledAlarmService {
       await prefs.setInt('scheduled_prayer_time_$notificationId', prayerTime.millisecondsSinceEpoch);
       
       if (kDebugMode) {
-        print('[$timestamp] ScheduledAlarmService: Storing prayer info for $prayerDisplayName (ID: $notificationId) at ${prayerTime.toString()}');
       }
       
       // Convert to timezone-aware datetime
@@ -312,12 +292,10 @@ class ScheduledAlarmService {
       );
 
       if (kDebugMode) {
-        print('[$timestamp] ScheduledAlarmService: ✅ Scheduled notification for $prayerDisplayName at ${prayerTime.toString()} (ID: $notificationId)');
       }
     } catch (e) {
       final errorTimestamp = DateTime.now().toIso8601String();
       if (kDebugMode) {
-        print('[$errorTimestamp] ScheduledAlarmService: ❌ Error scheduling notification for $prayerName: $e');
       }
     }
   }
@@ -328,34 +306,29 @@ class ScheduledAlarmService {
     final payload = response.payload ?? '';
     
     if (kDebugMode) {
-      print('[$timestamp] ScheduledAlarmService: Notification received - Payload: $payload, Action: ${response.actionId}');
     }
     
     if (payload == 'reschedule') {
       // Reschedule tomorrow's prayers
       if (kDebugMode) {
-        print('[$timestamp] ScheduledAlarmService: Rescheduling prayers');
       }
       _scheduleTodayPrayers();
     } else if (payload.startsWith('adhan_')) {
       // Play adhan audio when notification is tapped or received
       final prayerName = payload.substring(6);
       if (kDebugMode) {
-        print('[$timestamp] ScheduledAlarmService: 🕌 Playing azan for $prayerName (notification triggered)');
       }
       _adhanAudioService.playAdhanForPrayer(prayerName);
     } else if (payload.startsWith('test_adhan_')) {
       // Test notification
       final prayerName = payload.substring(11);
       if (kDebugMode) {
-        print('[$timestamp] ScheduledAlarmService: 🧪 Test azan for $prayerName');
       }
       _adhanAudioService.playAdhanForPrayer(prayerName);
     } else if (payload.startsWith('test_scheduled_')) {
       // Test scheduled notification
       final prayerName = payload.substring(15);
       if (kDebugMode) {
-        print('[$timestamp] ScheduledAlarmService: 🧪 Test scheduled azan for $prayerName');
       }
       _adhanAudioService.playAdhanForPrayer(prayerName);
     }
@@ -374,7 +347,6 @@ class ScheduledAlarmService {
     
     if (kDebugMode) {
       final timestamp = DateTime.now().toIso8601String();
-      print('[$timestamp] ScheduledAlarmService: ✅ Started prayer time checker (checks every 30 seconds)');
     }
   }
   
@@ -408,7 +380,6 @@ class ScheduledAlarmService {
               
               if (!lastPlayed) {
                 if (kDebugMode) {
-                  print('[$timestamp] ScheduledAlarmService: 🕌 Auto-playing azan for $prayerName (time check: ${prayerTime.toString()})');
                 }
                 await _adhanAudioService.playAdhanForPrayer(prayerName);
                 await prefs.setBool(lastPlayedKey, true);
@@ -420,7 +391,6 @@ class ScheduledAlarmService {
     } catch (e) {
       final errorTimestamp = DateTime.now().toIso8601String();
       if (kDebugMode) {
-        print('[$errorTimestamp] ScheduledAlarmService: Error checking prayer times: $e');
       }
     }
   }
@@ -434,7 +404,6 @@ class ScheduledAlarmService {
       return DateTime(baseDate.year, baseDate.month, baseDate.day, hour, minute);
     } catch (e) {
       if (kDebugMode) {
-        print('Error parsing prayer time "$timeString": $e');
       }
       // Fallback to a default time if parsing fails
       return DateTime(baseDate.year, baseDate.month, baseDate.day, 12, 0);
@@ -471,7 +440,6 @@ class ScheduledAlarmService {
     }
     
     if (kDebugMode) {
-      print('Prayer alarm ${enabled ? 'enabled' : 'disabled'}');
     }
   }
 
@@ -488,7 +456,6 @@ class ScheduledAlarmService {
     await _scheduleTodayPrayers();
     
     if (kDebugMode) {
-      print('Prayer $prayerName ${enabled ? 'enabled' : 'disabled'}');
     }
   }
 
@@ -498,7 +465,6 @@ class ScheduledAlarmService {
     final timestamp = DateTime.now().toIso8601String();
     
     if (kDebugMode) {
-      print('[$timestamp] ScheduledAlarmService: Testing adhan for $prayerName ($prayerDisplayName)');
     }
     
     // Show notification first, then play audio
@@ -541,11 +507,9 @@ class ScheduledAlarmService {
       );
       
       if (kDebugMode) {
-        print('[$timestamp] ScheduledAlarmService: ✅ Test notification shown for $prayerDisplayName');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('[$timestamp] ScheduledAlarmService: ❌ Error showing test notification: $e');
       }
     }
     
@@ -556,7 +520,6 @@ class ScheduledAlarmService {
     await _adhanAudioService.playAdhanForPrayer(prayerName);
     
     if (kDebugMode) {
-      print('[$timestamp] ScheduledAlarmService: ✅ Test adhan audio started for $prayerDisplayName');
     }
   }
 
@@ -571,7 +534,6 @@ class ScheduledAlarmService {
       final testId = 8888 + prayerName.hashCode;
       
       if (kDebugMode) {
-        print('Scheduling test notification for $prayerDisplayName at ${nextMinute.toString()}');
       }
       
       // Convert to timezone-aware datetime
@@ -624,11 +586,9 @@ class ScheduledAlarmService {
       );
       
       if (kDebugMode) {
-        print('Test notification scheduled successfully for $prayerDisplayName');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error scheduling test notification: $e');
       }
       rethrow;
     }

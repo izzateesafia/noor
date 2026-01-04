@@ -79,11 +79,9 @@ class IOSOptimizedAlarmService {
       _isInitialized = true;
 
       if (kDebugMode) {
-        print('IOSOptimizedAlarmService initialized successfully');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error initializing IOSOptimizedAlarmService: $e');
       }
     }
   }
@@ -100,11 +98,9 @@ class IOSOptimizedAlarmService {
       }
       
       if (kDebugMode) {
-        print('Loaded preferences - Enabled: $_alarmEnabled, Prayers: $_enabledPrayers');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error loading preferences: $e');
       }
     }
   }
@@ -117,11 +113,9 @@ class IOSOptimizedAlarmService {
       await prefs.setStringList('prayer_alarm_prayers', _enabledPrayers.toList());
       
       if (kDebugMode) {
-        print('Preferences saved successfully');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error saving preferences: $e');
       }
     }
   }
@@ -136,7 +130,6 @@ class IOSOptimizedAlarmService {
       if (androidPlugin != null) {
         final granted = await androidPlugin.requestNotificationsPermission();
         if (kDebugMode) {
-          print('Android notification permission granted: $granted');
         }
       }
       
@@ -151,12 +144,10 @@ class IOSOptimizedAlarmService {
           sound: true,
         );
         if (kDebugMode) {
-          print('iOS notification permission granted: $granted');
         }
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error requesting permissions: $e');
       }
     }
   }
@@ -213,11 +204,9 @@ class IOSOptimizedAlarmService {
       );
 
       if (kDebugMode) {
-        print('Scheduled ${_enabledPrayers.length} prayer notifications for today');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error scheduling prayers: $e');
       }
     }
   }
@@ -294,11 +283,9 @@ class IOSOptimizedAlarmService {
       );
 
       if (kDebugMode) {
-        print('Scheduled notification for $prayerDisplayName at ${prayerTime.toString()}');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error scheduling notification for $prayerName: $e');
       }
     }
   }
@@ -319,7 +306,6 @@ class IOSOptimizedAlarmService {
     }
     
     if (kDebugMode) {
-      print('Notification tapped: ${response.payload}, Action: ${response.actionId}');
     }
   }
 
@@ -353,7 +339,6 @@ class IOSOptimizedAlarmService {
     }
     
     if (kDebugMode) {
-      print('Prayer alarm ${enabled ? 'enabled' : 'disabled'}');
     }
   }
 
@@ -370,7 +355,6 @@ class IOSOptimizedAlarmService {
     await _scheduleTodayPrayers();
     
     if (kDebugMode) {
-      print('Prayer $prayerName ${enabled ? 'enabled' : 'disabled'}');
     }
   }
 
@@ -425,7 +409,6 @@ class IOSOptimizedAlarmService {
       final testId = 8888 + prayerName.hashCode;
       
       if (kDebugMode) {
-        print('Scheduling iOS-optimized test notification for $prayerDisplayName at ${nextMinute.toString()}');
       }
       
       // Convert to timezone-aware datetime
@@ -479,11 +462,9 @@ class IOSOptimizedAlarmService {
       );
       
       if (kDebugMode) {
-        print('iOS-optimized test notification scheduled successfully for $prayerDisplayName');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error scheduling iOS-optimized test notification: $e');
       }
       rethrow;
     }

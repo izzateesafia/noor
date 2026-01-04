@@ -210,7 +210,6 @@ class _LoginPageState extends State<LoginPage> {
 
       await userCubit.updateUser(updatedUser);
     } catch (e) {
-      print('Error requesting location: $e');
       // Don't block login if location fails
     }
   }
@@ -284,7 +283,6 @@ class _LoginPageState extends State<LoginPage> {
         // Auto-reset if stuck in loading state for too long
         Future.delayed(const Duration(seconds: 10), () {
           if (cubit.state.status == UserStatus.loading) {
-            print('Auto-resetting stuck loading state');
             cubit.resetState();
           }
         });

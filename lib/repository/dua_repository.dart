@@ -15,7 +15,6 @@ class DuaRepository {
         usedOrderBy = true;
       } catch (e) {
         // If orderBy fails (e.g., missing index), try without orderBy
-        print('OrderBy failed, falling back to simple query: $e');
         snapshot = await _db.collection(_collection).get();
         usedOrderBy = false;
       }
@@ -47,7 +46,6 @@ class DuaRepository {
       
       return duas;
     } catch (e) {
-      print('Error fetching duas: $e');
       rethrow;
     }
   }
@@ -67,7 +65,6 @@ class DuaRepository {
       }
       return Dua.fromJson({...data, 'id': doc.id});
     } catch (e) {
-      print('Error getting dua by ID: $e');
       rethrow;
     }
   }
@@ -77,9 +74,7 @@ class DuaRepository {
       final data = dua.toJson();
       data.remove('id');
       await _db.collection(_collection).add(data);
-      print('Dua added successfully');
     } catch (e) {
-      print('Error adding dua: $e');
       rethrow;
     }
   }
@@ -93,9 +88,7 @@ class DuaRepository {
       final id = dua.id;
       data.remove('id');
       await _db.collection(_collection).doc(id).update(data);
-      print('Dua updated successfully');
     } catch (e) {
-      print('Error updating dua: $e');
       rethrow;
     }
   }
@@ -106,9 +99,7 @@ class DuaRepository {
         throw Exception('Cannot delete dua with empty ID');
       }
       await _db.collection(_collection).doc(id).delete();
-      print('Dua deleted successfully');
     } catch (e) {
-      print('Error deleting dua: $e');
       rethrow;
     }
   }

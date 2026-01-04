@@ -95,9 +95,6 @@ class _UserProfileViewState extends State<_UserProfileView> {
       child: BlocBuilder<UserCubit, UserState>(
         builder: (context, userState) {
           // Debug logging
-          print('Profile Page BlocBuilder: UserState: $userState');
-          print('Profile Page BlocBuilder: Status: ${userState.status}');
-          print('Profile Page BlocBuilder: CurrentUser: ${userState.currentUser}');
           
           final user = userState.currentUser;
           if (user == null) {
@@ -333,7 +330,6 @@ class _UserProfileViewState extends State<_UserProfileView> {
         try {
           await _imageUploadService.deleteProfilePicture(user.profileImage!);
         } catch (e) {
-          print('Error deleting old profile picture: $e');
         }
       }
 
@@ -432,9 +428,6 @@ class _UserProfileViewState extends State<_UserProfileView> {
                 .toList();
 
             // Debug logging
-            print('Profile Page: User enrolledClassIds: ${user.enrolledClassIds}');
-            print('Profile Page: Available classes: ${classState.classes.map((c) => c.id).toList()}');
-            print('Profile Page: Enrolled classes found: ${enrolledClasses.map((c) => c.title).toList()}');
 
             if (enrolledClasses.isEmpty) {
               return Card(

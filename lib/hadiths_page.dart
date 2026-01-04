@@ -74,7 +74,8 @@ class _HadithsPageState extends State<HadithsPage> {
               );
             }
 
-            if (state.hadiths.isEmpty) {
+            final visibleHadiths = state.hadiths.where((h) => !h.isHidden).toList();
+            if (visibleHadiths.isEmpty) {
               return Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
@@ -107,9 +108,9 @@ class _HadithsPageState extends State<HadithsPage> {
               },
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-                itemCount: state.hadiths.length,
+                itemCount: visibleHadiths.length,
                 itemBuilder: (context, index) {
-                  final hadith = state.hadiths[index];
+                  final hadith = visibleHadiths[index];
                   return InkWell(
                     onTap: () {
                       Navigator.of(context).push(

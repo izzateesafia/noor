@@ -94,7 +94,6 @@ class MushafDownloadService {
       }
       return false;
     } catch (e) {
-      print('Error deleting cached PDF: $e');
       return false;
     }
   }

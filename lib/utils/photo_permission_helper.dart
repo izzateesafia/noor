@@ -17,9 +17,7 @@ class PhotoPermissionHelper {
     // This approach matches how apps like Facebook handle permissions
     if (Platform.isIOS) {
       if (source == ImageSource.gallery) {
-        print('PhotoPermissionHelper: iOS gallery - skipping permission check (PHPickerViewController doesn\'t require it)');
       } else if (source == ImageSource.camera) {
-        print('PhotoPermissionHelper: iOS camera - skipping permission check (image_picker will handle it)');
       }
       return true; // Let image_picker handle permissions internally
     }
@@ -36,13 +34,9 @@ class PhotoPermissionHelper {
     var status = await permission.status;
 
     // Debug logging - initial status
-    print('PhotoPermissionHelper: Initial permission status: $status');
-    print('PhotoPermissionHelper: isGranted: ${status.isGranted}, isDenied: ${status.isDenied}, isLimited: ${status.isLimited}, isPermanentlyDenied: ${status.isPermanentlyDenied}');
-    print('PhotoPermissionHelper: Source: ${source == ImageSource.camera ? "Camera" : "Gallery"}');
 
     // Full access granted - proceed
     if (status.isGranted) {
-      print('PhotoPermissionHelper: Permission already granted');
       return true;
     }
 
@@ -50,7 +44,6 @@ class PhotoPermissionHelper {
     // On iOS, the system picker will allow users to select photos even with limited access
     // We should not block the picker with a dialog - let it open so users can select photos
     if (status.isLimited && source != ImageSource.camera) {
-      print('PhotoPermissionHelper: Limited access detected, allowing picker to open');
       // Allow the picker to open - the system will handle photo selection
       // The upgrade dialog can be shown later if needed, but don't block the picker
       return true;
@@ -58,7 +51,6 @@ class PhotoPermissionHelper {
 
     // Permanently denied - show settings dialog
     if (status.isPermanentlyDenied) {
-      print('PhotoPermissionHelper: Permission permanently denied, showing settings dialog');
       final openSettings = await _showPermanentlyDeniedDialog(context, source);
       if (openSettings == true) {
         await openAppSettings();
@@ -66,7 +58,6 @@ class PhotoPermissionHelper {
         await Future.delayed(const Duration(milliseconds: 500));
         // Re-check after returning from settings
         status = await permission.status;
-        print('PhotoPermissionHelper: After settings (permanently denied), status: $status');
         if (status.isGranted) {
           if (context.mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
@@ -76,11 +67,9 @@ class PhotoPermissionHelper {
               ),
             );
           }
-          print('PhotoPermissionHelper: Permission granted after settings');
           return true;
         }
         if (status.isLimited) {
-          print('PhotoPermissionHelper: Limited access granted after settings');
           return true;
         }
         // Still denied - show helpful message
@@ -103,19 +92,14 @@ class PhotoPermissionHelper {
     // Request permission if not granted, not limited, and not permanently denied
     // This catches: denied, notDetermined (initial state on iOS), and restricted states
     if (!status.isGranted && !status.isLimited && !status.isPermanentlyDenied) {
-      print('PhotoPermissionHelper: Requesting permission (current status: $status)');
       status = await permission.request();
-      print('PhotoPermissionHelper: Permission request result: $status');
-      print('PhotoPermissionHelper: After request - isGranted: ${status.isGranted}, isDenied: ${status.isDenied}, isLimited: ${status.isLimited}, isPermanentlyDenied: ${status.isPermanentlyDenied}');
       
       if (status.isGranted) {
-        print('PhotoPermissionHelper: Permission granted after request');
         return true;
       }
       
       // Check if it became permanently denied after request
       if (status.isPermanentlyDenied) {
-        print('PhotoPermissionHelper: Permission became permanently denied after request, showing settings dialog');
         final openSettings = await _showPermanentlyDeniedDialog(context, source);
         if (openSettings == true) {
           await openAppSettings();
@@ -123,7 +107,6 @@ class PhotoPermissionHelper {
           await Future.delayed(const Duration(milliseconds: 500));
           // Re-check after returning from settings
           status = await permission.status;
-          print('PhotoPermissionHelper: After settings (became permanently denied), status: $status');
           if (status.isGranted) {
             if (context.mounted) {
               ScaffoldMessenger.of(context).showSnackBar(
@@ -133,11 +116,9 @@ class PhotoPermissionHelper {
                 ),
               );
             }
-            print('PhotoPermissionHelper: Permission granted after settings');
             return true;
           }
           if (status.isLimited) {
-            print('PhotoPermissionHelper: Limited access granted after settings');
             return true;
           }
           // Still denied - show helpful message
@@ -160,13 +141,11 @@ class PhotoPermissionHelper {
       // Limited access granted after request - allow picker to open
       // Don't show dialog that blocks the picker - let users select photos first
       if (status.isLimited && source != ImageSource.camera) {
-        print('PhotoPermissionHelper: Limited access granted after request, allowing picker to open');
         // Allow the picker to open immediately - users can select photos through the system picker
         return true;
       }
       
       // Permission denied after request (but not permanently denied)
-      print('PhotoPermissionHelper: Permission denied after request');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -182,7 +161,6 @@ class PhotoPermissionHelper {
     }
 
     // Other states - show error
-    print('PhotoPermissionHelper: Unexpected permission state: $status');
     if (context.mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

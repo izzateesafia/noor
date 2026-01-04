@@ -1,6 +1,8 @@
 import 'package:daily_quran/models/user_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_credit_card/flutter_credit_card.dart';
+import 'package:flutter_stripe/flutter_stripe.dart' as stripe;
 import 'package:url_launcher/url_launcher.dart';
 import 'models/class_model.dart';
 import 'models/payment/order_request.dart';
@@ -98,7 +100,7 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
               } else if (state is PaymentSuccess) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: const Text('Pembayaran berjaya! Anda kini telah mendaftar dalam kelas!'),
+                    content: const Text('Pembayaran berjaya! Anda kini telah mendaftar kelas ini.'),
                     backgroundColor: Theme.of(context).colorScheme.primaryContainer,
                   ),
                 );
@@ -112,7 +114,7 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
                 );
               }
               
-              return _buildPaymentContent();
+              return _buildPaymentContent(userState);
             },
           ),
         );
@@ -120,7 +122,12 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
     );
   }
 
-  Widget _buildPaymentContent() {
+  Widget _buildPaymentContent(UserState userState) {
+    // Check if user is enrolled in this class
+    final currentUser = userState.currentUser;
+    final isEnrolled = currentUser?.enrolledClassIds.contains(widget.classModel.id) ?? false;
+    final isPaymentPending = currentUser?.isPaymentPendingForClass(widget.classModel.id) ?? false;
+    
     return SingleChildScrollView(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -138,24 +145,13 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
                 _buildClassInfo(),
                 const SizedBox(height: 24),
 
-                      _buildOnPayButton(),
-
-          // // Payment Method Selection
-          // _buildPaymentMethodSelection(),
-          // const SizedBox(height: 24),
-          //
-          // // Card Payment Form (if selected and not using saved card)
-          // if (_selectedIndex == 1) _buildCardPaymentForm(),
-          //
-          // const SizedBox(height: 24),
-          //
-          // // Personal Information Form
-          // _buildPersonalInfoForm(),
-          //
-          // const SizedBox(height: 32),
-          //
-          //       // Pay Button
-          //       _buildPayButton(),
+                // Show enrollment status if enrolled, otherwise show payment button or pending status
+                if (isEnrolled)
+                  _buildEnrollmentStatus()
+                else if (isPaymentPending)
+                  _buildPendingPaymentStatus()
+                else
+                  _buildOnPayButton(),
               ],
             ),
           ),
@@ -492,7 +488,92 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
     );
   }
 
+  Widget _buildPendingPaymentStatus() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.orange.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.orange.withOpacity(0.3),
+          width: 2,
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.hourglass_empty,
+            color: Colors.orange[700],
+            size: 48,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Menunggu pengesahan admin',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: Colors.orange[700],
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Pembayaran anda sedang menunggu pengesahan daripada pihak admin. Sila tunggu untuk kemas kini.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEnrollmentStatus() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+          width: 2,
+        ),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.check_circle,
+            color: Theme.of(context).colorScheme.primary,
+            size: 48,
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Anda telah mendaftar kelas ini',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: Theme.of(context).colorScheme.primary,
+            ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Terima kasih kerana mendaftar. Anda kini boleh mengakses semua kandungan kelas ini.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
+            ),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildOnPayButton() {
+    final userState = context.read<UserCubit>().state;
+    final currentUser = userState.currentUser;
+    final isPaymentPending = currentUser?.isPaymentPendingForClass(widget.classModel.id) ?? false;
     final hasPaymentUrl = widget.classModel.paymentUrl != null && 
                          widget.classModel.paymentUrl!.isNotEmpty;
     
@@ -502,7 +583,7 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
         icon: const Icon(Icons.payment),
         label: Text('Bayar RM ${widget.classModel.price.toStringAsFixed(2)}'),
         style: ElevatedButton.styleFrom(
-          backgroundColor: hasPaymentUrl 
+          backgroundColor: (hasPaymentUrl && !isPaymentPending)
               ? Theme.of(context).colorScheme.primary
               : Theme.of(context).colorScheme.primary.withOpacity(0.5),
           foregroundColor: Theme.of(context).colorScheme.onPrimary,
@@ -510,9 +591,53 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
           padding: const EdgeInsets.symmetric(vertical: 16),
           textStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
-        onPressed: hasPaymentUrl ? () => _launchPaymentUrl() : null,
+        onPressed: (hasPaymentUrl && !isPaymentPending) ? () => _launchPaymentUrl() : null,
       ),
     );
+  }
+
+  Future<void> _markPaymentAsPending() async {
+    final userState = context.read<UserCubit>().state;
+    final currentUser = userState.currentUser;
+    
+    if (currentUser == null) return;
+
+    try {
+      // Create or update pendingClassPayments map
+      final updatedPendingPayments = Map<String, String>.from(
+        currentUser.pendingClassPayments ?? {},
+      );
+      updatedPendingPayments[widget.classModel.id] = 'pending_confirmation';
+
+      // Update user with pending payment status
+      final updatedUser = currentUser.copyWith(
+        pendingClassPayments: updatedPendingPayments,
+      );
+
+      await context.read<UserCubit>().updateUser(updatedUser);
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Status pembayaran telah dikemaskini. Sila tunggu pengesahan daripada pihak admin.'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ralat mengemaskini status: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+          ),
+        );
+      }
+    }
   }
 
   Future<void> _launchPaymentUrl() async {
@@ -524,7 +649,41 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
     try {
       final uri = Uri.parse(widget.classModel.paymentUrl!);
       if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
+        // Launch payment URL in in-app webview
+        final launched = await launchUrl(uri, mode: LaunchMode.inAppWebView);
+        
+        // Show dialog when user returns from webview
+        if (launched && mounted) {
+          await Future.delayed(const Duration(milliseconds: 300)); // Small delay to ensure smooth transition
+          if (mounted) {
+            await showDialog(
+              context: context,
+              builder: (context) => AlertDialog(
+                title: const Text('Pembayaran'),
+                content: const Text('Adakah anda telah membuat pembayaran?'),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop('belum'),
+                    child: const Text('Belum bayar'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop('telah'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Theme.of(context).colorScheme.primary,
+                      foregroundColor: Theme.of(context).colorScheme.onPrimary,
+                    ),
+                    child: const Text('Saya telah bayar'),
+                  ),
+                ],
+              ),
+            ).then((result) async {
+              if (result == 'telah' && mounted) {
+                // User confirmed payment - update pending status
+                await _markPaymentAsPending();
+              }
+            });
+          }
+        }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -594,7 +753,41 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
       paymentMethod: _selectedIndex == 0 ? 'apple_pay' : 'card',
     );
 
-    // Note: Payment processing removed - now redirects to paymentUrl
+    // Check if using saved payment method
+    // final userState = context.read<UserCubit>().state;
+    final savedPaymentMethodId = userState.currentUser?.stripePaymentMethodId;
+    final useSavedCard = _selectedIndex == 2 && savedPaymentMethodId != null && savedPaymentMethodId.isNotEmpty;
+
+    // Create card details if using new card payment
+    stripe.CardDetails? cardDetails;
+    String? paymentMethodId;
+    
+    if (useSavedCard) {
+      // Use saved payment method
+      paymentMethodId = savedPaymentMethodId;
+    } else if (_selectedIndex == 1) {
+      // Use new card details
+      final expiryParts = _expiryDate.split('/');
+      if (expiryParts.length == 2) {
+        cardDetails = stripe.CardDetails(
+          number: _cardNumber.replaceAll(' ', ''),
+          expirationMonth: int.parse(expiryParts[0]),
+          expirationYear: int.parse('20${expiryParts[1]}'),
+          cvc: _cvvCode,
+        );
+      }
+    }
+
+    // Process payment
+    context.read<PaymentBloc>().add(
+      InitPayment(
+        cardDetails: cardDetails,
+        savedPaymentMethodId: paymentMethodId,
+        orderRequest: orderRequest,
+        totalAmount: widget.classModel.price.toStringAsFixed(2),
+        planId: 'class_${widget.classModel.id}',
+      ),
+    );
   }
 
   bool _validateForm() {

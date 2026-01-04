@@ -18,6 +18,16 @@ class AdCubit extends Cubit<AdState> {
     }
   }
 
+  Future<void> fetchAllAds() async {
+    emit(state.copyWith(isLoading: true, error: null));
+    try {
+      final ads = await _repository.getAllAds();
+      emit(state.copyWith(ads: ads, isLoading: false));
+    } catch (e) {
+      emit(state.copyWith(error: 'Failed to fetch all ads: $e', isLoading: false));
+    }
+  }
+
   Future<void> addAd(Ad ad) async {
     emit(state.copyWith(isLoading: true, error: null));
     try {

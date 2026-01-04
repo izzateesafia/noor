@@ -7,9 +7,58 @@ class AdRepository {
 
   Future<List<Ad>> getAds() async {
     try {
+      // Try query with orderBy first (requires composite index)
+      try {
+        final querySnapshot = await _firestore
+            .collection(_collection)
+            .where('isActive', isEqualTo: true)
+            .orderBy('createdAt', descending: true)
+            .get();
+        
+        final ads = querySnapshot.docs.map((doc) {
+          return Ad.fromJson({
+            'id': doc.id,
+            ...doc.data(),
+          });
+        }).toList();
+        
+        return ads;
+      } catch (e) {
+        // If orderBy fails (likely missing composite index), try without orderBy
+        final fallbackSnapshot = await _firestore
+            .collection(_collection)
+            .where('isActive', isEqualTo: true)
+            .get();
+        
+        // Sort manually by createdAt and get the most recent
+        final sortedDocs = fallbackSnapshot.docs.toList()
+          ..sort((a, b) {
+            final aCreated = a.data()['createdAt'] as String?;
+            final bCreated = b.data()['createdAt'] as String?;
+            if (aCreated == null && bCreated == null) return 0;
+            if (aCreated == null) return 1;
+            if (bCreated == null) return -1;
+            return bCreated.compareTo(aCreated); // descending
+          });
+        
+        final ads = sortedDocs.map((doc) {
+          return Ad.fromJson({
+            'id': doc.id,
+            ...doc.data(),
+          });
+        }).toList();
+        
+        return ads;
+      }
+    } catch (e) {
+      return [];
+    }
+  }
+
+  Future<List<Ad>> getAllAds() async {
+    try {
       final querySnapshot = await _firestore
           .collection(_collection)
-          .where('isActive', isEqualTo: true)
           .orderBy('createdAt', descending: true)
           .get();
 
@@ -20,7 +69,6 @@ class AdRepository {
         });
       }).toList();
     } catch (e) {
-      print('Error getting ads: $e');
       return [];
     }
   }
@@ -35,7 +83,6 @@ class AdRepository {
         ...doc.data()!,
       });
     } catch (e) {
-      print('Error getting ad by ID: $e');
       return null;
     }
   }
@@ -44,12 +91,16 @@ class AdRepository {
     try {
       final data = ad.toJson();
       data.remove('id');
-      data['createdAt'] = DateTime.now().toIso8601String();
-      data['isActive'] = true;
+      if (data['createdAt'] == null) {
+        data['createdAt'] = DateTime.now().toIso8601String();
+      }
+      // Use the isActive value from the ad object
+      if (data['isActive'] == null) {
+        data['isActive'] = true;
+      }
       
       await _firestore.collection(_collection).add(data);
     } catch (e) {
-      print('Error adding ad: $e');
       rethrow;
     }
   }
@@ -65,7 +116,6 @@ class AdRepository {
           .doc(ad.id)
           .update(data);
     } catch (e) {
-      print('Error updating ad: $e');
       rethrow;
     }
   }
@@ -74,7 +124,6 @@ class AdRepository {
     try {
       await _firestore.collection(_collection).doc(id).delete();
     } catch (e) {
-      print('Error deleting ad: $e');
       rethrow;
     }
   }

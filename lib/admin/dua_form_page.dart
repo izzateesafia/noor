@@ -24,6 +24,7 @@ class _DuaFormPageState extends State<DuaFormPage> {
   File? _imageFile;
   String? _imagePath;
   bool _isUploading = false;
+  bool _isHidden = false;
   final ImageUploadService _imageUploadService = ImageUploadService();
 
   @override
@@ -34,6 +35,7 @@ class _DuaFormPageState extends State<DuaFormPage> {
     _linkController = TextEditingController(text: widget.initialDua?.link ?? '');
     _notesController = TextEditingController(text: widget.initialDua?.notes ?? '');
     _imagePath = widget.initialDua?.image;
+    _isHidden = widget.initialDua?.isHidden ?? false;
   }
 
   Future<bool> _checkAndRequestPermission(ImageSource source) async {
@@ -83,6 +85,7 @@ class _DuaFormPageState extends State<DuaFormPage> {
         link: _linkController.text.trim().isEmpty ? null : _linkController.text.trim(),
         notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
         uploaded: isEdit ? widget.initialDua!.uploaded : DateTime.now(),
+        isHidden: _isHidden,
       );
       
       if (mounted) {
@@ -255,6 +258,18 @@ class _DuaFormPageState extends State<DuaFormPage> {
                     fit: BoxFit.cover,
                   ),
                 ),
+              const SizedBox(height: 24),
+              SwitchListTile(
+                title: const Text('Sembunyikan daripada pengguna'),
+                subtitle: const Text('Jika diaktifkan, doa ini tidak akan kelihatan di halaman pengguna'),
+                value: _isHidden,
+                onChanged: (value) {
+                  setState(() {
+                    _isHidden = value;
+                  });
+                },
+                activeColor: Theme.of(context).colorScheme.primary,
+              ),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,

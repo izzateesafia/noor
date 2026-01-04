@@ -23,6 +23,7 @@ class _HadithFormPageState extends State<HadithFormPage> {
   File? _imageFile;
   String? _imagePath;
   bool _isUploading = false;
+  bool _isHidden = false;
   final ImageUploadService _imageUploadService = ImageUploadService();
 
   @override
@@ -33,6 +34,7 @@ class _HadithFormPageState extends State<HadithFormPage> {
     _linkController = TextEditingController(text: widget.initialHadith?.link ?? '');
     _notesController = TextEditingController(text: widget.initialHadith?.notes ?? '');
     _imagePath = widget.initialHadith?.image;
+    _isHidden = widget.initialHadith?.isHidden ?? false;
   }
 
   Future<bool> _checkAndRequestPermission(ImageSource source) async {
@@ -84,6 +86,7 @@ class _HadithFormPageState extends State<HadithFormPage> {
         source: widget.initialHadith?.source,
         book: widget.initialHadith?.book,
         uploaded: widget.initialHadith?.uploaded ?? DateTime.now(),
+        isHidden: _isHidden,
       );
       
       if (mounted) {
@@ -255,6 +258,18 @@ class _HadithFormPageState extends State<HadithFormPage> {
                     fit: BoxFit.cover,
                   ),
                 ),
+              const SizedBox(height: 24),
+              SwitchListTile(
+                title: const Text('Sembunyikan daripada pengguna'),
+                subtitle: const Text('Jika diaktifkan, hadis ini tidak akan kelihatan di halaman pengguna'),
+                value: _isHidden,
+                onChanged: (value) {
+                  setState(() {
+                    _isHidden = value;
+                  });
+                },
+                activeColor: Theme.of(context).colorScheme.primary,
+              ),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,

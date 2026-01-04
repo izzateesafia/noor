@@ -34,7 +34,6 @@ class WidgetDataService {
         'location': location ?? '',
       });
     } catch (e) {
-      print('Error updating widget: $e');
       // Don't throw - widget updates are non-critical
     }
   }

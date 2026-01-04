@@ -33,7 +33,6 @@ class LocationService {
 
       return position;
     } catch (e) {
-      print('Error getting location: $e');
       return null;
     }
   }
@@ -44,7 +43,6 @@ class LocationService {
       final zoneInfo = await _prayerTimesRepository.getZoneFromCoordinates(latitude, longitude);
       return '${zoneInfo.district}, ${zoneInfo.state}';
     } catch (e) {
-      print('Error getting location name: $e');
       return null;
     }
   }

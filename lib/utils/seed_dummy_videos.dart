@@ -84,13 +84,10 @@ Future<void> seedDummyVideos() async {
   for (final video in dummyVideos) {
     try {
       await repository.addVideo(video);
-      print('Added dummy video: ${video.title}');
     } catch (e) {
-      print('Error adding dummy video ${video.title}: $e');
     }
   }
   
-  print('Finished seeding dummy videos');
 }
 
 

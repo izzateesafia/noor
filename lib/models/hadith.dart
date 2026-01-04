@@ -9,6 +9,7 @@ class Hadith {
   final String? link;
   final String? notes;
   final DateTime? uploaded;
+  final bool isHidden;
 
   Hadith({
     required this.id,
@@ -21,6 +22,7 @@ class Hadith {
     this.link,
     this.notes,
     this.uploaded,
+    this.isHidden = false,
   });
 
   factory Hadith.fromJson(Map<String, dynamic> json) {
@@ -35,6 +37,7 @@ class Hadith {
       link: json['link'] as String?,
       notes: json['notes'] as String?,
       uploaded: json['uploaded'] != null ? DateTime.tryParse(json['uploaded']) : null,
+      isHidden: json['isHidden'] as bool? ?? false,
     );
   }
 
@@ -50,6 +53,7 @@ class Hadith {
       'link': link,
       'notes': notes,
       'uploaded': uploaded?.toIso8601String(),
+      'isHidden': isHidden,
     };
   }
 
@@ -64,6 +68,7 @@ class Hadith {
     String? link,
     String? notes,
     DateTime? uploaded,
+    bool? isHidden,
   }) {
     return Hadith(
       id: id ?? this.id,
@@ -76,6 +81,7 @@ class Hadith {
       link: link ?? this.link,
       notes: notes ?? this.notes,
       uploaded: uploaded ?? this.uploaded,
+      isHidden: isHidden ?? this.isHidden,
     );
   }
 } 

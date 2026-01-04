@@ -12,7 +12,7 @@ exports.scheduledNotification = functions.pubsub
     const snapshot = await admin.firestore()
       .collection("scheduled_notifications")
       .where("scheduledTime", "<=", now.toISOString())
-      .where("sent", "==", null)
+      .where("sent", "==", false)
       .get();
 
     if (snapshot.empty) return null;

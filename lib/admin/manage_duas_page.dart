@@ -180,6 +180,41 @@ class _ManageDuasView extends StatelessWidget {
     );
   }
 
+  void _toggleHideDua(BuildContext context, Dua dua) async {
+    try {
+      await context.read<DuaCubit>().updateDua(
+        dua.copyWith(isHidden: !dua.isHidden),
+      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(dua.isHidden 
+              ? 'Doa telah ditunjukkan kepada pengguna'
+              : 'Doa telah disembunyikan daripada pengguna'),
+            backgroundColor: Colors.green,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Ralat mengemas kini doa: $e'),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(8),
+            ),
+          ),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -265,34 +300,58 @@ class _ManageDuasView extends StatelessWidget {
             itemCount: state.duas.length,
             itemBuilder: (context, i) {
               final dua = state.duas[i];
-              return Card(
-                elevation: 2,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                color: Theme.of(context).brightness == Brightness.dark ? AppColors.darkCard : AppColors.lightCard,
-                margin: const EdgeInsets.only(bottom: 16),
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      if (dua.image != null && dua.image!.isNotEmpty)
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(10),
-                          child: _buildDuaImage(dua.image!),
-                        ),
-                      const SizedBox(width: 18),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              dua.title,
-                              style: TextStyle(
-                                color: Theme.of(context).brightness == Brightness.dark ? AppColors.darkText : AppColors.text,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 16,
+              return Opacity(
+                opacity: dua.isHidden ? 0.6 : 1.0,
+                child: Card(
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  color: Theme.of(context).brightness == Brightness.dark ? AppColors.darkCard : AppColors.lightCard,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        if (dua.image != null && dua.image!.isNotEmpty)
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(10),
+                            child: _buildDuaImage(dua.image!),
+                          ),
+                        const SizedBox(width: 18),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      dua.title,
+                                      style: TextStyle(
+                                        color: Theme.of(context).brightness == Brightness.dark ? AppColors.darkText : AppColors.text,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ),
+                                  if (dua.isHidden)
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      decoration: BoxDecoration(
+                                        color: Colors.grey,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: const Text(
+                                        'Disembunyikan',
+                                        style: TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
+                                    ),
+                                ],
                               ),
-                            ),
                             const SizedBox(height: 8),
                             Text(
                               dua.content,
@@ -339,6 +398,9 @@ class _ManageDuasView extends StatelessWidget {
                             case 'duplicate':
                               _duplicateDua(context, dua);
                               break;
+                            case 'hide':
+                              _toggleHideDua(context, dua);
+                              break;
                             case 'delete':
                               _deleteDua(context, dua);
                               break;
@@ -349,7 +411,7 @@ class _ManageDuasView extends StatelessWidget {
                             value: 'edit',
                             child: Row(
                               children: [
-                                Icon(Icons.edit, color: Colors.orange, size: 20),
+                                const Icon(Icons.edit, color: Colors.orange, size: 20),
                                 const SizedBox(width: 12),
                                 const Text('Edit'),
                               ],
@@ -359,9 +421,23 @@ class _ManageDuasView extends StatelessWidget {
                             value: 'duplicate',
                             child: Row(
                               children: [
-                                Icon(Icons.copy, color: Colors.blue, size: 20),
+                                const Icon(Icons.copy, color: Colors.blue, size: 20),
                                 const SizedBox(width: 12),
                                 const Text('Duplicate'),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem(
+                            value: 'hide',
+                            child: Row(
+                              children: [
+                                Icon(
+                                  dua.isHidden ? Icons.visibility : Icons.visibility_off,
+                                  color: Colors.grey,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 12),
+                                Text(dua.isHidden ? 'Tunjukkan' : 'Sembunyikan'),
                               ],
                             ),
                           ),
@@ -369,7 +445,11 @@ class _ManageDuasView extends StatelessWidget {
                             value: 'delete',
                             child: Row(
                               children: [
-                                Icon(Icons.delete, color: Colors.red, size: 20),
+                                Icon(
+                                  Icons.delete,
+                                  color: Theme.of(context).colorScheme.error,
+                                  size: 20,
+                                ),
                                 const SizedBox(width: 12),
                                 const Text('Padam'),
                               ],
@@ -380,6 +460,7 @@ class _ManageDuasView extends StatelessWidget {
                     ],
                   ),
                 ),
+              ),
               );
             },
           );

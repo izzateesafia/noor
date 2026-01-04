@@ -112,6 +112,26 @@ service cloud.firestore {
       allow create, update, delete: if isAdmin();
     }
     
+    // User tokens collection - for FCM push notifications
+    match /user_tokens/{tokenId} {
+      // Users can read/write their own token, admins can read/write any
+      allow read: if isAuthenticated() && (request.auth.uid == tokenId || isAdmin());
+      allow create, update: if isAuthenticated() && (request.auth.uid == tokenId || isAdmin());
+      allow delete: if isAuthenticated() && (request.auth.uid == tokenId || isAdmin());
+    }
+    
+    // Admin notifications collection - for admin notification management
+    match /admin_notifications/{notificationId} {
+      // Only admins can read, create, update, delete notifications
+      allow read, create, update, delete: if isAdmin();
+    }
+    
+    // Scheduled notifications collection - for scheduling live stream notifications
+    match /scheduled_notifications/{notificationId} {
+      // Only admins can read, create, update, delete scheduled notifications
+      allow read, create, update, delete: if isAdmin();
+    }
+    
     // Default: Deny all other collections
     match /{document=**} {
       allow read, write: if false;
