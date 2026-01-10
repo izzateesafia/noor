@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:path/path.dart' as path;
 import '../models/video.dart';
 import '../models/video_category.dart';
 import '../theme_constants.dart';
@@ -102,13 +104,38 @@ class _VideoFormPageState extends State<VideoFormPage> {
     }
   }
 
-  Future<void> _pickVideo() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.video,
-    );
-    if (result != null && result.files.single.path != null) {
+  Future<void> _pickVideo(ImageSource source) async {
+    // Check and request permission first
+    final hasPermission = await _checkAndRequestPermission(source);
+    if (!hasPermission) return;
+
+    final picker = ImagePicker();
+    final picked = await picker.pickVideo(source: source);
+    if (picked != null) {
+      final filePath = picked.path;
+      final extension = path.extension(filePath).toLowerCase();
+      
+      // Allowed video formats: .mov, .mp4, .m4v
+      const allowedExtensions = ['.mov', '.mp4', '.m4v'];
+      
+      // Validate file format
+      if (!allowedExtensions.contains(extension)) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                'Format fail tidak disokong. Sila pilih fail video dalam format MP4, MOV, atau M4V sahaja.',
+              ),
+              backgroundColor: Colors.red,
+              duration: const Duration(seconds: 4),
+            ),
+          );
+        }
+        return;
+      }
+      
       setState(() {
-        _videoFile = File(result.files.single.path!);
+        _videoFile = File(filePath);
         _useVideoUrl = false;
       });
     }
@@ -383,6 +410,67 @@ class _VideoFormPageState extends State<VideoFormPage> {
                         ],
                       ),
                       const SizedBox(height: 12),
+                      // Video format information
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: Colors.blue.shade50,
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(
+                            color: Colors.blue.shade200,
+                            width: 1,
+                          ),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Icon(
+                                  Icons.info_outline,
+                                  color: Colors.blue.shade700,
+                                  size: 20,
+                                ),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Format Video yang Disokong',
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.blue.shade900,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              'Format: MP4 / MOV / M4V\nSaiz maksimum: 500MB\n\nUntuk memastikan video boleh dimainkan dengan baik pada semua peranti, terutamanya iOS, sila gunakan format MP4 dengan codec H.264 atau H.265.',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.blue.shade800,
+                                height: 1.4,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            OutlinedButton.icon(
+                              onPressed: () async {
+                                final uri = Uri.parse('https://www.freeconvert.com/video-converter');
+                                if (await canLaunchUrl(uri)) {
+                                  await launchUrl(uri, mode: LaunchMode.externalApplication);
+                                }
+                              },
+                              icon: const Icon(Icons.link, size: 16),
+                              label: const Text('Tukar format video (Pembekal percuma)'),
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: Colors.blue.shade700,
+                                side: BorderSide(color: Colors.blue.shade300),
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 12),
                       if (_useVideoUrl)
                         TextFormField(
                           controller: _videoUrlController,
@@ -421,10 +509,20 @@ class _VideoFormPageState extends State<VideoFormPage> {
                               ],
                             ),
                           ),
+                        Row(
+                          children: [
+                            ElevatedButton.icon(
+                              onPressed: () => _pickVideo(ImageSource.gallery),
+                              icon: const Icon(Icons.video_library),
+                              label: const Text('Galeri'),
+                            ),
+                            const SizedBox(width: 12),
                         ElevatedButton.icon(
-                          onPressed: _pickVideo,
-                          icon: const Icon(Icons.video_file),
-                          label: const Text('Pilih Fail Video'),
+                              onPressed: () => _pickVideo(ImageSource.camera),
+                              icon: const Icon(Icons.videocam),
+                              label: const Text('Kamera'),
+                            ),
+                          ],
                         ),
                       ],
                     ],

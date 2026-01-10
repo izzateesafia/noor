@@ -207,56 +207,56 @@ class AdCarousel extends StatelessWidget {
                   },
                 ),
                 // Premium upgrade badge overlay
-                if (!isPremium)
-                  Positioned(
-                    top: 8,
-                    right: 8,
-                    child: GestureDetector(
-                      onTap: () {
-                        Navigator.of(context).pushNamed('/premium');
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          gradient: LinearGradient(
-                            colors: [
-                              Colors.amber,
-                              Colors.orange,
-                            ],
-                            begin: Alignment.topLeft,
-                            end: Alignment.bottomRight,
-                          ),
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.2),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.workspace_premium,
-                              size: 16,
-                              color: Colors.white,
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              'Tingkatkan ke Premium',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                // if (!isPremium)
+                //   Positioned(
+                //     top: 8,
+                //     right: 8,
+                //     child: GestureDetector(
+                //       onTap: () {
+                //         Navigator.of(context).pushNamed('/premium');
+                //       },
+                //       child: Container(
+                //         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                //         decoration: BoxDecoration(
+                //           gradient: LinearGradient(
+                //             colors: [
+                //               Colors.amber,
+                //               Colors.orange,
+                //             ],
+                //             begin: Alignment.topLeft,
+                //             end: Alignment.bottomRight,
+                //           ),
+                //           borderRadius: BorderRadius.circular(20),
+                //           boxShadow: [
+                //             BoxShadow(
+                //               color: Colors.black.withOpacity(0.2),
+                //               blurRadius: 4,
+                //               offset: const Offset(0, 2),
+                //             ),
+                //           ],
+                //         ),
+                //         child: Row(
+                //           mainAxisSize: MainAxisSize.min,
+                //           children: [
+                //             Icon(
+                //               Icons.workspace_premium,
+                //               size: 16,
+                //               color: Colors.white,
+                //             ),
+                //             const SizedBox(width: 6),
+                //             Text(
+                //               'Tingkatkan ke Premium',
+                //               style: TextStyle(
+                //                 color: Colors.white,
+                //                 fontSize: 11,
+                //                 fontWeight: FontWeight.bold,
+                //               ),
+                //             ),
+                //           ],
+                //         ),
+                //       ),
+                //     ),
+                //   ),
               ],
             ),
           ),

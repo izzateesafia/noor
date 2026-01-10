@@ -1509,6 +1509,8 @@ PODS:
   - shared_preferences_foundation (0.0.1):
     - Flutter
     - FlutterMacOS
+  - sign_in_with_apple (0.0.1):
+    - Flutter
   - Stripe (24.7.0):
     - StripeApplePay (= 24.7.0)
     - StripeCore (= 24.7.0)
@@ -1596,6 +1598,7 @@ DEPENDENCIES:
   - permission_handler_apple (from `.symlinks/plugins/permission_handler_apple/ios`)
   - share_plus (from `.symlinks/plugins/share_plus/ios`)
   - shared_preferences_foundation (from `.symlinks/plugins/shared_preferences_foundation/darwin`)
+  - sign_in_with_apple (from `.symlinks/plugins/sign_in_with_apple/ios`)
   - stripe_ios (from `.symlinks/plugins/stripe_ios/ios`)
   - syncfusion_flutter_pdfviewer (from `.symlinks/plugins/syncfusion_flutter_pdfviewer/ios`)
   - url_launcher_ios (from `.symlinks/plugins/url_launcher_ios/ios`)
@@ -1686,6 +1689,8 @@ EXTERNAL SOURCES:
     :path: ".symlinks/plugins/share_plus/ios"
   shared_preferences_foundation:
     :path: ".symlinks/plugins/shared_preferences_foundation/darwin"
+  sign_in_with_apple:
+    :path: ".symlinks/plugins/sign_in_with_apple/ios"
   stripe_ios:
     :path: ".symlinks/plugins/stripe_ios/ios"
   syncfusion_flutter_pdfviewer:
@@ -1749,6 +1754,7 @@ SPEC CHECKSUMS:
   SDWebImage: e9c98383c7572d713c1a0d7dd2783b10599b9838
   share_plus: de6030e33b4e106470e09322d87cf2a4258d2d1d
   shared_preferences_foundation: 9e1978ff2562383bd5676f64ec4e9aa8fa06a6f7
+  sign_in_with_apple: c5dcc141574c8c54d5ac99dd2163c0c72ad22418
   Stripe: 8a03a78bfa16b197f9fac51e42670ac563b34388
   stripe_ios: 95bdf6ba58efd184fe1dfed194cd8692299d66ca
   StripeApplePay: 3c1b43d9b5130f6b714863bf8c9482c24168ab27

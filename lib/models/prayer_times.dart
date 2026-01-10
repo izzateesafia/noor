@@ -15,25 +15,36 @@ class PrayerTimes {
     required this.isha,
   });
 
+  // Helper method to format time string (remove seconds)
+  static String _formatTime(String timeWithSeconds) {
+    if (timeWithSeconds.contains(':')) {
+      final parts = timeWithSeconds.split(':');
+      if (parts.length >= 2) {
+        return '${parts[0]}:${parts[1]}';
+      }
+    }
+    return timeWithSeconds;
+  }
+
   factory PrayerTimes.fromJson(Map<String, dynamic> json) {
     return PrayerTimes(
-      fajr: json['fajr'] ?? '',
-      sunrise: json['sunrise'] ?? '',
-      dhuhr: json['dhuhr'] ?? '',
-      asr: json['asr'] ?? '',
-      maghrib: json['maghrib'] ?? '',
-      isha: json['isha'] ?? '',
+      fajr: _formatTime(json['fajr'] ?? ''),
+      sunrise: _formatTime(json['sunrise'] ?? ''),
+      dhuhr: _formatTime(json['dhuhr'] ?? ''),
+      asr: _formatTime(json['asr'] ?? ''),
+      maghrib: _formatTime(json['maghrib'] ?? ''),
+      isha: _formatTime(json['isha'] ?? ''),
     );
   }
 
   factory PrayerTimes.fromMap(Map<String, String> map) {
     return PrayerTimes(
-      fajr: map['Fajr'] ?? '',
-      sunrise: map['Sunrise'] ?? '',
-      dhuhr: map['Dhuhr'] ?? '',
-      asr: map['Asr'] ?? '',
-      maghrib: map['Maghrib'] ?? '',
-      isha: map['Isha'] ?? '',
+      fajr: _formatTime(map['Fajr'] ?? ''),
+      sunrise: _formatTime(map['Sunrise'] ?? ''),
+      dhuhr: _formatTime(map['Dhuhr'] ?? ''),
+      asr: _formatTime(map['Asr'] ?? ''),
+      maghrib: _formatTime(map['Maghrib'] ?? ''),
+      isha: _formatTime(map['Isha'] ?? ''),
     );
   }
 
@@ -251,18 +262,29 @@ class ZonePrayerTimes {
     required this.district,
   });
 
+  // Helper method to format time string (remove seconds)
+  static String _formatTime(String timeWithSeconds) {
+    if (timeWithSeconds.contains(':')) {
+      final parts = timeWithSeconds.split(':');
+      if (parts.length >= 2) {
+        return '${parts[0]}:${parts[1]}';
+      }
+    }
+    return timeWithSeconds;
+  }
+
   factory ZonePrayerTimes.fromJson(Map<String, dynamic> json) {
     final prayerTime = json['prayerTime'] ?? {};
     return ZonePrayerTimes(
       hijri: prayerTime['hijri'] ?? '',
       date: prayerTime['date'] ?? '',
       day: prayerTime['day'] ?? '',
-      fajr: prayerTime['fajr'] ?? '',
-      syuruk: prayerTime['syuruk'] ?? '',
-      dhuhr: prayerTime['dhuhr'] ?? '',
-      asr: prayerTime['asr'] ?? '',
-      maghrib: prayerTime['maghrib'] ?? '',
-      isha: prayerTime['isha'] ?? '',
+      fajr: _formatTime(prayerTime['fajr'] ?? ''),
+      syuruk: _formatTime(prayerTime['syuruk'] ?? ''),
+      dhuhr: _formatTime(prayerTime['dhuhr'] ?? ''),
+      asr: _formatTime(prayerTime['asr'] ?? ''),
+      maghrib: _formatTime(prayerTime['maghrib'] ?? ''),
+      isha: _formatTime(prayerTime['isha'] ?? ''),
       status: json['status'] ?? '',
       serverTime: json['serverTime'] ?? '',
       periodType: json['periodType'] ?? '',
@@ -281,12 +303,12 @@ class ZonePrayerTimes {
       hijri: prayerTime['hijri'] ?? '',
       date: prayerTime['date'] ?? '',
       day: prayerTime['day'] ?? '',
-      fajr: prayerTime['fajr'] ?? '',
-      syuruk: prayerTime['syuruk'] ?? '',
-      dhuhr: prayerTime['dhuhr'] ?? '',
-      asr: prayerTime['asr'] ?? '',
-      maghrib: prayerTime['maghrib'] ?? '',
-      isha: prayerTime['isha'] ?? '',
+      fajr: _formatTime(prayerTime['fajr'] ?? ''),
+      syuruk: _formatTime(prayerTime['syuruk'] ?? ''),
+      dhuhr: _formatTime(prayerTime['dhuhr'] ?? ''),
+      asr: _formatTime(prayerTime['asr'] ?? ''),
+      maghrib: _formatTime(prayerTime['maghrib'] ?? ''),
+      isha: _formatTime(prayerTime['isha'] ?? ''),
       status: prayerTimeJson['status'] ?? '',
       serverTime: prayerTimeJson['serverTime'] ?? '',
       periodType: prayerTimeJson['periodType'] ?? '',
@@ -301,12 +323,12 @@ class ZonePrayerTimes {
   // Convert to the existing PrayerTimes format for compatibility
   PrayerTimes toPrayerTimes() {
     return PrayerTimes(
-      fajr: fajr,
-      sunrise: syuruk,
-      dhuhr: dhuhr,
-      asr: asr,
-      maghrib: maghrib,
-      isha: isha,
+      fajr: _formatTime(fajr),
+      sunrise: _formatTime(syuruk),
+      dhuhr: _formatTime(dhuhr),
+      asr: _formatTime(asr),
+      maghrib: _formatTime(maghrib),
+      isha: _formatTime(isha),
     );
   }
 

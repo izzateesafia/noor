@@ -246,7 +246,17 @@ class ImageUploadService {
       }
 
       // Get file extension
-      final extension = path.extension(videoFile.path);
+      final extension = path.extension(videoFile.path).toLowerCase();
+      
+      // Validate file format - only allow .mov, .mp4, .m4v
+      const allowedExtensions = ['.mov', '.mp4', '.m4v'];
+      if (!allowedExtensions.contains(extension)) {
+        throw Exception(
+          'Format fail video tidak disokong. '
+          'Sila gunakan format MP4, MOV, atau M4V sahaja. '
+          'Format semasa: ${extension.isEmpty ? "tidak dikenal pasti" : extension.toUpperCase()}'
+        );
+      }
       
       // Generate unique filename: videos/{timestamp}_{userId}{extension}
       final timestamp = DateTime.now().millisecondsSinceEpoch;
@@ -257,13 +267,12 @@ class ImageUploadService {
 
       // Determine content type based on extension
       String contentType = 'video/mp4';
-      if (extension.toLowerCase() == '.mov') {
+      if (extension == '.mov') {
         contentType = 'video/quicktime';
-      } else if (extension.toLowerCase() == '.webm') {
-        contentType = 'video/webm';
-      } else if (extension.toLowerCase() == '.avi') {
-        contentType = 'video/x-msvideo';
+      } else if (extension == '.m4v') {
+        contentType = 'video/x-m4v';
       }
+      // Note: .mp4 uses default 'video/mp4'
 
       // Upload file
       final uploadTask = ref.putFile(

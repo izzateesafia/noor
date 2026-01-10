@@ -1,6 +1,10 @@
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:video_player/video_player.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import '../models/video.dart';
 import '../theme_constants.dart';
 
@@ -22,6 +26,137 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   bool _showControls = true;
   bool _isFullscreen = false;
 
+  bool _isValidVideoUrl(String? url) {
+    if (url == null || url.trim().isEmpty) return false;
+    return url.startsWith('http://') || url.startsWith('https://');
+  }
+
+  /// Checks if URL is from Firebase Storage
+  bool _isFirebaseStorageUrl(String url) {
+    return url.contains('firebasestorage.googleapis.com') ||
+           url.contains('firebasestorage.app');
+  }
+
+  /// Checks if URL is a Firebase Storage path (not full URL)
+  bool _isFirebaseStoragePath(String url) {
+    // Paths typically start with 'videos/' or 'gs://' or don't have http/https
+    return url.startsWith('videos/') ||
+           url.startsWith('gs://') ||
+           (!url.startsWith('http://') && !url.startsWith('https://'));
+  }
+
+  /// Extracts Storage path from Firebase Storage URL
+  String? _extractStoragePathFromUrl(String url) {
+    try {
+      final uri = Uri.parse(url);
+      // Firebase Storage URLs can have different formats:
+      // 1. https://firebasestorage.googleapis.com/v0/b/bucket/o/videos%2Ffile.mp4?alt=media&token=...
+      // 2. https://bucket.firebasestorage.app/videos/file.mp4?token=...
+      
+      final pathSegments = uri.pathSegments;
+      
+      // Try to find 'videos' in path segments
+      final videosIndex = pathSegments.indexOf('videos');
+      if (videosIndex >= 0 && videosIndex < pathSegments.length - 1) {
+        // Reconstruct path: videos/filename
+        final filename = pathSegments.sublist(videosIndex + 1).join('/');
+        return 'videos/$filename';
+      }
+      
+      // Alternative format: path might be URL-encoded in 'o' parameter
+      // Format: /v0/b/bucket/o/videos%2Ffile.mp4
+      if (pathSegments.contains('o') && pathSegments.length > pathSegments.indexOf('o') + 1) {
+        final encodedPath = pathSegments[pathSegments.indexOf('o') + 1];
+        try {
+          final decodedPath = Uri.decodeComponent(encodedPath);
+          if (decodedPath.startsWith('videos/')) {
+            return decodedPath;
+          }
+        } catch (e) {
+          print('DEBUG: Error decoding path: $e');
+        }
+      }
+      
+      // Check if path contains 'videos' anywhere
+      final fullPath = uri.path;
+      final videosMatch = RegExp(r'videos[/%2F]([^?]+)').firstMatch(fullPath);
+      if (videosMatch != null) {
+        final filename = videosMatch.group(1);
+        if (filename != null) {
+          return 'videos/${Uri.decodeComponent(filename)}';
+        }
+      }
+    } catch (e) {
+      print('DEBUG: Error extracting path from URL: $e');
+    }
+    return null;
+  }
+
+  /// Regenerates download URL from Firebase Storage
+  Future<String?> _refreshFirebaseStorageUrl(String url) async {
+    try {
+      print('DEBUG: Attempting to refresh Firebase Storage URL');
+      print('DEBUG: Original URL: $url');
+
+      String? storagePath;
+
+      // Check if it's already a path
+      if (_isFirebaseStoragePath(url)) {
+        storagePath = url;
+      } else if (_isFirebaseStorageUrl(url)) {
+        // Extract path from full URL
+        storagePath = _extractStoragePathFromUrl(url);
+      }
+
+      if (storagePath == null) {
+        print('DEBUG: Could not extract storage path, using original URL');
+        return url;
+      }
+
+      print('DEBUG: Storage path: $storagePath');
+
+      // Get fresh download URL from Firebase Storage
+      final storageRef = FirebaseStorage.instance.ref(storagePath);
+      final freshUrl = await storageRef.getDownloadURL();
+      
+      print('DEBUG: Fresh download URL obtained: $freshUrl');
+      return freshUrl;
+    } catch (e, stackTrace) {
+      print('DEBUG: Error refreshing Firebase Storage URL: $e');
+      print('DEBUG: Stack trace: $stackTrace');
+      // Return original URL if refresh fails
+      return url;
+    }
+  }
+
+  /// Normalizes Firebase Storage URLs for iOS compatibility
+  String _normalizeVideoUrlForIOS(String url) {
+    // Check if it's a Firebase Storage URL
+    if (_isFirebaseStorageUrl(url)) {
+      final uri = Uri.tryParse(url);
+      if (uri != null) {
+        // Ensure we have the proper query parameters for iOS
+        final queryParams = Map<String, String>.from(uri.queryParameters);
+        
+        // Add alt=media if not present (required for Firebase Storage downloads)
+        if (!queryParams.containsKey('alt')) {
+          queryParams['alt'] = 'media';
+        }
+        
+        // Rebuild URI with normalized parameters
+        final normalizedUri = uri.replace(queryParameters: queryParams);
+        return normalizedUri.toString();
+      }
+    }
+    return url;
+  }
+
+  /// Checks if we're running on iOS
+  bool get _isIOS {
+    if (kIsWeb) return false;
+    return Platform.isIOS;
+  }
+
   @override
   void initState() {
     super.initState();
@@ -29,32 +164,134 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
   }
 
   Future<void> _initializePlayer() async {
+    print('DEBUG: Initializing video player');
+    print('DEBUG: Video URL from model: ${widget.video.videoUrl}');
+    
+    // Check if it's a Firebase Storage path (not full URL)
+    String videoUrl = widget.video.videoUrl;
+    
+    // If it's a Firebase Storage URL or path, try to refresh it
+    if (_isFirebaseStorageUrl(videoUrl) || _isFirebaseStoragePath(videoUrl)) {
+      print('DEBUG: Detected Firebase Storage URL/path, refreshing...');
+      final refreshedUrl = await _refreshFirebaseStorageUrl(videoUrl);
+      if (refreshedUrl != null) {
+        videoUrl = refreshedUrl;
+        print('DEBUG: Using refreshed URL: $videoUrl');
+      } else {
+        print('DEBUG: URL refresh failed, using original URL');
+      }
+    }
+
+    if (!_isValidVideoUrl(videoUrl)) {
+      if (mounted) {
+        setState(() {
+          _hasError = true;
+          _errorMessage = 'URL video tidak sah. Sila cuba buka secara luaran.';
+        });
+      }
+      return;
+    }
+
     try {
-      final controller = VideoPlayerController.networkUrl(
-        Uri.parse(widget.video.videoUrl),
-      );
-      
-      await controller.initialize();
-      
+      // Normalize URL for iOS if needed
+      if (_isIOS) {
+        final normalizedUrl = _normalizeVideoUrlForIOS(videoUrl);
+        if (normalizedUrl != videoUrl) {
+          print('DEBUG: Normalized URL for iOS: $normalizedUrl');
+          videoUrl = normalizedUrl;
+        }
+      }
+
+      print('DEBUG: Final video URL: $videoUrl');
+      final uri = Uri.tryParse(videoUrl);
+      if (uri == null) {
+        throw Exception('URL video tidak sah.');
+      }
+
+      // Create video player controller with retry logic for iOS
+      VideoPlayerController? controller;
+      int retryCount = 0;
+      const maxRetries = 2;
+
+      while (retryCount <= maxRetries) {
+        try {
+          print('DEBUG: Attempt ${retryCount + 1} to initialize video player');
+          controller = VideoPlayerController.networkUrl(uri);
+          
+          // Add timeout for initialization (iOS sometimes hangs)
+          await controller.initialize().timeout(
+            const Duration(seconds: 15),
+            onTimeout: () {
+              print('DEBUG: Video initialization timeout');
+              throw Exception('Video initialization timeout. Sila cuba lagi atau buka dalam Safari.');
+            },
+          );
+
+          print('DEBUG: Video player initialized successfully');
+          // Success - break out of retry loop
+          break;
+        } catch (e, stackTrace) {
+          print('DEBUG: Video initialization error (attempt ${retryCount + 1}): $e');
+          print('DEBUG: Stack trace: $stackTrace');
+          retryCount++;
+          if (controller != null) {
+            await controller.dispose();
+            controller = null;
+          }
+
+          // If this was the last retry, throw the error
+          if (retryCount > maxRetries) {
+            print('DEBUG: Max retries reached, giving up');
+            // Provide iOS-specific error message
+            if (_isIOS && e.toString().contains('cannot open')) {
+              throw Exception(
+                'Video tidak dapat dimainkan pada peranti iOS. '
+                'Ini mungkin disebabkan oleh format video yang tidak disokong. '
+                'Sila cuba buka video dalam Safari atau gunakan format H.264/H.265.'
+              );
+            }
+            rethrow;
+          }
+
+          // Wait before retrying (exponential backoff)
+          print('DEBUG: Waiting before retry...');
+          await Future.delayed(Duration(milliseconds: 500 * retryCount));
+        }
+      }
+
+      if (controller == null) {
+        throw Exception('Gagal memuatkan video selepas beberapa percubaan.');
+      }
+
       if (mounted) {
         setState(() {
           _controller = controller;
           _isInitialized = true;
-          _isPlaying = controller.value.isPlaying;
+          _isPlaying = controller!.value.isPlaying;
         });
-        
-        // Auto-play video
-        controller.play();
-        controller.addListener(_videoListener);
+        controller!.play();
+        controller!.addListener(_videoListener);
       } else {
-        // If widget is disposed before initialization completes, dispose controller
-        controller.dispose();
+        await controller!.dispose();
       }
     } catch (e) {
       if (mounted) {
+        String errorMsg = e.toString();
+        
+        // Provide user-friendly error messages
+        if (errorMsg.contains('cannot open') || errorMsg.contains('videoError')) {
+          errorMsg = _isIOS
+              ? 'Video tidak dapat dimainkan pada iOS. Format video mungkin tidak disokong. Sila cuba buka dalam Safari.'
+              : 'Video tidak dapat dimainkan. Sila cuba buka dalam pelayar.';
+        } else if (errorMsg.contains('timeout')) {
+          errorMsg = 'Masa tamat memuatkan video. Sila semak sambungan internet anda.';
+        } else if (errorMsg.contains('network')) {
+          errorMsg = 'Masalah sambungan internet. Sila semak sambungan anda.';
+        }
+
         setState(() {
           _hasError = true;
-          _errorMessage = e.toString();
+          _errorMessage = errorMsg;
         });
       }
     }
@@ -291,6 +528,17 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
                 textAlign: TextAlign.center,
               ),
             ],
+            const SizedBox(height: 8),
+            Text(
+              _isIOS
+                  ? 'Jika video gagal dimuat, cuba buka dalam Safari. Format video mungkin tidak disokong oleh pemain dalam aplikasi.'
+                  : 'Jika video gagal dimuat, cuba buka semula pautan ini dalam pelayar untuk mengesahkan akses.',
+              style: TextStyle(
+                color: Colors.white.withOpacity(0.7),
+                fontSize: 12,
+              ),
+              textAlign: TextAlign.center,
+            ),
             const SizedBox(height: 24),
             ElevatedButton.icon(
               onPressed: () {
@@ -303,10 +551,34 @@ class _VideoPlayerPageState extends State<VideoPlayerPage> {
               icon: const Icon(Icons.refresh),
               label: const Text('Cuba Lagi'),
             ),
+            if (_isValidVideoUrl(widget.video.videoUrl))
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: OutlinedButton.icon(
+                  onPressed: _launchVideoExternally,
+                  icon: const Icon(Icons.open_in_new),
+                  label: const Text('Buka dalam Safari'),
+                ),
+              ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _launchVideoExternally() async {
+    final uri = Uri.tryParse(widget.video.videoUrl);
+    if (uri == null) return;
+    if (!await canLaunchUrl(uri)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Tidak dapat membuka URL video secara luaran.')),
+        );
+      }
+      return;
+    }
+
+    await launchUrl(uri, mode: LaunchMode.externalApplication);
   }
 
   Widget _buildPlayerWithDetails() {

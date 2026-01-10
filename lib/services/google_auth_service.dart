@@ -1,4 +1,5 @@
-import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform;
+import 'package:flutter/material.dart' show TargetPlatform;
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
 import 'package:google_sign_in/google_sign_in.dart';
 import '../models/user_model.dart';
@@ -8,8 +9,10 @@ import '../main.dart';
 class GoogleAuthService {
   final firebase_auth.FirebaseAuth _auth = firebase_auth.FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn(
-    // Only specify clientId for iOS, Android uses google-services.json automatically
-    clientId: Platform.isIOS 
+    // For iOS: use iOS client ID
+    // For Android: null (uses google-services.json automatically)
+    // For Web: null (reads from meta tag in index.html)
+    clientId: (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS)
         ? '134970392054-86d1gomong6gdbdtu6c62p4knpouqh02.apps.googleusercontent.com'
         : null,
     scopes: ['email', 'profile'],

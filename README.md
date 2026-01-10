@@ -1,6 +1,6 @@
-# noor
+# Daily Quran
 
-A new Flutter project.
+A Flutter application for daily Quran reading and Islamic content.
 
 ## Getting Started
 

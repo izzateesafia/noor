@@ -40,6 +40,14 @@ class ToastUtil {
   }
 
   static void showError(BuildContext context, String message) {
+    // Don't show snackbars for permission-denied errors
+    // These are handled in UI cards instead
+    if (message.contains('permission-denied') ||
+        message.contains('cloud_firestore') ||
+        message.contains('Kebenaran ditolak')) {
+      return;
+    }
+    
     showToast(
       context,
       message,

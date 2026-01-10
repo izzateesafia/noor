@@ -11,9 +11,28 @@ class ClassCubit extends Cubit<ClassState> {
     emit(state.copyWith(status: ClassStatus.loading));
     try {
       final classes = await repository.getClasses();
-      emit(state.copyWith(status: ClassStatus.loaded, classes: classes));
+      emit(state.copyWith(status: ClassStatus.loaded, classes: classes, error: null));
     } catch (e) {
-      emit(state.copyWith(status: ClassStatus.error, error: e.toString()));
+      // Extract user-friendly error message
+      String errorMessage = 'Gagal memuatkan kelas';
+      if (e is Exception) {
+        errorMessage = e.toString().replaceFirst('Exception: ', '');
+      } else {
+        errorMessage = e.toString();
+      }
+      
+      // For permission-denied errors, set error but don't trigger snackbars
+      // The error will be shown in UI cards instead
+      final isPermissionError = errorMessage.contains('permission-denied') ||
+          errorMessage.contains('cloud_firestore') ||
+          errorMessage.contains('Kebenaran ditolak') ||
+          errorMessage.contains('Pengesahan diperlukan');
+      
+      emit(state.copyWith(
+        status: ClassStatus.error, 
+        error: errorMessage,
+        // Store a flag to indicate this is a permission error (for UI handling)
+      ));
     }
   }
 
@@ -22,7 +41,14 @@ class ClassCubit extends Cubit<ClassState> {
       await repository.addClass(classModel);
       fetchClasses();
     } catch (e) {
-      emit(state.copyWith(status: ClassStatus.error, error: e.toString()));
+      // Extract user-friendly error message
+      String errorMessage = 'Gagal menambah kelas';
+      if (e is Exception) {
+        errorMessage = e.toString().replaceFirst('Exception: ', '');
+      } else {
+        errorMessage = e.toString();
+      }
+      emit(state.copyWith(status: ClassStatus.error, error: errorMessage));
     }
   }
 
@@ -31,7 +57,14 @@ class ClassCubit extends Cubit<ClassState> {
       await repository.updateClass(classModel);
       fetchClasses();
     } catch (e) {
-      emit(state.copyWith(status: ClassStatus.error, error: e.toString()));
+      // Extract user-friendly error message
+      String errorMessage = 'Gagal mengemas kini kelas';
+      if (e is Exception) {
+        errorMessage = e.toString().replaceFirst('Exception: ', '');
+      } else {
+        errorMessage = e.toString();
+      }
+      emit(state.copyWith(status: ClassStatus.error, error: errorMessage));
     }
   }
 
@@ -40,7 +73,14 @@ class ClassCubit extends Cubit<ClassState> {
       await repository.deleteClass(id);
       fetchClasses();
     } catch (e) {
-      emit(state.copyWith(status: ClassStatus.error, error: e.toString()));
+      // Extract user-friendly error message
+      String errorMessage = 'Gagal memadam kelas';
+      if (e is Exception) {
+        errorMessage = e.toString().replaceFirst('Exception: ', '');
+      } else {
+        errorMessage = e.toString();
+      }
+      emit(state.copyWith(status: ClassStatus.error, error: errorMessage));
     }
   }
 } 

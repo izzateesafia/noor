@@ -180,12 +180,18 @@ class _ManageClassesPageState extends State<ManageClassesPage> {
     return BlocConsumer<ClassCubit, ClassState>(
       listener: (context, state) {
         if (state.status == ClassStatus.error) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Ralat: ${state.error}'),
-              backgroundColor: Theme.of(context).colorScheme.error,
-            ),
-          );
+          // Filter out permission-denied errors - they're handled in UI cards
+          final error = state.error ?? '';
+          if (!error.contains('permission-denied') &&
+              !error.contains('cloud_firestore') &&
+              !error.contains('Kebenaran ditolak')) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text('Ralat: $error'),
+                backgroundColor: Theme.of(context).colorScheme.error,
+              ),
+            );
+          }
         } else if (state.status == ClassStatus.loaded && state.classes.isNotEmpty) {
           // Optionally show a success snackbar after add/delete
           // ScaffoldMessenger.of(context).showSnackBar(

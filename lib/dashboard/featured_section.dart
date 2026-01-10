@@ -1,4 +1,4 @@
-import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../theme_constants.dart';
@@ -575,14 +575,35 @@ class FeaturedSection extends StatelessWidget {
       );
     }
 
-    // Local file
+    // Local file (skip on web)
+    if (kIsWeb) {
+      // On web, show placeholder instead of trying to load local file
+      return Container(
+        width: double.infinity,
+        height: 80,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.3),
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(20),
+            topRight: Radius.circular(20),
+          ),
+        ),
+        child: Icon(
+          Icons.school,
+          color: Theme.of(context).colorScheme.onPrimary,
+          size: 40,
+        ),
+      );
+    }
+    
+    // For non-web platforms, try to load as file
     return ClipRRect(
       borderRadius: const BorderRadius.only(
         topLeft: Radius.circular(20),
         topRight: Radius.circular(20),
       ),
-      child: Image.file(
-        File(imageUrl),
+      child: Image.network(
+        imageUrl,
         width: double.infinity,
         height: 80,
         fit: BoxFit.cover,
@@ -685,11 +706,29 @@ class FeaturedSection extends StatelessWidget {
       );
     }
 
-    // Local file
+    // Local file (skip on web)
+    if (kIsWeb) {
+      // On web, show placeholder instead of trying to load local file
+      return Container(
+        height: 60,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          Icons.favorite,
+          color: Theme.of(context).colorScheme.primary,
+          size: 30,
+        ),
+      );
+    }
+    
+    // For non-web platforms, try to load as network (fallback)
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
-      child: Image.file(
-        File(imageUrl),
+      child: Image.network(
+        imageUrl,
         height: 60,
         width: double.infinity,
         fit: BoxFit.cover,
@@ -787,11 +826,29 @@ class FeaturedSection extends StatelessWidget {
       );
     }
 
-    // Local file
+    // Local file (skip on web)
+    if (kIsWeb) {
+      // On web, show placeholder instead of trying to load local file
+      return Container(
+        height: 60,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.primary.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(
+          Icons.book,
+          color: Theme.of(context).colorScheme.primary,
+          size: 30,
+        ),
+      );
+    }
+    
+    // For non-web platforms, try to load as network (fallback)
     return ClipRRect(
       borderRadius: BorderRadius.circular(10),
-      child: Image.file(
-        File(imageUrl),
+      child: Image.network(
+        imageUrl,
         height: 60,
         width: double.infinity,
         fit: BoxFit.cover,

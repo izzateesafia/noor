@@ -50,13 +50,6 @@ class PagesListPage extends StatelessWidget {
         icon: Icons.credit_card,
         category: 'Profile',
       ),
-      PageItem(
-        route: '/welcome',
-        title: 'Welcome Screen',
-        description: 'Welcome message screen',
-        icon: Icons.waving_hand,
-        category: 'Onboarding',
-      ),
       
       // Dashboard Pages
       PageItem(

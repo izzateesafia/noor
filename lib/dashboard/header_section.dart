@@ -38,14 +38,6 @@ class HeaderSection extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          Text(
-            formattedDate,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 6),
           // Location display
           BlocBuilder<UserCubit, UserState>(
             builder: (context, state) {

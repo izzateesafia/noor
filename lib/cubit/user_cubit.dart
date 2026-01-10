@@ -2,11 +2,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../models/user_model.dart';
 import '../repository/user_repository.dart';
 import '../services/google_auth_service.dart';
+import '../services/apple_auth_service.dart';
 import 'user_states.dart';
 
 class UserCubit extends Cubit<UserState> {
   final UserRepository repository;
   final GoogleAuthService _googleAuthService = GoogleAuthService();
+  final AppleAuthService _appleAuthService = AppleAuthService();
   
   UserCubit(this.repository) : super(const UserState());
 
@@ -126,6 +128,38 @@ class UserCubit extends Cubit<UserState> {
       emit(state.copyWith(
         status: UserStatus.error,
         error: 'Failed to sign in with Google: $e',
+      ));
+    }
+  }
+
+  Future<void> signInWithApple() async {
+    emit(state.copyWith(status: UserStatus.loading));
+    try {
+      final user = await _appleAuthService.signInWithApple().timeout(
+        const Duration(seconds: 70),
+        onTimeout: () {
+          throw Exception('Apple Sign-In timed out - sila pastikan sambungan internet anda stabil dan cuba lagi');
+        },
+      );
+
+      if (user != null) {
+        emit(state.copyWith(
+          status: UserStatus.loaded,
+          currentUser: user,
+        ));
+      } else {
+        print('DEBUG: Apple Sign-In returned null user');
+        emit(state.copyWith(
+          status: UserStatus.error,
+          error: 'Apple sign-in was cancelled or failed.',
+        ));
+      }
+    } catch (e, stackTrace) {
+      print('DEBUG: UserCubit Apple Sign-In Error: $e');
+      print('DEBUG: UserCubit Stack trace: $stackTrace');
+      emit(state.copyWith(
+        status: UserStatus.error,
+        error: 'Failed to sign in with Apple: $e',
       ));
     }
   }

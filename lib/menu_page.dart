@@ -80,12 +80,12 @@ class MenuPage extends StatelessWidget {
             description: 'Konfigurasi waktu solat',
             onTap: () => Navigator.of(context).pushNamed('/prayer_alarm_settings'),
           ),
-          MenuItem(
-            icon: Icons.money,
-            label: 'Premium',
-            description: 'Upgrade ke versi premium',
-            onTap: () => Navigator.of(context).pushNamed('/premium'),
-          ),
+          // MenuItem(
+          //   icon: Icons.money,
+          //   label: 'Premium',
+          //   description: 'Upgrade ke versi premium',
+          //   onTap: () => Navigator.of(context).pushNamed('/premium'),
+          // ),
         ],
       ),
       MenuSection(

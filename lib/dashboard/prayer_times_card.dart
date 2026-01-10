@@ -183,6 +183,17 @@ class _PrayerTimesCardState extends State<PrayerTimesCard> {
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
+                            if (hijriDate != null) ...[
+                              const SizedBox(height: 4),
+                              Text(
+                                '${hijriDate.hijriDate} ${hijriDate.hijriMonth} ${hijriDate.hijriYear} H',
+                                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                  color: AppColors.primary.withOpacity(0.7),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ],
+                            const SizedBox(height: 4),
                             Text(
                               'Next: $nextPrayer',
                               style: Theme.of(context).textTheme.bodyMedium?.copyWith(

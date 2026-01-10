@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:url_launcher/url_launcher.dart';
 import '../models/news.dart';
 import '../theme_constants.dart';
 import '../pages/news_post_page.dart';
-import 'dart:io';
 
 class TerkiniNewsFeed extends StatelessWidget {
   final List<News> news;
@@ -179,15 +179,29 @@ class _NewsCard extends StatelessWidget {
         fit: BoxFit.cover,
         errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
       );
-    } else if (File(news.image!).existsSync()) {
-      // Local file
-      return Image.file(
-        File(news.image!),
+    } else if (kIsWeb) {
+      // On web, skip file operations and try network directly
+      return Image.network(
+        news.image!,
         fit: BoxFit.cover,
+        loadingBuilder: (context, child, loadingProgress) {
+          if (loadingProgress == null) return child;
+          return Container(
+            color: AppColors.primary.withOpacity(0.1),
+            child: Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                    : null,
+              ),
+            ),
+          );
+        },
         errorBuilder: (context, error, stackTrace) => _buildPlaceholder(),
       );
     } else {
-      // Network image or URL
+      // Network image or URL (prioritize this on web)
       return Image.network(
         news.image!,
         fit: BoxFit.cover,

@@ -52,30 +52,32 @@ class DashboardPage extends StatefulWidget {
 }
 
 class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserver {
+  bool _hasUserBeenLoaded = false; // Track if user was successfully loaded at least once
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      // Fetch user data first before using it
+      context.read<UserCubit>().fetchCurrentUser();
+      
+      // Fetch other data
       context.read<ClassCubit>().fetchClasses();
       context.read<LiveStreamCubit>().getCurrentLiveStream();
       context.read<DuaCubit>().fetchDuas();
       context.read<HadithCubit>().fetchHadiths();
       context.read<NewsCubit>().fetchNews();
+      context.read<AdCubit>().fetchAds();
+      context.read<WhatsNewCubit>().fetchWhatsNew();
+      context.read<VideoCubit>().fetchVideos();
       
       // Fetch prayer times using user's location if available
-      final user = context.read<UserCubit>().state.currentUser;
+      // Note: User might not be loaded yet, so we'll handle this in a listener or after user loads
       final prayerTimesCubit = context.read<PrayerTimesCubit>();
       prayerTimesCubit.fetchHijriDate();
       
-      if (user?.latitude != null && user?.longitude != null) {
-        // Use user's location coordinates
-        prayerTimesCubit.fetchPrayerTimesByCoordinates(user!.latitude!, user.longitude!);
-      } else {
-        // Fallback to default location (Kuala Lumpur)
-        prayerTimesCubit.fetchCurrentPrayerTimes('Kuala Lumpur', 'Kuala Lumpur');
-      }
-      
+      // Fetch prayer times will be handled after user is loaded
       // Request location permission and update user location if not available
       _requestAndUpdateLocation();
     });
@@ -106,6 +108,7 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
   /// Request location permission and update user location
   /// [forceRefresh] - If true, will fetch location even if user already has location data
   Future<void> _requestAndUpdateLocation({bool forceRefresh = false}) async {
+    if (!mounted) return;
     try {
       final userCubit = context.read<UserCubit>();
       final user = userCubit.state.currentUser;
@@ -117,7 +120,7 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
       
       // Check if location services are enabled
       bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
+      if (!serviceEnabled || !mounted) {
         return;
       }
       
@@ -127,12 +130,12 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
       if (permission == LocationPermission.denied) {
         // Request permission - this will show the iOS permission dialog if needed
         permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
+        if (permission == LocationPermission.denied || !mounted) {
           return;
         }
       }
       
-      if (permission == LocationPermission.deniedForever) {
+      if (permission == LocationPermission.deniedForever || !mounted) {
         return;
       }
       
@@ -152,6 +155,8 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
         return;
       }
       
+      if (!mounted) return;
+      
       // Get location name
       final locationService = LocationService();
       final locationName = await locationService.getLocationName(
@@ -159,10 +164,15 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
         position.longitude,
       );
       
+      // Check mounted before updating user
+      if (!mounted) return;
+      
       // Update user with location
       // IMPORTANT: Fetch latest user from Firestore first to ensure we have current roles
       // This prevents overwriting manually set roles when updating location
       await userCubit.fetchCurrentUser();
+      
+      if (!mounted) return;
       final latestUser = userCubit.state.currentUser;
       
       if (latestUser != null && mounted) {
@@ -175,6 +185,9 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
         );
         
         await userCubit.updateUser(updatedUser);
+        
+        // Check mounted before accessing context
+        if (!mounted) return;
         
         // Update prayer times with new location
         final prayerTimesCubit = context.read<PrayerTimesCubit>();
@@ -303,14 +316,14 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
               const SizedBox(width: 8),
               Flexible(
                 child: Text(
-                  '${hijriDate.hijriDate} ${hijriDate.hijriMonth} ${hijriDate.hijriYear}',
-                  style: TextStyle(
+                '${hijriDate.hijriDate} ${hijriDate.hijriMonth} ${hijriDate.hijriYear}',
+                style: TextStyle(
                     fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.primary,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.primary,
                 ),
+                  overflow: TextOverflow.ellipsis,
+              ),
               ),
               const SizedBox(width: 6),
               Container(
@@ -358,35 +371,62 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
             BlocProvider<PrayerTimesCubit>.value(
               value: context.read<PrayerTimesCubit>(),
             ),
-            BlocProvider<AdCubit>(
-              create: (context) => AdCubit(AdRepository())..fetchAds(),
+            BlocProvider<AdCubit>.value(
+              value: context.read<AdCubit>(),
             ),
-            BlocProvider<WhatsNewCubit>(
-              create: (context) => WhatsNewCubit(WhatsNewRepository())..fetchWhatsNew(),
+            BlocProvider<WhatsNewCubit>.value(
+              value: context.read<WhatsNewCubit>(),
             ),
             BlocProvider<NewsCubit>.value(
               value: context.read<NewsCubit>(),
             ),
-            BlocProvider<VideoCubit>(
-              create: (context) => VideoCubit(VideoRepository())..fetchVideos(),
+            BlocProvider<VideoCubit>.value(
+              value: context.read<VideoCubit>(),
             ),
           ],
           child: BlocConsumer<UserCubit, UserState>(
             listener: (context, userState) {
-              if (userState.status == UserStatus.error) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(userState.error ?? 'Gagal memuatkan data pengguna'),
-                    backgroundColor: Theme.of(context).colorScheme.error,
-                    duration: const Duration(seconds: 4),
-                    action: SnackBarAction(
-                      label: 'Cuba Lagi',
-                      onPressed: () {
-                        context.read<UserCubit>().fetchCurrentUser();
-                      },
+              if (userState.status == UserStatus.loaded && userState.currentUser != null) {
+                // Mark that user was successfully loaded
+                _hasUserBeenLoaded = true;
+                
+                // User loaded - fetch prayer times using user's location
+                final user = userState.currentUser!;
+                final prayerTimesCubit = context.read<PrayerTimesCubit>();
+                
+                if (user.latitude != null && user.longitude != null) {
+                  // Use user's location coordinates
+                  prayerTimesCubit.fetchPrayerTimesByCoordinates(user.latitude!, user.longitude!);
+                } else {
+                  // Fallback to default location (Kuala Lumpur)
+                  prayerTimesCubit.fetchCurrentPrayerTimes('Kuala Lumpur', 'Kuala Lumpur');
+                }
+              } else if (userState.status == UserStatus.error && 
+                  userState.error != null &&
+                  _hasUserBeenLoaded) {
+                // Only show error if user was previously loaded successfully
+                // This prevents showing errors that occur during initial load or before login
+                // Also filter out permission-denied errors (they're handled in UI cards)
+                final error = userState.error!;
+                if (!error.contains('No user data found') &&
+                    !error.contains('Please try logging in again') &&
+                    !error.contains('permission-denied') &&
+                    !error.contains('cloud_firestore') &&
+                    !error.contains('Kebenaran ditolak')) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(error),
+                      backgroundColor: Theme.of(context).colorScheme.error,
+                      duration: const Duration(seconds: 4),
+                      action: SnackBarAction(
+                        label: 'Cuba Lagi',
+                        onPressed: () {
+                          context.read<UserCubit>().fetchCurrentUser();
+                        },
+                      ),
                     ),
-                  ),
-                );
+                  );
+                }
               }
             },
             builder: (context, userState) {
@@ -427,22 +467,60 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
               }
             },
             builder: (context, liveStreamState) {
-              // Default user for fallback
-              UserModel user = UserModel(
-                id: 'default',
-                name: 'User',
-                email: 'user@example.com',
-                phone: 'N/A',
-                roles: const [UserType.student],
-                isPremium: false,
-              );
+              // Wait for user to be loaded - don't show fallback user
+              if (userState.status != UserStatus.loaded || userState.currentUser == null) {
+                // Still loading or error - show loading or wait
+                if (userState.status == UserStatus.loading) {
+                  return const Scaffold(
+                    body: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          CircularProgressIndicator(),
+                          SizedBox(height: 16),
+                          Text('Memuatkan data pengguna...'),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                // If error, still try to show dashboard but user will be null
+                // This should not happen if user is authenticated
+              }
 
-              // Use real user data if available
-              if (userState.status == UserStatus.loaded && userState.currentUser != null) {
-                user = userState.currentUser!;
-              } else if (userState.status == UserStatus.error) {
-                // Handle error state
-              } else {
+              // Use real user data - required at this point
+              final user = userState.currentUser;
+              if (user == null) {
+                // This should not happen for authenticated users, but handle gracefully
+                return Scaffold(
+                  body: Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.error_outline,
+                          size: 64,
+                          color: Theme.of(context).colorScheme.error,
+                        ),
+                        const SizedBox(height: 16),
+                        Text(
+                          'Tiada data pengguna',
+                          style: TextStyle(
+                            color: Theme.of(context).colorScheme.error,
+                            fontSize: 18,
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        ElevatedButton(
+                          onPressed: () {
+                            context.read<UserCubit>().fetchCurrentUser();
+                          },
+                          child: const Text('Cuba Lagi'),
+                        ),
+                      ],
+                    ),
+                  ),
+                );
               }
 
               // Get current live stream
@@ -542,18 +620,26 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
                     children: [
                       RefreshIndicator(
                         onRefresh: () async {
-                          context.read<LiveStreamCubit>().getCurrentLiveStream();
-                          context.read<ClassCubit>().fetchClasses();
-                          context.read<NewsCubit>().fetchNews();
-                          
-                          // Refresh location
-                          await _requestAndUpdateLocation(forceRefresh: true);
-                          
-                          // Refresh prayer times
+                          // Store cubit references before async operations
+                          if (!mounted) return;
                           final userCubit = context.read<UserCubit>();
-                          final user = userCubit.state.currentUser;
+                          final liveStreamCubit = context.read<LiveStreamCubit>();
+                          final classCubit = context.read<ClassCubit>();
+                          final newsCubit = context.read<NewsCubit>();
                           final prayerTimesCubit = context.read<PrayerTimesCubit>();
                           
+                          // Perform async operations
+                          await liveStreamCubit.getCurrentLiveStream();
+                          await classCubit.fetchClasses();
+                          await newsCubit.fetchNews();
+                          
+                          // Check mounted before accessing context-dependent operations
+                          if (!mounted) return;
+                          await _requestAndUpdateLocation(forceRefresh: true);
+                          
+                          // Use stored references instead of context.read
+                          if (!mounted) return;
+                          final user = userCubit.state.currentUser;
                           if (user?.latitude != null && user?.longitude != null) {
                             prayerTimesCubit.fetchPrayerTimesByCoordinates(user!.latitude!, user.longitude!);
                           } else {
@@ -563,7 +649,9 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
                           // Also refresh Hijri date
                           prayerTimesCubit.fetchHijriDate();
                           
+                          if (mounted) {
                           await Future.delayed(const Duration(milliseconds: 500)); // Small delay for better UX
+                          }
                         },
                         child: SingleChildScrollView(
                           child: Column(
@@ -710,7 +798,7 @@ class _DashboardPageState extends State<DashboardPage> with WidgetsBindingObserv
                               value: context.read<UserCubit>(),
                               child: HeaderSection(user: user),
                             ),
-                            _buildHijriDateDisplay(),
+                            // _buildHijriDateDisplay(),
                             PrayerTimesCard(),
                             QuickAccessGrid(),
 

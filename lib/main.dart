@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_stripe/flutter_stripe.dart';
@@ -25,7 +26,6 @@ import 'user_profile_page.dart';
 import 'biodata_page.dart';
 import 'card_info_page.dart';
 import 'policy_page.dart';
-import 'welcome_message_screen.dart';
 import 'deep_link_handler.dart';
 import 'deep_link_test_page.dart';
 import 'quran_reader_page.dart';
@@ -64,6 +64,12 @@ import 'repository/live_stream_repository.dart';
 import 'repository/daily_tracker_repository.dart';
 import 'repository/news_repository.dart';
 import 'cubit/news_cubit.dart';
+import 'repository/ad_repository.dart';
+import 'cubit/ad_cubit.dart';
+import 'repository/whats_new_repository.dart';
+import 'cubit/whats_new_cubit.dart';
+import 'repository/video_repository.dart';
+import 'cubit/video_cubit.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart' as firebase_auth;
@@ -82,8 +88,16 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // Load environment variables
-  await dotenv.load(fileName: ".env");
+  // Load environment variables (only on non-web platforms)
+  if (!kIsWeb) {
+    try {
+      await dotenv.load(fileName: ".env");
+    } catch (e) {
+      // .env file not found, continue without it
+      // This is fine since Stripe is no longer used
+    }
+  }
+  // For web, skip .env loading entirely
   
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
@@ -100,10 +114,6 @@ void main() async {
   
   // Initialize lock screen notification service
   await LockScreenNotificationService().initialize();
-  
-  // Initialize Stripe from environment variables
-  Stripe.publishableKey = dotenv.env['STRIPE_PUBLISHABLE_KEY'] ?? '';
-  Stripe.merchantIdentifier = dotenv.env['STRIPE_MERCHANT_IDENTIFIER'] ?? 'merchant.com.hexahelix.dq';
   
   runApp(const MyApp());
 }
@@ -231,6 +241,15 @@ class MyApp extends StatelessWidget {
             RepositoryProvider<NewsRepository>(
               create: (context) => NewsRepository(),
             ),
+            RepositoryProvider<AdRepository>(
+              create: (context) => AdRepository(),
+            ),
+            RepositoryProvider<WhatsNewRepository>(
+              create: (context) => WhatsNewRepository(),
+            ),
+            RepositoryProvider<VideoRepository>(
+              create: (context) => VideoRepository(),
+            ),
           ],
           child: MultiBlocProvider(
             providers: [
@@ -277,8 +296,24 @@ class MyApp extends StatelessWidget {
                   context.read<NewsRepository>(),
                 ),
               ),
+              BlocProvider<AdCubit>(
+                create: (context) => AdCubit(
+                  context.read<AdRepository>(),
+                ),
+              ),
+              BlocProvider<WhatsNewCubit>(
+                create: (context) => WhatsNewCubit(
+                  context.read<WhatsNewRepository>(),
+                ),
+              ),
+              BlocProvider<VideoCubit>(
+                create: (context) => VideoCubit(
+                  context.read<VideoRepository>(),
+                ),
+              ),
             ],
             child: MaterialApp(
+                debugShowCheckedModeBanner: false,
               title: 'Daily Quran',
               theme: lightTheme,
               darkTheme: darkTheme,
@@ -313,13 +348,6 @@ class MyApp extends StatelessWidget {
                 '/biodata': (context) => const BiodataPage(),
                 '/card-info': (context) => const CardInfoPage(),
                 '/policy': (context) => const PolicyPage(),
-                '/welcome': (context) {
-                  final args = ModalRoute.of(context)?.settings.arguments as Map<String, dynamic>?;
-                  return WelcomeMessageScreen(
-                    userId: args?['userId'] as String?,
-                    hasCompletedBiodata: args?['hasCompletedBiodata'] as bool? ?? false,
-                  );
-                },
                 '/deep_link_test': (context) => const DeepLinkTestPage(),
                 '/quran': (context) => const QuranReaderPage(),
                 '/quran_search': (context) => const QuranSearchPage(),

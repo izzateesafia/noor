@@ -29,7 +29,7 @@
 			<string>com.hexahelix.dq</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>noor</string>
+				<string>DailyQuran</string>
 			</array>
 		</dict>
 		<dict>
@@ -71,9 +71,7 @@
 	<array>
 		<string>fetch</string>
 		<string>remote-notification</string>
-		<string>processing</string>
 		<string>audio</string>
-		<string>background-processing</string>
 	</array>
 	<key>LSApplicationQueriesSchemes</key>
 	<array>

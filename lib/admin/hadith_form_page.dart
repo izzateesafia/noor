@@ -50,10 +50,10 @@ class _HadithFormPageState extends State<HadithFormPage> {
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: source, imageQuality: 80);
     if (picked != null) {
-      setState(() {
-        _imageFile = File(picked.path);
+        setState(() {
+          _imageFile = File(picked.path);
         _imagePath = null; // Clear old path when new image is selected
-      });
+        });
     }
   }
 
@@ -66,7 +66,7 @@ class _HadithFormPageState extends State<HadithFormPage> {
 
     try {
       String? imageUrl = widget.initialHadith?.image;
-      
+    
       // Upload new image if selected
       if (_imageFile != null) {
         imageUrl = await _imageUploadService.uploadHadithImage(
@@ -75,22 +75,22 @@ class _HadithFormPageState extends State<HadithFormPage> {
         );
       }
       
-      final hadith = Hadith(
-        id: widget.initialHadith?.id ?? '',
-        title: _titleController.text.trim(),
-        content: _contentController.text.trim(),
+    final hadith = Hadith(
+      id: widget.initialHadith?.id ?? '',
+      title: _titleController.text.trim(),
+      content: _contentController.text.trim(),
         image: imageUrl,
         link: _linkController.text.trim().isEmpty ? null : _linkController.text.trim(),
         notes: _notesController.text.trim().isEmpty ? null : _notesController.text.trim(),
-        narrator: widget.initialHadith?.narrator,
-        source: widget.initialHadith?.source,
-        book: widget.initialHadith?.book,
+      narrator: widget.initialHadith?.narrator,
+      source: widget.initialHadith?.source,
+      book: widget.initialHadith?.book,
         uploaded: widget.initialHadith?.uploaded ?? DateTime.now(),
         isHidden: _isHidden,
-      );
+    );
       
       if (mounted) {
-        Navigator.of(context).pop(hadith);
+    Navigator.of(context).pop(hadith);
       }
     } catch (e) {
       if (mounted) {
@@ -269,7 +269,7 @@ class _HadithFormPageState extends State<HadithFormPage> {
                   });
                 },
                 activeColor: Theme.of(context).colorScheme.primary,
-              ),
+                ),
               const SizedBox(height: 24),
               SizedBox(
                 width: double.infinity,

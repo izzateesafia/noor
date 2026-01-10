@@ -188,12 +188,12 @@ class _ManageAdsView extends StatelessWidget {
         }
       },
       builder: (context, state) {
-        return Scaffold(
-          appBar: AppBar(
-            title: const Text('Urus Iklan'),
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Urus Iklan'),
             backgroundColor: Theme.of(context).appBarTheme.backgroundColor,
             foregroundColor: Theme.of(context).appBarTheme.foregroundColor,
-            actions: [
+        actions: [
               if (state.isLoading)
                 Padding(
                   padding: const EdgeInsets.all(16.0),
@@ -208,9 +208,9 @@ class _ManageAdsView extends StatelessWidget {
                     ),
                   ),
                 ),
-              IconButton(
-                icon: const Icon(Icons.add),
-                tooltip: 'Tambah Iklan',
+          IconButton(
+            icon: const Icon(Icons.add),
+            tooltip: 'Tambah Iklan',
                 onPressed: state.isLoading ? null : () => _addAd(context),
               ),
             ],
@@ -267,16 +267,16 @@ class _ManageAdsView extends StatelessWidget {
               style: TextStyle(
                 color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.6),
               ),
-            ),
-          ],
-        ),
+          ),
+        ],
+      ),
       );
     }
 
     return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
       itemCount: state.ads.length,
-      itemBuilder: (context, i) {
+        itemBuilder: (context, i) {
         final ad = state.ads[i];
         return Opacity(
           opacity: !ad.isActive ? 0.6 : 1.0,
@@ -335,9 +335,9 @@ class _ManageAdsView extends StatelessWidget {
                               )
                             : Image.asset(
                                 ad.image!,
-                                width: 80,
-                                height: 80,
-                                fit: BoxFit.cover,
+                      width: 80,
+                      height: 80,
+                      fit: BoxFit.cover,
                                 errorBuilder: (context, error, stackTrace) {
                                   return Container(
                                     width: 80,
@@ -366,7 +366,7 @@ class _ManageAdsView extends StatelessWidget {
                               color: Theme.of(context).colorScheme.primary,
                               size: 40,
                             ),
-                          ),
+                    ),
                   ),
                   const SizedBox(width: 18),
                   Expanded(
@@ -377,12 +377,12 @@ class _ManageAdsView extends StatelessWidget {
                           children: [
                             Expanded(
                               child: Text(
-                                ad.title,
-                                style: TextStyle(
+                          ad.title,
+                          style: TextStyle(
                                   color: Theme.of(context).textTheme.bodyLarge?.color,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
                               ),
                             ),
                             if (!ad.isActive)
@@ -416,13 +416,13 @@ class _ManageAdsView extends StatelessWidget {
                           ),
                         ],
                         if (ad.link != null && ad.link!.isNotEmpty) ...[
-                          const SizedBox(height: 8),
-                          Text(
+                        const SizedBox(height: 8),
+                        Text(
                             ad.link!,
-                            style: TextStyle(
+                          style: TextStyle(
                               color: Theme.of(context).colorScheme.primary,
-                              fontSize: 13,
-                              decoration: TextDecoration.underline,
+                            fontSize: 13,
+                            decoration: TextDecoration.underline,
                             ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
@@ -476,7 +476,7 @@ class _ManageAdsView extends StatelessWidget {
                       PopupMenuItem(
                         value: 'hide',
                         child: Row(
-                          children: [
+                    children: [
                             Icon(
                               ad.isActive ? Icons.visibility_off : Icons.visibility,
                               color: Colors.grey,
@@ -505,10 +505,10 @@ class _ManageAdsView extends StatelessWidget {
                   ),
                 ],
               ),
+              ),
             ),
-          ),
-        );
-      },
+          );
+        },
     );
   }
-}
+} 

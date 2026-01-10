@@ -51,10 +51,8 @@ class _UserProfileViewState extends State<_UserProfileView> {
   @override
   void initState() {
     super.initState();
-    // Always fetch classes when the page loads
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ClassCubit>().fetchClasses();
-    });
+    // Don't fetch classes here - wait for user authentication to be confirmed
+    // Classes will be fetched in the BlocListener when user state is loaded
   }
 
   /// Format address map as a readable string for display
@@ -73,6 +71,10 @@ class _UserProfileViewState extends State<_UserProfileView> {
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    // Clear any existing snackbars (especially permission-denied errors)
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ScaffoldMessenger.of(context).clearSnackBars();
+    });
     // Refresh user data when page becomes visible (e.g., returning from payment)
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<UserCubit>().fetchCurrentUser();
@@ -81,18 +83,28 @@ class _UserProfileViewState extends State<_UserProfileView> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocListener<UserCubit, UserState>(
-      listener: (context, userState) {
-        // Automatically fetch classes when user data is loaded
-        if (userState.status == UserStatus.loaded && userState.currentUser != null) {
-          // Only fetch classes if they haven't been loaded yet
-          final classCubit = context.read<ClassCubit>();
-          if (classCubit.state.status == ClassStatus.initial) {
-            classCubit.fetchClasses();
-          }
+    return BlocListener<ClassCubit, ClassState>(
+      listener: (context, classState) {
+        // Error handling - snackbar display removed per user request
+        // Errors are still shown in the UI via the error card in _buildEnrolledClasses
+        // Also clear any snackbars that might have been shown from other pages
+        if (classState.status == ClassStatus.error) {
+          ScaffoldMessenger.of(context).clearSnackBars();
         }
       },
-      child: BlocBuilder<UserCubit, UserState>(
+      child: BlocListener<UserCubit, UserState>(
+        listener: (context, userState) {
+          // Automatically fetch classes when user data is loaded and authenticated
+          if (userState.status == UserStatus.loaded && userState.currentUser != null) {
+            // Only fetch classes if they haven't been loaded yet or if there was an error
+            final classCubit = context.read<ClassCubit>();
+            if (classCubit.state.status == ClassStatus.initial || 
+                classCubit.state.status == ClassStatus.error) {
+              classCubit.fetchClasses();
+            }
+          }
+        },
+        child: BlocBuilder<UserCubit, UserState>(
         builder: (context, userState) {
           // Debug logging
           
@@ -118,38 +130,7 @@ class _UserProfileViewState extends State<_UserProfileView> {
                   tooltip: mode == ThemeMode.dark ? 'Tukar ke Mod Terang' : 'Tukar ke Mod Gelap',
                 ),
               ),
-              if (user.isPremium)
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: Chip(
-                    label: Text(
-                      'Premium',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.onSurface,
-                      ),
-                    ),
-                    backgroundColor: Colors.amber,
-                  ),
-                )
-              else
-                Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: ElevatedButton.icon(
-                    onPressed: () {
-                      Navigator.of(context).pushNamed('/premium');
-                    },
-                    icon: const Icon(Icons.star, size: 16),
-                    label: const Text('Upgrade'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.amber,
-                      foregroundColor: Theme.of(context).colorScheme.onSurface,
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
-                  ),
-                ),
+
             ],
           ),
           body: SingleChildScrollView(
@@ -173,7 +154,7 @@ class _UserProfileViewState extends State<_UserProfileView> {
         );
         },
       ),
-    );
+    ));
   }
 
   Widget _buildUserInfo(UserModel user) {
@@ -380,9 +361,17 @@ class _UserProfileViewState extends State<_UserProfileView> {
             const Spacer(),
             IconButton(
               onPressed: () {
-                // Refresh user data and classes
-                context.read<UserCubit>().fetchCurrentUser();
-                context.read<ClassCubit>().fetchClasses();
+                // Refresh user data first, then classes will be fetched automatically
+                // when user state is loaded (via BlocListener)
+                final userState = context.read<UserCubit>().state;
+                if (userState.currentUser != null) {
+                  // User is authenticated, refresh both
+                  context.read<UserCubit>().fetchCurrentUser();
+                  context.read<ClassCubit>().fetchClasses();
+                } else {
+                  // User not authenticated, fetch user first
+                  context.read<UserCubit>().fetchCurrentUser();
+                }
               },
               icon: const Icon(Icons.refresh, size: 20),
               tooltip: 'Muat Semula',
@@ -397,6 +386,22 @@ class _UserProfileViewState extends State<_UserProfileView> {
             }
 
             if (classState.status == ClassStatus.error) {
+              // Get user-friendly error message
+              String errorMessage = 'Ralat memuatkan kelas yang didaftar';
+              if (classState.error != null) {
+                final error = classState.error!;
+                if (error.contains('permission-denied') || 
+                    error.contains('Kebenaran ditolak')) {
+                  errorMessage = 'Kebenaran ditolak. Sila pastikan anda telah log masuk.';
+                } else if (error.contains('Pengesahan diperlukan') ||
+                           error.contains('tidak didaftarkan masuk')) {
+                  errorMessage = 'Pengesahan diperlukan. Sila log masuk terlebih dahulu.';
+                } else if (!error.contains('cloud_firestore')) {
+                  // Use the formatted error message if available
+                  errorMessage = error;
+                }
+              }
+              
               return Card(
                 color: Colors.red.shade50,
                 child: Padding(
@@ -406,13 +411,21 @@ class _UserProfileViewState extends State<_UserProfileView> {
                       Icon(Icons.error_outline, color: Colors.red, size: 32),
                       const SizedBox(height: 8),
                       Text(
-                        'Ralat memuatkan kelas yang didaftar',
+                        errorMessage,
                         style: TextStyle(color: Colors.red[700]),
+                        textAlign: TextAlign.center,
                       ),
                       const SizedBox(height: 8),
                       ElevatedButton(
                         onPressed: () {
-                          context.read<ClassCubit>().fetchClasses();
+                          // Check if user is authenticated before retrying
+                          final userState = context.read<UserCubit>().state;
+                          if (userState.currentUser != null) {
+                            context.read<ClassCubit>().fetchClasses();
+                          } else {
+                            // If not authenticated, fetch user first
+                            context.read<UserCubit>().fetchCurrentUser();
+                          }
                         },
                         child: const Text('Cuba Lagi'),
                       ),

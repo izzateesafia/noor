@@ -206,13 +206,13 @@ class _RukunSolatPageState extends State<RukunSolatPage> {
                                             onPressed: () => Navigator.of(context).pop(),
                                             child: const Text('Batal'),
                                           ),
-                                          ElevatedButton(
-                                            onPressed: () {
-                                              Navigator.of(context).pop();
-                                              Navigator.of(context).pushNamed('/premium');
-                                            },
-                                            child: const Text('Lihat Premium'),
-                                          ),
+                                          // ElevatedButton(
+                                          //   onPressed: () {
+                                          //     Navigator.of(context).pop();
+                                          //     Navigator.of(context).pushNamed('/premium');
+                                          //   },
+                                          //   child: const Text('Lihat Premium'),
+                                          // ),
                                         ],
                                       ),
                                     );

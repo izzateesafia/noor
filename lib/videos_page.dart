@@ -512,6 +512,41 @@ class VideoCard extends StatelessWidget {
     return _buildGridCard(context);
   }
 
+  // Helper method to validate if URL is a valid network URL
+  bool _isValidNetworkUrl(String? url) {
+    if (url == null || url.isEmpty) return false;
+    return url.startsWith('http://') || url.startsWith('https://');
+  }
+
+  // Helper method to build thumbnail with proper validation
+  Widget _buildThumbnail() {
+    if (!_isValidNetworkUrl(video.thumbnailUrl)) {
+      return _buildPlaceholderThumbnail();
+    }
+
+    return Image.network(
+      video.thumbnailUrl,
+      fit: BoxFit.cover,
+      headers: const {
+        'Accept': 'image/*',
+      },
+      errorBuilder: (context, error, stackTrace) {
+        return _buildPlaceholderThumbnail();
+      },
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Center(
+          child: CircularProgressIndicator(
+            value: loadingProgress.expectedTotalBytes != null
+                ? loadingProgress.cumulativeBytesLoaded /
+                    loadingProgress.expectedTotalBytes!
+                : null,
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildHorizontalCard(BuildContext context) {
     return GestureDetector(
       onTap: () => _playVideo(context),
@@ -525,26 +560,7 @@ class VideoCard extends StatelessWidget {
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(12),
-                  child: video.thumbnailUrl.isNotEmpty
-                      ? Image.network(
-                          video.thumbnailUrl,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            return _buildPlaceholderThumbnail();
-                          },
-                          loadingBuilder: (context, child, loadingProgress) {
-                            if (loadingProgress == null) return child;
-                            return Center(
-                              child: CircularProgressIndicator(
-                                value: loadingProgress.expectedTotalBytes != null
-                                    ? loadingProgress.cumulativeBytesLoaded /
-                                        loadingProgress.expectedTotalBytes!
-                                    : null,
-                              ),
-                            );
-                          },
-                        )
-                      : _buildPlaceholderThumbnail(),
+                  child: _buildThumbnail(),
                 ),
                 // Play button overlay
                 Container(
@@ -675,26 +691,7 @@ class VideoCard extends StatelessWidget {
                     borderRadius: const BorderRadius.vertical(
                       top: Radius.circular(12),
                     ),
-                    child: video.thumbnailUrl.isNotEmpty
-                        ? Image.network(
-                            video.thumbnailUrl,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return _buildPlaceholderThumbnail();
-                            },
-                            loadingBuilder: (context, child, loadingProgress) {
-                              if (loadingProgress == null) return child;
-                              return Center(
-                                child: CircularProgressIndicator(
-                                  value: loadingProgress.expectedTotalBytes != null
-                                      ? loadingProgress.cumulativeBytesLoaded /
-                                          loadingProgress.expectedTotalBytes!
-                                      : null,
-                                ),
-                              );
-                            },
-                          )
-                        : _buildPlaceholderThumbnail(),
+                    child: _buildThumbnail(),
                   ),
                   // Play button overlay
                   Container(
@@ -834,6 +831,41 @@ class _FeaturedVideoCard extends StatelessWidget {
 
   const _FeaturedVideoCard({required this.video});
 
+  // Helper method to validate if URL is a valid network URL
+  bool _isValidNetworkUrl(String? url) {
+    if (url == null || url.isEmpty) return false;
+    return url.startsWith('http://') || url.startsWith('https://');
+  }
+
+  // Helper method to build thumbnail with proper validation
+  Widget _buildThumbnail() {
+    if (!_isValidNetworkUrl(video.thumbnailUrl)) {
+      return _buildPlaceholderThumbnail();
+    }
+
+    return Image.network(
+      video.thumbnailUrl,
+      fit: BoxFit.cover,
+      headers: const {
+        'Accept': 'image/*',
+      },
+      errorBuilder: (context, error, stackTrace) {
+        return _buildPlaceholderThumbnail();
+      },
+      loadingBuilder: (context, child, loadingProgress) {
+        if (loadingProgress == null) return child;
+        return Center(
+          child: CircularProgressIndicator(
+            value: loadingProgress.expectedTotalBytes != null
+                ? loadingProgress.cumulativeBytesLoaded /
+                    loadingProgress.expectedTotalBytes!
+                : null,
+          ),
+        );
+      },
+    );
+  }
+
   String _formatDuration(Duration? duration) {
     if (duration == null) return '';
     final minutes = duration.inMinutes;
@@ -944,26 +976,7 @@ class _FeaturedVideoCard extends StatelessWidget {
               // Thumbnail
               AspectRatio(
                 aspectRatio: 16 / 9,
-                child: video.thumbnailUrl.isNotEmpty
-                    ? Image.network(
-                        video.thumbnailUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return _buildPlaceholderThumbnail();
-                        },
-                        loadingBuilder: (context, child, loadingProgress) {
-                          if (loadingProgress == null) return child;
-                          return Center(
-                            child: CircularProgressIndicator(
-                              value: loadingProgress.expectedTotalBytes != null
-                                  ? loadingProgress.cumulativeBytesLoaded /
-                                      loadingProgress.expectedTotalBytes!
-                                  : null,
-                            ),
-                          );
-                        },
-                      )
-                    : _buildPlaceholderThumbnail(),
+                child: _buildThumbnail(),
               ),
               // Gradient overlay
               Positioned.fill(
