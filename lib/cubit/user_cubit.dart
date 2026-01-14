@@ -3,12 +3,14 @@ import '../models/user_model.dart';
 import '../repository/user_repository.dart';
 import '../services/google_auth_service.dart';
 import '../services/apple_auth_service.dart';
+import '../services/image_upload_service.dart';
 import 'user_states.dart';
 
 class UserCubit extends Cubit<UserState> {
   final UserRepository repository;
   final GoogleAuthService _googleAuthService = GoogleAuthService();
   final AppleAuthService _appleAuthService = AppleAuthService();
+  final ImageUploadService _imageUploadService = ImageUploadService();
   
   UserCubit(this.repository) : super(const UserState());
 
@@ -191,6 +193,119 @@ class UserCubit extends Cubit<UserState> {
         status: UserStatus.error,
         error: 'Failed to sign out: $e',
       ));
+    }
+  }
+
+  // Delete current user's account completely
+  // This permanently deletes all user data including:
+  // - Profile image from Storage
+  // - FCM token from Firestore
+  // - User document from Firestore
+  // - Firebase Auth account
+  // After deletion, user is automatically signed out
+  // Throws exception if deletion fails so UI can catch and handle it
+  Future<void> deleteCurrentUserAccount() async {
+    emit(state.copyWith(status: UserStatus.loading));
+    
+    try {
+      final currentUser = state.currentUser;
+      if (currentUser == null) {
+        final error = 'No user logged in to delete';
+        emit(state.copyWith(
+          status: UserStatus.error,
+          error: error,
+        ));
+        throw Exception(error);
+      }
+
+      final userId = currentUser.id;
+
+      // 1. Delete profile image if exists (non-critical, continue even if fails)
+      if (currentUser.profileImage != null && currentUser.profileImage!.isNotEmpty) {
+        try {
+          await _imageUploadService.deleteProfilePicture(currentUser.profileImage!);
+        } catch (e) {
+          // Log but continue - profile image deletion failure shouldn't block account deletion
+          print('Warning: Failed to delete profile image: $e');
+        }
+      }
+
+      // 2. Delete account (handles FCM token, Firestore doc, and Firebase Auth account)
+      // This will throw if deletion fails (includes verification that document was deleted)
+      print('DEBUG: UserCubit - Calling repository.deleteCurrentUserAccount()');
+      await repository.deleteCurrentUserAccount();
+      print('DEBUG: UserCubit - Repository deletion completed successfully');
+
+      // 3. Sign out from Google if applicable (user is already signed out from Firebase Auth)
+      try {
+        await _googleAuthService.signOut();
+        print('DEBUG: UserCubit - Signed out from Google');
+      } catch (e) {
+        // Non-critical - user is already signed out from Firebase Auth
+        print('Warning: Failed to sign out from Google: $e');
+      }
+
+      // 4. Explicitly sign out from Firebase Auth to ensure all auth state is cleared
+      try {
+        await repository.signOut();
+        print('DEBUG: UserCubit - Signed out from Firebase Auth');
+      } catch (e) {
+        // Non-critical - account is already deleted, but try to clear any remaining state
+        print('Warning: Failed to sign out from Firebase Auth: $e');
+      }
+
+      // 5. Reset state - user is now deleted and signed out
+      emit(state.copyWith(
+        status: UserStatus.initial,
+        currentUser: null,
+        users: [],
+      ));
+      
+      print('DEBUG: UserCubit - Account deletion completed, user signed out and state reset');
+      
+    } catch (e) {
+      print('DEBUG: UserCubit - Error during account deletion: $e');
+      
+      // Extract error message from exception
+      String errorMessage = e.toString();
+      if (errorMessage.startsWith('Exception: ')) {
+        errorMessage = errorMessage.substring(11);
+      }
+      
+      // If the error message is already user-friendly (from repository), use it
+      // Otherwise, format a generic error message
+      if (!errorMessage.contains('Tiada') && 
+          !errorMessage.contains('Gagal') && 
+          !errorMessage.contains('Sila')) {
+        // Not a user-friendly message, format it
+        final errorString = errorMessage.toLowerCase();
+        if (errorString.contains('firestore') || errorString.contains('document') || errorString.contains('pangkalan data')) {
+          errorMessage = 'Gagal memadam data pengguna dari pangkalan data. Sila cuba lagi atau hubungi sokongan.';
+        } else if (errorString.contains('auth') || errorString.contains('authentication') || errorString.contains('pengesahan')) {
+          errorMessage = 'Gagal memadam akaun pengesahan. Sila cuba lagi atau hubungi sokongan.';
+        } else if (errorString.contains('network') || errorString.contains('connection') || errorString.contains('sambungan')) {
+          errorMessage = 'Tiada sambungan internet. Sila semak sambungan anda dan cuba lagi.';
+        } else if (errorString.contains('permission') || errorString.contains('denied') || errorString.contains('kebenaran')) {
+          errorMessage = 'Tiada kebenaran untuk memadam akaun. Sila hubungi sokongan.';
+        } else if (errorString.contains('no user logged in') || errorString.contains('tiada pengguna')) {
+          errorMessage = 'Tiada pengguna yang log masuk. Sila log masuk semula.';
+        } else {
+          errorMessage = 'Gagal memadam akaun. Sila cuba lagi.';
+        }
+      }
+      
+      print('DEBUG: UserCubit - Formatted error message: $errorMessage');
+      
+      // Emit error state for UI updates
+      // Keep the user logged in so they can try again
+      emit(state.copyWith(
+        status: UserStatus.error,
+        error: errorMessage,
+        // Don't clear currentUser - keep user logged in on deletion failure
+      ));
+      
+      // Re-throw the exception with user-friendly message so the UI's try-catch can handle it
+      throw Exception(errorMessage);
     }
   }
 } 

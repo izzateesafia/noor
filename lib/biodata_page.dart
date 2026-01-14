@@ -73,8 +73,8 @@ class _BiodataPageState extends State<BiodataPage> {
           _nameController.text = user.name;
           
           // Parse phone number to extract country code and number
-          if (user.phone != 'N/A' && user.phone.isNotEmpty) {
-            final phone = user.phone.trim();
+          if (user.phone != null && user.phone != 'N/A' && user.phone!.isNotEmpty) {
+            final phone = user.phone!.trim();
             // Try to extract country code (starts with +)
             String? countryCode;
             String phoneNumber = phone;
@@ -177,40 +177,38 @@ class _BiodataPageState extends State<BiodataPage> {
   }
 
   String? _validatePhone(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Nombor telefon diperlukan';
-    }
-    // Remove spaces, dashes, and parentheses for validation
-    final cleaned = value.trim().replaceAll(RegExp(r'[\s\-\(\)]'), '');
-    if (cleaned.length < 7) {
-      return 'Nombor telefon terlalu pendek';
-    }
-    if (cleaned.length > 15) {
-      return 'Nombor telefon terlalu panjang';
-    }
-    // Check if it contains only digits
-    if (!RegExp(r'^\d+$').hasMatch(cleaned)) {
-      return 'Nombor telefon hanya boleh mengandungi nombor';
+    // Phone is now optional, but if provided, it must be valid
+    if (value != null && value.trim().isNotEmpty) {
+      // Remove spaces, dashes, and parentheses for validation
+      final cleaned = value.trim().replaceAll(RegExp(r'[\s\-\(\)]'), '');
+      if (cleaned.length < 7) {
+        return 'Nombor telefon terlalu pendek';
+      }
+      if (cleaned.length > 15) {
+        return 'Nombor telefon terlalu panjang';
+      }
+      // Check if it contains only digits
+      if (!RegExp(r'^\d+$').hasMatch(cleaned)) {
+        return 'Nombor telefon hanya boleh mengandungi nombor';
+      }
     }
     return null;
   }
 
   String? _validateBirthDate() {
-    if (_selectedBirthDate == null) {
-      return 'Birth date is required';
-    }
-    final now = DateTime.now();
-    final age = now.year - _selectedBirthDate!.year;
-    if (age < 5 || age > 120) {
-      return 'Please enter a valid birth date';
+    // Birth date is now optional, but if provided, it must be valid
+    if (_selectedBirthDate != null) {
+      final now = DateTime.now();
+      final age = now.year - _selectedBirthDate!.year;
+      if (age < 5 || age > 120) {
+        return 'Please enter a valid birth date';
+      }
     }
     return null;
   }
 
   String? _validateRequired(String? value, String fieldName) {
-    if (value == null || value.trim().isEmpty) {
-      return '$fieldName is required';
-    }
+    // Address fields are now optional
     return null;
   }
 
@@ -289,12 +287,12 @@ class _BiodataPageState extends State<BiodataPage> {
   }
 
   String? _validatePostcode(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Postcode is required';
-    }
-    // Basic postcode validation (5-10 alphanumeric characters)
-    if (!RegExp(r'^[A-Za-z0-9\s-]{5,10}$').hasMatch(value.trim())) {
-      return 'Please enter a valid postcode';
+    // Postcode is now optional, but if provided, it must be valid
+    if (value != null && value.trim().isNotEmpty) {
+      // Basic postcode validation (5-10 alphanumeric characters)
+      if (!RegExp(r'^[A-Za-z0-9\s-]{5,10}$').hasMatch(value.trim())) {
+        return 'Please enter a valid postcode';
+      }
     }
     return null;
   }
@@ -313,20 +311,35 @@ class _BiodataPageState extends State<BiodataPage> {
     try {
       if (_user == null) return;
       
-      // Combine country code and phone number
-      final countryCode = _selectedCountryCode.trim();
-      final phoneNumber = _phoneController.text.trim().replaceAll(RegExp(r'[\s\-\(\)]'), '');
-      final fullPhone = '$countryCode$phoneNumber';
+      // Combine country code and phone number (if provided)
+      String? fullPhone;
+      if (_phoneController.text.trim().isNotEmpty) {
+        final countryCode = _selectedCountryCode.trim();
+        final phoneNumber = _phoneController.text.trim().replaceAll(RegExp(r'[\s\-\(\)]'), '');
+        fullPhone = '$countryCode$phoneNumber';
+      }
       
-      // Create address map
-      final addressMap = {
-        'line1': _addressLine1Controller.text.trim(),
-        'street': _streetController.text.trim(),
-        'postcode': _postcodeController.text.trim(),
-        'city': _cityController.text.trim(),
-        'state': _stateController.text.trim(),
-        'country': _countryController.text.trim(),
-      };
+      // Create address map (only if at least one field is filled)
+      Map<String, String>? addressMap;
+      final line1 = _addressLine1Controller.text.trim();
+      final street = _streetController.text.trim();
+      final postcode = _postcodeController.text.trim();
+      final city = _cityController.text.trim();
+      final state = _stateController.text.trim();
+      final country = _countryController.text.trim();
+      
+      // Only create address map if at least one field has a value
+      if (line1.isNotEmpty || street.isNotEmpty || postcode.isNotEmpty || 
+          city.isNotEmpty || state.isNotEmpty || country.isNotEmpty) {
+        addressMap = {
+          'line1': line1,
+          'street': street,
+          'postcode': postcode,
+          'city': city,
+          'state': state,
+          'country': country,
+        };
+      }
       
       // Upload profile picture if selected but not yet uploaded
       String? finalImageUrl = _uploadedImageUrl;
@@ -343,7 +356,7 @@ class _BiodataPageState extends State<BiodataPage> {
         name: _nameController.text.trim(),
         phone: fullPhone,
         birthDate: _selectedBirthDate,
-        address: addressMap,
+        address: addressMap, // can be null if no address fields filled
         hasCompletedBiodata: true,
         profileImage: finalImageUrl, // Include profile image if uploaded
       );
@@ -531,7 +544,7 @@ class _BiodataPageState extends State<BiodataPage> {
                     child: TextFormField(
                       controller: _phoneController,
                       decoration: const InputDecoration(
-                        labelText: 'Phone Number *',
+                        labelText: 'Phone Number (Optional)',
                         hintText: '123456789',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.phone),
@@ -550,12 +563,22 @@ class _BiodataPageState extends State<BiodataPage> {
                 onTap: _pickBirthDate,
                 child: AbsorbPointer(
                   child: TextFormField(
-                    decoration: const InputDecoration(
-                      labelText: 'Birth Date *',
+                    decoration: InputDecoration(
+                      labelText: 'Birth Date (Optional)',
                       hintText: 'Select your birth date',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.calendar_today),
-                      suffixIcon: Icon(Icons.arrow_drop_down),
+                      border: const OutlineInputBorder(),
+                      prefixIcon: const Icon(Icons.calendar_today),
+                      suffixIcon: _selectedBirthDate != null 
+                        ? IconButton(
+                            icon: const Icon(Icons.clear),
+                            onPressed: () {
+                              setState(() {
+                                _selectedBirthDate = null;
+                                _birthDateText = null;
+                              });
+                            },
+                          )
+                        : const Icon(Icons.arrow_drop_down),
                     ),
                     controller: TextEditingController(text: _birthDateText ?? ''),
                     validator: (_) => _validateBirthDate(),
@@ -566,7 +589,7 @@ class _BiodataPageState extends State<BiodataPage> {
 
               // Address fields
               Text(
-                'Address *',
+                'Address (Optional)',
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -576,7 +599,7 @@ class _BiodataPageState extends State<BiodataPage> {
               TextFormField(
                 controller: _addressLine1Controller,
                 decoration: const InputDecoration(
-                  labelText: 'Line 1 *',
+                  labelText: 'Line 1 (Optional)',
                   hintText: 'Enter address line 1',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.home),
@@ -589,7 +612,7 @@ class _BiodataPageState extends State<BiodataPage> {
               TextFormField(
                 controller: _streetController,
                 decoration: const InputDecoration(
-                  labelText: 'Street *',
+                  labelText: 'Street (Optional)',
                   hintText: 'Enter street name',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.streetview),
@@ -605,7 +628,7 @@ class _BiodataPageState extends State<BiodataPage> {
                     child: TextFormField(
                       controller: _postcodeController,
                       decoration: const InputDecoration(
-                        labelText: 'Postcode *',
+                        labelText: 'Postcode (Optional)',
                         hintText: '12345',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.markunread_mailbox),
@@ -621,7 +644,7 @@ class _BiodataPageState extends State<BiodataPage> {
                     child: TextFormField(
                       controller: _cityController,
                       decoration: const InputDecoration(
-                        labelText: 'City *',
+                        labelText: 'City (Optional)',
                         hintText: 'Enter city',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.location_city),
@@ -640,7 +663,7 @@ class _BiodataPageState extends State<BiodataPage> {
                     child: TextFormField(
                       controller: _stateController,
                       decoration: const InputDecoration(
-                        labelText: 'State *',
+                        labelText: 'State (Optional)',
                         hintText: 'Enter state',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.map),
@@ -654,7 +677,7 @@ class _BiodataPageState extends State<BiodataPage> {
                     child: TextFormField(
                       controller: _countryController,
                       decoration: const InputDecoration(
-                        labelText: 'Country *',
+                        labelText: 'Country (Optional)',
                         hintText: 'Enter country',
                         border: OutlineInputBorder(),
                         prefixIcon: Icon(Icons.public),

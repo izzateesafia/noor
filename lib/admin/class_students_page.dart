@@ -61,7 +61,7 @@ class _ClassStudentsPageState extends State<ClassStudentsPage> {
     return availableStudents.where((user) {
       return user.name.toLowerCase().contains(query) ||
           user.email.toLowerCase().contains(query) ||
-          user.phone.toLowerCase().contains(query);
+          (user.phone != null && user.phone!.toLowerCase().contains(query));
     }).toList();
   }
 
@@ -401,9 +401,9 @@ class _ClassStudentsPageState extends State<ClassStudentsPage> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(student.email),
-                if (student.phone.isNotEmpty)
+                if (student.phone != null && student.phone!.isNotEmpty)
                   Text(
-                    student.phone,
+                    student.phone!,
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
               ],
@@ -494,9 +494,9 @@ class _ClassStudentsPageState extends State<ClassStudentsPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(student.email),
-                      if (student.phone.isNotEmpty)
+                      if (student.phone != null && student.phone!.isNotEmpty)
                         Text(
-                          student.phone,
+                          student.phone!,
                           style: Theme.of(context).textTheme.bodySmall,
                         ),
                     ],

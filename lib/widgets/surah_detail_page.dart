@@ -22,7 +22,6 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
   bool _showTranslation = false;
   bool _showArabic = true;
   String _selectedTranslation = 'indonesian';
-  bool _isPlaying = false;
 
   final Map<String, String> _translations = {
     'indonesian': 'Bahasa Indonesia (Paling hampir dengan Bahasa Melayu)',
@@ -42,10 +41,6 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
         foregroundColor: Colors.white,
         elevation: 0,
         actions: [
-          IconButton(
-            onPressed: _toggleAudio,
-            icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow),
-          ),
           PopupMenuButton<String>(
             onSelected: (value) {
               setState(() {
@@ -303,35 +298,6 @@ class _SurahDetailPageState extends State<SurahDetailPage> {
           verseNumber,
           translation: quran.Translation.indonesian,
         );
-    }
-  }
-
-  void _toggleAudio() {
-    setState(() {
-      _isPlaying = !_isPlaying;
-    });
-    
-    if (_isPlaying) {
-      // Play full surah audio
-      final audioUrl = quran.getAudioURLBySurah(
-        widget.surahNumber,
-        reciter: quran.Reciter.arAlafasy,
-      );
-      
-      // TODO: Implement audio playback using audioplayers
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Memainkan audio ${widget.surahName}...'),
-          action: SnackBarAction(
-            label: 'Hentikan',
-            onPressed: () {
-              setState(() {
-                _isPlaying = false;
-              });
-            },
-          ),
-        ),
-      );
     }
   }
 

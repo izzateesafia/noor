@@ -338,7 +338,7 @@ class _ManageUsersViewState extends State<_ManageUsersView> {
       }
       return user.name.toLowerCase().contains(query) ||
           user.email.toLowerCase().contains(query) ||
-          user.phone.toLowerCase().contains(query) ||
+          (user.phone != null && user.phone!.toLowerCase().contains(query)) ||
           addressMatches;
     }).toList();
   }
@@ -548,7 +548,7 @@ class _ManageUsersViewState extends State<_ManageUsersView> {
                                   const Icon(Icons.phone, size: 16),
                                   const SizedBox(width: 4),
                                   Text(
-                                    user.phone,
+                                    user.phone ?? 'N/A',
                                     style: TextStyle(
                                       color: Colors.grey[600],
                                     ),

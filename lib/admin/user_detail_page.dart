@@ -284,7 +284,7 @@ class _UserDetailViewState extends State<_UserDetailView> {
                   // All fields are read-only - no editing allowed
                     _buildInfoRow('Name', widget.user.name, icon: Icons.person),
                     _buildInfoRow('Email', widget.user.email, icon: Icons.email),
-                    _buildInfoRow('Phone', widget.user.phone, icon: Icons.phone),
+                    _buildInfoRow('Phone', widget.user.phone ?? 'N/A', icon: Icons.phone),
                     if (widget.user.address != null)
                       _buildInfoRow('Address', _formatAddressForDisplay(widget.user.address), icon: Icons.location_on),
                     if (widget.user.birthDate != null)

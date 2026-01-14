@@ -148,7 +148,7 @@ class _CardInfoPageState extends State<CardInfoPage> {
       final billingDetails = {
         'email': user.email,
         'name': user.name,
-        if (user.phone.isNotEmpty && user.phone != 'N/A') 'phone': user.phone,
+        if (user.phone != null && user.phone!.isNotEmpty && user.phone != 'N/A') 'phone': user.phone!,
       };
 
       // Create payment method via repository

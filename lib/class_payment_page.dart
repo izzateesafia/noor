@@ -53,7 +53,7 @@ class _ClassPaymentPageState extends State<ClassPaymentPage> {
         ? widget.user.name.split(' ').skip(1).join(' ') 
         : '';
     _emailController.text = widget.user.email;
-    _phoneController.text = widget.user.phone;
+    _phoneController.text = widget.user.phone ?? '';
     
     _formData['first_name'] = _firstNameController.text;
     _formData['last_name'] = _lastNameController.text;

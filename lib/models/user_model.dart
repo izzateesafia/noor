@@ -4,7 +4,7 @@ class UserModel {
   final String id;
   final String name;
   final String email;
-  final String phone; // new required field
+  final String? phone; // optional field
   final bool isPremium;
   final String? profileImage;
   final DateTime? premiumStartDate;
@@ -29,7 +29,7 @@ class UserModel {
     required this.id,
     required this.name,
     required this.email,
-    required this.phone,
+    this.phone,
     required this.isPremium,
     this.profileImage,
     this.premiumStartDate,
@@ -106,14 +106,8 @@ class UserModel {
   bool get isBiodataComplete {
     if (!hasCompletedBiodata) return false;
     if (name.isEmpty || email.isEmpty) return false;
-    if (phone.isEmpty || phone == 'N/A') return false;
-    if (birthDate == null) return false;
-    if (address == null) return false;
-    // Check that all required address fields are present and not empty
-    final requiredFields = ['line1', 'street', 'postcode', 'city', 'state', 'country'];
-    return requiredFields.every((field) => 
-      address![field] != null && address![field]!.trim().isNotEmpty
-    );
+    // Phone, birth date, and address fields are now optional
+    return true;
   }
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -129,7 +123,7 @@ class UserModel {
       id: json['id'] as String,
       name: json['name'] as String,
       email: json['email'] as String,
-      phone: json['phone'] as String,
+      phone: json['phone'] as String?,
       isPremium: json['isPremium'] as bool,
       profileImage: json['profileImage'] as String?,
       premiumStartDate: json['premiumStartDate'] != null ? DateTime.parse(json['premiumStartDate']) : null,
@@ -165,7 +159,7 @@ class UserModel {
       'id': id,
       'name': name,
       'email': email,
-      'phone': phone,
+      'phone': phone, // can be null
       // userType removed - roles array is the single source of truth
       // userType is kept as computed getter for backward compatibility in code only
       'isPremium': isPremium,

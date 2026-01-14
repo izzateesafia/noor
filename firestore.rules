@@ -40,8 +40,10 @@ service cloud.firestore {
         isAdmin()
       );
       
-      // Only admins can delete users
-      allow delete: if isAdmin();
+      // Users can delete their own account
+      allow delete: if isAuthenticated() && request.auth.uid == userId;
+      // Admins can delete any user
+      allow delete: if isAuthenticated() && isAdmin();
     }
     
     // Videos collection

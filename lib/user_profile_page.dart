@@ -148,6 +148,10 @@ class _UserProfileViewState extends State<_UserProfileView> {
                 
                 // Logout Button
                 _buildLogoutButton(),
+                const SizedBox(height: 16),
+                
+                // Delete Account Button
+                _buildDeleteAccountButton(),
               ],
             ),
           ),
@@ -238,9 +242,9 @@ class _UserProfileViewState extends State<_UserProfileView> {
             user.email, 
             style: TextStyle(color: Colors.grey[700])
           ),
-          if (user.phone.isNotEmpty)
+          if (user.phone != null && user.phone!.isNotEmpty)
             Text(
-              user.phone, 
+              user.phone!, 
               style: TextStyle(color: Colors.grey[700])
             ),
           if (user.address != null)
@@ -624,5 +628,174 @@ class _UserProfileViewState extends State<_UserProfileView> {
         );
       },
     );
+  }
+
+  Widget _buildDeleteAccountButton() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 24),
+        child: SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: () => _showDeleteAccountDialog(context),
+            icon: const Icon(Icons.delete_forever),
+            label: const Text('Padam Akaun'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: Colors.red.shade700,
+              side: BorderSide(color: Colors.red.shade700, width: 1.5),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Row(
+            children: [
+              Icon(Icons.warning, color: Colors.red.shade700, size: 28),
+              const SizedBox(width: 8),
+              const Expanded(
+                child: Text(
+                  'Padam Akaun',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          content: const SingleChildScrollView(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Adakah anda pasti mahu memadam akaun anda?',
+                  style: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+                ),
+                SizedBox(height: 12),
+                Text(
+                  'Tindakan ini akan:',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+                SizedBox(height: 8),
+                Text('• Memadam semua data peribadi anda'),
+                Text('• Memadam gambar profil anda'),
+                Text('• Memadam semua maklumat akaun'),
+                Text('• Memadam pendaftaran kelas'),
+                SizedBox(height: 12),
+                Text(
+                  'Tindakan ini TIDAK BOLEH DIBATALKAN. Semua data anda akan dipadam secara kekal.',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: Colors.red,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Batal'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                _confirmDeleteAccount(context);
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.red.shade700,
+              ),
+              child: const Text('Padam Akaun'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _confirmDeleteAccount(BuildContext context) async {
+    // Show loading dialog
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return const AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(height: 16),
+              Text('Memadam akaun...'),
+            ],
+          ),
+        );
+      },
+    );
+
+    try {
+      // Delete the account
+      await context.read<UserCubit>().deleteCurrentUserAccount();
+
+      // Close loading dialog
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Show success message
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Akaun anda telah berjaya dipadam'),
+            backgroundColor: Colors.green,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+
+      // Wait a moment to show the success message, then navigate to login page
+      await Future.delayed(const Duration(milliseconds: 500));
+      
+      // Navigate to login page and clear all previous routes
+      if (context.mounted) {
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/login',
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      // Close loading dialog
+      if (context.mounted) {
+        Navigator.of(context).pop();
+      }
+
+      // Show error message
+      if (context.mounted) {
+        // Extract error message, removing "Exception: " prefix if present
+        String errorMessage = e.toString();
+        if (errorMessage.startsWith('Exception: ')) {
+          errorMessage = errorMessage.substring(11);
+        }
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      }
+
+      // Keep user logged in so they can try again or contact support
+      // Do not navigate away - let user stay on profile page
+    }
   }
 } 

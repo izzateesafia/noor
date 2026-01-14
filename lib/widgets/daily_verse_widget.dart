@@ -197,49 +197,4 @@ class _DailyVerseWidgetState extends State<DailyVerseWidget> {
     );
   }
 
-  void _playAudio() {
-    // Get audio URL for the verse
-    final audioUrl = quran.getAudioURLByVerse(
-      _surahNumber,
-      _verseNumber,
-      reciter: quran.Reciter.arAlafasy,
-    );
-    
-    // Show a dialog with audio player
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text('$_surahName - Verse $_verseNumber'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              _arabicVerse,
-              textAlign: TextAlign.right,
-              style: GoogleFonts.amiriQuran(fontSize: 20),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: () {
-                // TODO: Implement audio playback using audioplayers
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: const Text('Pemain audio akan ditambah tidak lama lagi'),
-                  ),
-                );
-              },
-              icon: const Icon(Icons.play_arrow),
-              label: const Text('Mainkan Audio'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: const Text('Tutup'),
-          ),
-        ],
-      ),
-    );
-  }
 }

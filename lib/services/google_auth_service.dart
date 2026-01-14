@@ -98,7 +98,7 @@ class GoogleAuthService {
             id: firebaseUser.uid,
             name: firebaseUser.displayName ?? 'Google User',
             email: firebaseUser.email ?? '',
-            phone: firebaseUser.phoneNumber ?? 'N/A',
+            phone: firebaseUser.phoneNumber, // optional, can be null
             roles: const [UserType.student],
             isPremium: false,
             profileImage: firebaseUser.photoURL,

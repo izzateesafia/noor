@@ -94,7 +94,7 @@ class AppleAuthService {
         id: firebaseUser.uid,
         name: name,
         email: firebaseUser.email ?? appleCredential.email ?? '',
-        phone: 'N/A',
+        phone: null, // optional, can be null
         roles: const [UserType.student],
         isPremium: false,
         profileImage: firebaseUser.photoURL,

@@ -72,11 +72,11 @@ class _SignupPageState extends State<SignupPage> {
   }
 
   String? _validatePhone(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Nombor telefon diperlukan';
-    }
-    if (!_phoneRegex.hasMatch(value.trim())) {
-      return 'Sila masukkan nombor telefon yang sah';
+    // Phone is now optional, but if provided, it must be valid
+    if (value != null && value.trim().isNotEmpty) {
+      if (!_phoneRegex.hasMatch(value.trim())) {
+        return 'Sila masukkan nombor telefon yang sah';
+      }
     }
     return null;
   }
@@ -224,7 +224,7 @@ class _SignupPageState extends State<SignupPage> {
         name: _nameController.text.trim(),
         email: _emailController.text.trim(),
         password: _passwordController.text,
-        phone: _phoneController.text.trim(),
+        phone: _phoneController.text.trim().isEmpty ? null : _phoneController.text.trim(),
         birthDate: _selectedBirthDate,
         address: _addressController.text.trim().isEmpty 
             ? null 
@@ -341,7 +341,7 @@ class _SignupPageState extends State<SignupPage> {
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
                   decoration: const InputDecoration(
-                    labelText: 'Nombor Telefon *',
+                    labelText: 'Nombor Telefon (pilihan)',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.phone),
                   ),
